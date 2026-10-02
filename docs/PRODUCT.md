@@ -40,8 +40,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 - Grid toggle: shows the cell grid under the paths, for players who want to read the board.
 - Pinch zoom and pan on the board. Hit testing is by cell at the current scale, not by distance
   to the stroke; big boards are unplayable otherwise.
-- Undo of the last successful move is not offered in v1 (a free undo would make drops
-  meaningless). Open question below.
+- No undo. A free undo would make drops meaningless, and a paid one adds nothing.
+- A lost board is retried as the same puzzle (same seed), with fresh drops and timer.
 
 ## Boards
 
@@ -105,7 +105,8 @@ weekends.
 
 ### Daily league
 
-A league table that resets every day. Promotion to the next league for the top 10 of 30,
+A league table that resets every day at midnight in the player's local time (a day key is
+`YYYY-MM-DD` in local time; we may move to a fixed time zone later). Promotion to the next league for the top 10 of 30,
 relegation for the bottom 10 (none from Bronze). Leagues: Bronze, Silver, Gold, Platinum,
 Diamond, Master, Legend. Points come from every board finished that day, weighted by tier, time
 and drops lost, with a bonus for event boards.
@@ -164,9 +165,14 @@ localization beyond English (strings are externalized from day one so Portuguese
 6. Capacitor iOS project, macOS build in CI, TestFlight.
 7. Polish: animations, sound, haptics, one theme designed in Claude Design.
 
+## Decisions log
+
+- No undo (2026-10-02).
+- A lost board is retried as the same puzzle (2026-10-02).
+- The daily league runs on the player's local day, for now (2026-10-02).
+
 ## Open questions
 
-- Undo: none, or one free undo per board, or undo costs a drop?
-- Ray rule on drawings: bounds or mask? Decide after playing the first event board.
-- Lost board: retry the same puzzle (same seed) or a fresh one of the same level?
-- Daily league in the player's local time or in UTC?
+- Ray rule on drawings: `bounds` (the engine default; a wing can be blocked by the body across
+  the gap) or `mask` (out as soon as the ray leaves the drawing)? Decide after playing the first
+  event board.
