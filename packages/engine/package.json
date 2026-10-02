@@ -1,0 +1,28 @@
+{
+  "name": "@arrows/engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure, deterministic Arrows engine: seeded RNG, boards and masks, puzzle generator, solver, difficulty rating, level and daily seeds, and the daily league simulation. Zero dependencies, no DOM.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node --eval \"fs.rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run"
+  }
+}

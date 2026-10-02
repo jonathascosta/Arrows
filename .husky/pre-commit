@@ -1,0 +1,5 @@
+# Keep in sync with the "verify" job in .github/workflows/ci.yml.
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test
