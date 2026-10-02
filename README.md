@@ -6,7 +6,8 @@ and event board is generated on the phone from a seed, so there are infinitely m
 plays the same ones.
 
 What we are building, and why, is in [docs/PRODUCT.md](docs/PRODUCT.md). How the code is put
-together is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+together is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). What comes next, task by task, is in
+[docs/PLAN.md](docs/PLAN.md).
 
 ## Status
 

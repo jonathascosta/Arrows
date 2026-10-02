@@ -1,6 +1,7 @@
 # Arrows
 
-Read `docs/PRODUCT.md` (what we build) and `docs/ARCHITECTURE.md` (how) before changing anything.
+Read `docs/PRODUCT.md` (what we build), `docs/ARCHITECTURE.md` (how) and `docs/PLAN.md` (what
+is next, and what done means) before changing anything. Work on one task of the plan per session.
 
 ## Commands
 
