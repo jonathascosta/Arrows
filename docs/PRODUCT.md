@@ -50,10 +50,10 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   pixels wide, up to 80 tall) with a reduced palette. Transparent pixels are inactive cells.
   Each path stays inside one colour, so the drawing is visible in the arrows. Drawings come from
   Claude Design and live in the repository as data.
-- On a concave drawing the ray crosses inactive cells. The default rule is that inactive cells
-  are empty space and the ray runs to the edge of the bounding rectangle, so a wing of a
-  butterfly can be blocked by the body. The engine also supports "out as soon as the ray leaves
-  the drawing"; we pick per event after playtesting.
+- On a concave drawing the ray crosses inactive cells. The rule is `bounds`: inactive cells are
+  empty space and the ray runs to the edge of the bounding rectangle, so a wing of a butterfly
+  can be blocked by the body across the gap. The engine also supports `mask` (out as soon as the
+  ray leaves the drawing), kept for a possible event variant.
 
 ## Content generation
 
@@ -170,9 +170,8 @@ localization beyond English (strings are externalized from day one so Portuguese
 - No undo (2026-10-02).
 - A lost board is retried as the same puzzle (2026-10-02).
 - The daily league runs on the player's local day, for now (2026-10-02).
+- Ray rule on drawings is `bounds` (2026-10-02).
 
 ## Open questions
 
-- Ray rule on drawings: `bounds` (the engine default; a wing can be blocked by the body across
-  the gap) or `mask` (out as soon as the ray leaves the drawing)? Decide after playing the first
-  event board.
+None at the moment.
