@@ -40,12 +40,12 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 - A timer runs from the first tap that lands on an arrow, pauses while the app is in the
   background, and stops when the board is won or lost. Time and chances lost feed the score.
 - Hint: highlights one free arrow (the one with the shortest way out), and brings it into view
-  when zoomed in. Always behind a rewarded ad (the ad comes with T7 in [PLAN.md](PLAN.md)).
+  when zoomed in. The button reads "Hint shown" until that arrow is gone. Always behind a rewarded ad (the ad comes with T7 in [PLAN.md](PLAN.md)).
 - Grid toggle: shows the cell grid under the paths, for players who want to read the board.
 - Pinch zoom and pan on the board (wheel and drag on desktop). Hit testing is by cell at the
-  current scale, not by distance to the stroke; big boards are unplayable otherwise. The fitted
-  board sits above the grid button; zoomed in, it may pass under it. A double tap on empty space
-  resets the zoom; taps on arrows always play, however fast they come.
+  current scale, not by distance to the stroke; big boards are unplayable otherwise. The board
+  sits between the top bar and the tool bar. A double tap on empty space resets the zoom; taps on
+  arrows always play, however fast they come.
 - No undo. A free undo would make chances meaningless, and a paid one adds nothing.
 - A lost board is retried as the same puzzle (same seed), with fresh chances and timer.
 

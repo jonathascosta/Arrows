@@ -10,7 +10,7 @@ test('level 1 is won by following the hints, then opens level 2', async ({ page,
   await expect(page.locator('.time')).toHaveText('00:00');
 
   for (let move = 0; move < puzzle.arrows.length; move++) {
-    await press(page.locator('.hud .hint'), touch);
+    await press(page.locator('.toolbar .hint'), touch);
     const hinted = page.locator('.arrow.hinted');
     await expect(hinted).toHaveCount(1);
     const id = Number(await hinted.getAttribute('data-arrow'));
@@ -23,15 +23,15 @@ test('level 1 is won by following the hints, then opens level 2', async ({ page,
 
   const overlay = page.locator('.overlay[data-overlay="won"]');
   await expect(overlay).toBeVisible();
-  await expect(overlay).toContainText('3 of 3 drops left');
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(overlay).toContainText('3 of 3 chances left');
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
   await press(overlay.getByRole('button', { name: 'Next level' }), touch);
   await expect(page).toHaveURL(/\?level=2$/);
   await expect(page.locator('h1')).toHaveText('Level 2');
   await expect(page.locator('[data-arrow]')).toHaveCount(generateLevel(2).puzzle.arrows.length);
 });
 
-test('a blocked tap costs a drop; three lose; retry brings back the whole board', async ({
+test('a blocked tap costs a chance; three lose; retry brings back the whole board', async ({
   page,
   touch,
 }) => {
@@ -56,8 +56,8 @@ test('a blocked tap costs a drop; three lose; retry brings back the whole board'
   const free = new Set(freeArrows(game));
   const id = [...game.remaining].find((arrow) => !free.has(arrow))!;
   await tapArrow(page, touch, id);
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '2');
-  await expect(page.locator('.drop.lost')).toHaveCount(1);
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '2');
+  await expect(page.locator('.chance.lost')).toHaveCount(1);
   await expect(page.locator(`[data-arrow="${id}"]`)).toBeAttached();
   await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length - 2));
 
@@ -65,11 +65,14 @@ test('a blocked tap costs a drop; three lose; retry brings back the whole board'
   await tapArrow(page, touch, id);
   const overlay = page.locator('.overlay[data-overlay="lost"]');
   await expect(overlay).toBeVisible();
+  await expect(overlay.getByRole('heading')).toHaveText('Out of chances');
   await expect(play(page)).toHaveAttribute('data-status', 'lost');
+  await expect(page.locator('.chance.lost')).toHaveCount(3);
+  await expect(overlay.getByRole('link', { name: 'Home' })).toHaveAttribute('href', 'dev.html');
 
   await press(overlay.getByRole('button', { name: 'Retry' }), touch);
   await expect(overlay).toBeHidden();
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
   await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length));
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   expect(await bodies(page)).toEqual(initial);
@@ -124,6 +127,6 @@ test('the grid toggles and the hint button lights one arrow', async ({ page, tou
   await press(toggle, touch);
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.grid')).toHaveAttribute('visibility', 'visible');
-  await press(page.locator('.hud .hint'), touch);
+  await press(page.locator('.toolbar .hint'), touch);
   await expect(page.locator('.arrow.hinted')).toHaveCount(1);
 });

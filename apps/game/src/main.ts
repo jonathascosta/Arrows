@@ -1,3 +1,5 @@
+import '@fontsource/instrument-serif/latin-400.css';
+import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { parseRoute, routeSearch } from './route.ts';
 import { PlayScreen } from './screens/play.ts';

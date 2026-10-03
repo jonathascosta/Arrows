@@ -1,3 +1,5 @@
+import '@fontsource/instrument-serif/latin-400.css';
+import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { boardSizeForLevel, DRAWINGS, renderAscii, TIER_ORDER, tierForLevel } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';

@@ -21,7 +21,9 @@ pill, no mint green.
 | Title | Instrument Serif | SIL Open Font | Screen titles, level names, big numbers ("Solved", scores)   |
 | UI    | Geist            | SIL Open Font | Everything else; tier labels in small caps with wide spacing |
 
-Both are free to bundle in the app. Ship them as `woff2` with the build, not from a CDN.
+Both are free to bundle in the app. They ship with the build from the Fontsource packages
+(`@fontsource/instrument-serif`, latin subset, and `@fontsource-variable/geist`), not from a CDN;
+their licence files are in those packages and go into the app's credits in T10.
 
 ## Tokens
 
@@ -46,7 +48,7 @@ The theme object in `apps/game/src/theme/` carries these names and values.
 | `blocked`       | `#B93D2A` | Blocked arrow flash, breaking chance                      |
 | `primary`       | `#2B2925` | Primary buttons                                           |
 | `onPrimary`     | `#FCFAF6` | Text on primary buttons                                   |
-| `tierEasy`      | `#3F7D4E` | Tier accents                                              |
+| `tierEasy`      | `#3D784B` | Tier accents (design: `#3F7D4E`, darkened for 4.5:1)      |
 | `tierMedium`    | `#3C6FA0` |                                                           |
 | `tierHard`      | `#7A4FA6` |                                                           |
 | `tierSuperHard` | `#A83E34` |                                                           |
@@ -54,6 +56,9 @@ The theme object in `apps/game/src/theme/` carries these names and values.
 | `drawing2`      | `#C9A227` | yellow                                                    |
 | `drawing3`      | `#7A4E2D` | brown                                                     |
 | `drawing4`      | `#4F8A5B` | green                                                     |
+
+Every text and icon pairing meets WCAG AA (4.5:1 for text, 3:1 for large titles, icons and
+strokes); `apps/game/src/theme/contrast.test.ts` checks them. Only `tierEasy` needed a change.
 
 Tier colour appears only as an accent: the tier label, the tier badge, the level strip. Never as
 the arrow stroke and never as a board tint, because the stroke colour already carries the drawing
@@ -143,11 +148,16 @@ time. A lost chance differs from an intact one by shape as well as colour.
   score right-aligned. The player's row is raised, with a dark avatar and "You".
 - Labelled dividers after rank 10 ("ABOVE MOVES UP") and before rank 21 ("BELOW MOVES DOWN").
 
+## Screenshots
+
+What the build looks like at 390 by 844, task by task, in [screenshots/](screenshots/).
+
 ## Open points
 
 - `shadow`: the delivery says "layered"; the values still have to be picked.
 - Drawing palette: four colours are defined. Drawings that need more (the heart needs red) take
   `drawing5` onwards, still to be designed; until then red maps to `tierSuperHard`.
 - Chance direction: the chances point right, like the board's heads. Pointing them up was
-  suggested, so that two intact ones next to a timer do not read as a fast-forward button.
+  suggested, so that two intact ones next to a timer do not read as a fast-forward button. It is
+  one theme value (`chanceDirection: 'up'`) if the owner prefers it.
 - Character avatars: the design uses initials on colour; illustrated avatars stay for later.

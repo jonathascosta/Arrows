@@ -1,7 +1,7 @@
 import { DELTA } from '@arrows/engine';
 import type { Arrow, Puzzle } from '@arrows/engine';
 import type { Theme } from '../theme/theme.ts';
-import { arrowColor } from '../theme/theme.ts';
+import { arrowColors } from '../theme/theme.ts';
 import {
   bodyPoints,
   exitDuration,
@@ -79,10 +79,9 @@ export class BoardRenderer {
     const style = this.theme.board;
     for (const arrow of puzzle.arrows) {
       const group = svg(doc, 'g', { class: 'arrow', 'data-arrow': String(arrow.id) });
-      group.style.setProperty(
-        '--arrow-color',
-        arrowColor(this.theme, puzzle.mask.palette[arrow.color]),
-      );
+      const colors = arrowColors(this.theme, puzzle.mask.palette[arrow.color]);
+      group.style.setProperty('--arrow-color', colors.body);
+      group.style.setProperty('--arrow-head', colors.head);
       const body = svg(doc, 'path', { class: 'body', d: pathData(bodyPoints(arrow, style)) });
       const head = svg(doc, 'path', { class: 'head', d: polygonData(headPoints(arrow, style)) });
       group.append(body, head);

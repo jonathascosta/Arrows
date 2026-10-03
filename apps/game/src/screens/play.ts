@@ -20,7 +20,7 @@ import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
 import { formatDuration, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
-import { el, iconSpan } from '../ui/dom.ts';
+import { el } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
 import { Overlay } from '../ui/overlay.ts';
 import type { OverlayContent } from '../ui/overlay.ts';
@@ -48,7 +48,6 @@ export class PlayScreen {
   private readonly stage: HTMLElement;
   private readonly renderer: BoardRenderer;
   private readonly overlay: Overlay;
-  private readonly gridButton: HTMLButtonElement;
   private readonly status: HTMLParagraphElement;
   private readonly gestures = new GestureTracker();
   private readonly disposers: (() => void)[] = [];
@@ -66,28 +65,16 @@ export class PlayScreen {
     this.options = options;
     const doc = root.ownerDocument;
     const { theme } = options;
-    this.hud = new Hud(doc, theme, options.backHref);
+    this.hud = new Hud(doc, theme, options.backHref, options.reducedMotion);
     // Focusable from script only: focus returns here when an overlay closes.
     this.stage = el(doc, 'main', { class: 'stage', tabindex: '-1' });
     this.renderer = new BoardRenderer(this.stage, theme, options.reducedMotion);
-    this.gridButton = el(
-      doc,
-      'button',
-      {
-        class: 'fab grid-toggle',
-        type: 'button',
-        'aria-pressed': 'false',
-        'aria-label': t('hud.grid'),
-      },
-      [iconSpan(doc, theme.icons.grid, 'icon')],
-    );
     this.status = el(doc, 'p', { class: 'sr-only', 'aria-live': 'polite' });
     this.overlay = new Overlay(doc);
     this.element = el(doc, 'div', { class: 'play' }, [
       this.hud.topbar,
-      this.hud.row,
       this.stage,
-      this.gridButton,
+      this.hud.toolbar,
       this.status,
       this.overlay.element,
     ]);
@@ -132,7 +119,7 @@ export class PlayScreen {
     const session = this.session;
     const loaded = this.loaded;
     if (session === null || loaded === null) return;
-    await this.renderer.idle();
+    await Promise.all([this.renderer.idle(), this.hud.chancesIdle()]);
     await new Promise((resolve) =>
       globalThis.setTimeout(resolve, this.options.theme.motion.settleMs),
     );
@@ -147,6 +134,7 @@ export class PlayScreen {
         body: t('lost.body'),
         action: t('lost.retry'),
         onAction: () => this.restart(),
+        secondary: this.home(),
       });
       return;
     }
@@ -156,7 +144,7 @@ export class PlayScreen {
       title: t('won.title'),
       body: t('won.summary', {
         time: formatDuration(session.elapsedMs(this.options.now())),
-        drops: state.lives,
+        chances: state.lives,
         total: state.livesAtStart,
       }),
       action: ref.kind === 'level' ? t('won.next') : t('won.again'),
@@ -164,7 +152,13 @@ export class PlayScreen {
         if (ref.kind === 'level') this.options.navigate({ kind: 'level', level: ref.level + 1 });
         else this.restart();
       },
+      secondary: this.home(),
     });
+  }
+
+  /** Home is the puzzle picker until T3 brings the home screen. */
+  private home(): { label: string; href: string } {
+    return { label: t('nav.home'), href: this.options.backHref };
   }
 
   /** Shows the end-of-board card and takes everything behind it out of reach. */
@@ -181,7 +175,7 @@ export class PlayScreen {
   }
 
   private background(): HTMLElement[] {
-    return [this.hud.topbar, this.hud.row, this.stage, this.gridButton];
+    return [this.hud.topbar, this.stage, this.hud.toolbar];
   }
 
   // Input.
@@ -239,7 +233,7 @@ export class PlayScreen {
     on(this.stage, 'contextmenu', (event) => event.preventDefault());
 
     on(this.hud.hintButton, 'click', () => this.showHint());
-    on(this.gridButton, 'click', () => this.toggleGrid());
+    on(this.hud.gridButton, 'click', () => this.toggleGrid());
 
     onTarget(doc, 'keydown', (event) => {
       if (!(event instanceof KeyboardEvent)) return;
@@ -365,6 +359,7 @@ export class PlayScreen {
       return;
     }
     this.renderer.setHint(id);
+    this.hud.setHintShown(true);
     const arrow = session.puzzle.arrows[id]!;
     this.view = ensureVisible(this.view, cellCenter(head(arrow)), 48);
     this.applyView();
@@ -375,7 +370,7 @@ export class PlayScreen {
     this.gridVisible = !this.gridVisible;
     this.renderer.setGridVisible(this.gridVisible);
     // The label stays "Grid"; aria-pressed carries the state.
-    this.gridButton.setAttribute('aria-pressed', String(this.gridVisible));
+    this.hud.gridButton.setAttribute('aria-pressed', String(this.gridVisible));
   }
 
   // Drawing.
@@ -385,14 +380,11 @@ export class PlayScreen {
     const puzzle = this.session?.puzzle;
     if (puzzle === undefined) return;
     const rect = this.stage.getBoundingClientRect();
-    // The board fits above the grid button; zoomed in, it may pass under it.
-    const button = this.gridButton.getBoundingClientRect();
-    const bottom = button.height > 0 ? Math.max(0, rect.bottom - button.top + 8) : 0;
     this.view = createViewport(
       rect.width,
       rect.height,
       boardBounds(puzzle.width, puzzle.height, this.options.theme.board.margin),
-      { insets: { top: 8, right: 0, bottom, left: 0 } },
+      { insets: { top: 8, right: 0, bottom: 8, left: 0 } },
     );
     this.renderer.setStageSize(this.view.stageWidth, this.view.stageHeight);
     this.applyView();
@@ -407,8 +399,9 @@ export class PlayScreen {
     const session = this.session;
     if (session === null) return;
     const { state } = session;
-    this.hud.setDrops(state.lives, state.livesAtStart);
+    this.hud.setChances(state.lives, state.livesAtStart);
     this.hud.setHintEnabled(state.status === 'playing');
+    this.hud.setHintShown(this.renderer.hintedArrow !== null);
     this.element.dataset.status = state.status;
     this.element.dataset.arrowsLeft = String(state.remaining.size);
     this.stage.setAttribute('aria-label', tn('board.label', state.remaining.size));

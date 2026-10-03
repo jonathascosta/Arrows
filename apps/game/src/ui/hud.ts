@@ -1,49 +1,60 @@
 import type { Tier } from '@arrows/engine';
 import { t } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
+import { Chances } from './chances.ts';
 import { el, iconSpan } from './dom.ts';
 
-/** The top bar (back, title, tier) and the row under it (drops, timer, hint). */
+/**
+ * The play screen's chrome (docs/DESIGN.md, Board): a top bar with the back
+ * button, the title and tier on the left and the chances and timer on the
+ * right; a tool bar under the board with Grid and Hint.
+ */
 export class Hud {
   readonly topbar: HTMLElement;
-  readonly row: HTMLElement;
+  readonly toolbar: HTMLElement;
+  readonly gridButton: HTMLButtonElement;
   readonly hintButton: HTMLButtonElement;
   private readonly title: HTMLHeadingElement;
   private readonly tier: HTMLParagraphElement;
-  private readonly drops: HTMLDivElement;
+  private readonly chances: Chances;
   private readonly time: HTMLSpanElement;
-  private readonly timer: HTMLDivElement;
-  private readonly theme: Theme;
+  private readonly hintLabel: HTMLSpanElement;
 
-  constructor(doc: Document, theme: Theme, backHref: string) {
-    this.theme = theme;
+  constructor(doc: Document, theme: Theme, backHref: string, reducedMotion: () => boolean) {
     const back = el(
       doc,
       'a',
-      { class: 'icon-button back', href: backHref, 'aria-label': t('nav.back') },
+      { class: 'round-button back', href: backHref, 'aria-label': t('nav.back') },
       [iconSpan(doc, theme.icons.back, 'icon')],
     );
     this.title = el(doc, 'h1');
     this.tier = el(doc, 'p', { class: 'tier' });
+    this.chances = new Chances(doc, theme, reducedMotion);
+    this.time = el(doc, 'span', { class: 'time', role: 'timer' }, ['00:00']);
     this.topbar = el(doc, 'header', { class: 'topbar' }, [
       back,
       el(doc, 'div', { class: 'title' }, [this.title, this.tier]),
-      el(doc, 'span', { class: 'topbar-end' }),
+      el(doc, 'div', { class: 'status' }, [
+        this.chances.element,
+        el(doc, 'span', { class: 'status-divider', 'aria-hidden': 'true' }),
+        this.time,
+      ]),
     ]);
 
-    this.drops = el(doc, 'div', { class: 'drops', role: 'img' });
-    this.time = el(doc, 'span', { class: 'time' }, ['00:00']);
-    this.timer = el(doc, 'div', { class: 'timer', role: 'timer' }, [
-      iconSpan(doc, theme.icons.clock, 'icon'),
-      this.time,
-    ]);
-    this.hintButton = el(
+    this.gridButton = el(
       doc,
       'button',
-      { class: 'icon-button hint', type: 'button', 'aria-label': t('hud.hint') },
-      [iconSpan(doc, theme.icons.hint, 'icon')],
+      { class: 'tool grid-toggle', type: 'button', 'aria-pressed': 'false' },
+      [iconSpan(doc, theme.icons.grid, 'icon'), el(doc, 'span', {}, [t('tools.grid')])],
     );
-    this.row = el(doc, 'div', { class: 'hud' }, [this.drops, this.timer, this.hintButton]);
+    this.hintLabel = el(doc, 'span', { class: 'tool-label' }, [t('tools.hint')]);
+    this.hintButton = el(doc, 'button', { class: 'tool hint', type: 'button' }, [
+      iconSpan(doc, theme.icons.hint, 'icon'),
+      this.hintLabel,
+      el(doc, 'span', { class: 'sr-only' }, [t('tools.adNote')]),
+      el(doc, 'span', { class: 'ad-badge', 'aria-hidden': 'true' }, [t('tools.ad')]),
+    ]);
+    this.toolbar = el(doc, 'nav', { class: 'toolbar' }, [this.gridButton, this.hintButton]);
   }
 
   setTitle(title: string, tierLabel: string, tier: Tier): void {
@@ -52,26 +63,28 @@ export class Hud {
     this.tier.dataset.tier = tier;
   }
 
-  /** Draws `total` drops, the first `left` of them full. */
-  setDrops(left: number, total: number): void {
-    const doc = this.drops.ownerDocument;
-    if (this.drops.childElementCount !== total) {
-      this.drops.replaceChildren(
-        ...Array.from({ length: total }, () => iconSpan(doc, this.theme.icons.drop, 'drop')),
-      );
-    }
-    [...this.drops.children].forEach((drop, i) => drop.classList.toggle('lost', i >= left));
-    this.drops.dataset.lives = String(left);
-    this.drops.setAttribute('aria-label', t('hud.drops', { n: left, total }));
+  setChances(left: number, total: number): void {
+    this.chances.set(left, total);
+  }
+
+  /** Resolves when a breaking chance has settled. */
+  chancesIdle(): Promise<void> {
+    return this.chances.idle();
   }
 
   setTime(text: string): void {
     if (this.time.textContent === text) return;
     this.time.textContent = text;
-    this.timer.setAttribute('aria-label', t('hud.timer', { time: text }));
+    this.time.setAttribute('aria-label', t('hud.timer', { time: text }));
   }
 
   setHintEnabled(enabled: boolean): void {
     this.hintButton.disabled = !enabled;
+  }
+
+  /** "Hint shown" while a hinted arrow is on the board. */
+  setHintShown(shown: boolean): void {
+    this.hintLabel.textContent = t(shown ? 'tools.hintShown' : 'tools.hint');
+    this.hintButton.classList.toggle('shown', shown);
   }
 }

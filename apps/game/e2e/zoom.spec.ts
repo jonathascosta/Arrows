@@ -36,7 +36,7 @@ test('two fingers pinch to zoom and taps still land on the right arrow', async (
 
   await tapArrow(page, touch, target);
   await expect(page.locator(`[data-arrow="${target}"]`)).toHaveAttribute('data-state', 'leaving');
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
 });
 
 test('the wheel zooms at the pointer, drag pans, double click on empty space resets', async ({
@@ -72,7 +72,7 @@ test('the wheel zooms at the pointer, drag pans, double click on empty space res
   await expect.poll(() => zoomOf(page)).toBeGreaterThan(1);
   await page.mouse.dblclick(box.x + 4, box.y + 4);
   await expect.poll(() => zoomOf(page)).toBe(1);
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
 });
 
 test('a quick double tap on an arrow plays it and keeps the zoom', async ({ page, touch }) => {
@@ -84,7 +84,7 @@ test('a quick double tap on an arrow plays it and keeps the zoom', async ({ page
   await expect.poll(() => zoomOf(page)).toBeGreaterThan(1.5);
   const zoom = await zoomOf(page);
 
-  await press(page.locator('.hud .hint'), touch);
+  await press(page.locator('.toolbar .hint'), touch);
   const id = Number(await page.locator('.arrow.hinted').getAttribute('data-arrow'));
   const box = (await page.locator(`[data-arrow="${id}"] .head`).boundingBox())!;
   const x = box.x + box.width / 2;
@@ -97,6 +97,6 @@ test('a quick double tap on an arrow plays it and keeps the zoom', async ({ page
   }
 
   await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length - 1));
-  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
   expect(await zoomOf(page)).toBe(zoom);
 });

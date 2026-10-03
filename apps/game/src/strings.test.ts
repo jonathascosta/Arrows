@@ -4,16 +4,16 @@ import { formatDateKey, formatDuration, t, tn } from './strings.ts';
 describe('t', () => {
   it('fills placeholders and leaves unknown ones visible', () => {
     expect(t('title.level', { n: 12 })).toBe('Level 12');
-    expect(t('hud.drops', { n: 2, total: 3 })).toBe('2 of 3 drops left');
+    expect(t('hud.chances', { n: 2, total: 3 })).toBe('2 of 3 chances left');
     expect(t('title.level')).toBe('Level {n}');
   });
 });
 
 describe('tn', () => {
   it('picks the singular for one and the plural otherwise', () => {
-    expect(tn('status.blocked', 1)).toBe('Blocked. 1 drop left.');
-    expect(tn('status.blocked', 2)).toBe('Blocked. 2 drops left.');
-    expect(tn('status.blocked', 0)).toBe('Blocked. 0 drops left.');
+    expect(tn('status.blocked', 1)).toBe('Blocked. 1 chance left.');
+    expect(tn('status.blocked', 2)).toBe('Blocked. 2 chances left.');
+    expect(tn('status.blocked', 0)).toBe('Blocked. 0 chances left.');
     expect(tn('board.label', 1)).toMatch(/^Board, 1 arrow left\./);
     expect(tn('board.label', 142)).toMatch(/^Board, 142 arrows left\./);
   });
