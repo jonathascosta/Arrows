@@ -199,6 +199,63 @@ bundled fonts (Instrument Serif and Geist, SIL Open Font License), and the store
 the repository. Move the first daily (`DAILY_FIRST_DAY`, 1 January 2026 until then) to the
 launch month.
 
+## After the first TestFlight build
+
+The owner played build 201 on an iPhone (3 October 2026) and asked for these, one pull request
+each.
+
+### T11. Screens scroll in the app
+
+The app turned the web view's scrolling off, so a screen taller than the phone (home and the
+calendar on a small phone or in large text, the league, Credits, the privacy policy, the puzzle
+picker) could not be scrolled.
+
+Acceptance: the web view scrolls (`scrollEnabled`), a test keeps it on, and an end-to-end test
+checks that the board's screen is never taller than the window, so it still does not move.
+
+### T12. No puzzle picker in the app
+
+The owner's decision: the picker is a tool for testing, so it stays in the web build for
+development and leaves the app.
+
+Acceptance: Settings has no link to it in the app, the iOS bundle does not ship it, and the
+documents say so.
+
+### T13. The grid on the arrows' lines
+
+The grid toggle drew the cells' edges, while arrows run through the cells' centres.
+
+Acceptance: the grid's lines run through the centres, where the arrows and their rays run, so a
+player can follow a ray to the arrow it would hit.
+
+### T14. Harder Hard and Super Hard
+
+Super Hard felt easy: four to six arrows free at every step, each removal freeing about one more,
+often the one right behind it in the same direction, and arrows of four or five cells. The
+owner's decision: Super Hard gets long winding arrows (about eight cells) and usually one to
+three free arrows at a time, with fewer queues of arrows in the same direction; Hard gets part
+of that; Easy and Medium stay as they are.
+
+Acceptance: the calibration suite holds Super Hard to arrows of about eight cells and one to
+three free arrows at a time on average, Hard between that and Medium, Easy and Medium unchanged;
+the fingerprint test changes on purpose; PRODUCT.md first.
+
+### T15. Events of 300 boards
+
+The owner's decision: an event has 300 boards, played in order, its drawings in turn, the tiers
+in the levels' cycle of ten (medium, medium, hard, … super hard). The home card shows how many
+of the 300 are won with a progress bar, and the badge comes with the 300th.
+
+Acceptance: unit tests for the order of the boards, their drawings and tiers, the home card's
+count and bar, and the badge on the 300th; PRODUCT.md first.
+
+### T16. The policy and support pages on jonathas.net
+
+The privacy policy and a support page for the listing move to the owner's site, jonathas.net
+(with `app-ads.txt` for AdMob once its account exists), instead of GitHub Pages.
+
+Acceptance: the listing's URLs point there, and the Pages workflow is gone.
+
 ## After v1
 
 Themes as data packs, a currency, remove-ads purchase, real leaderboards through a small
@@ -219,6 +276,12 @@ API within the budget in the product document, Android, iPad.
 | T8   | owner | [#9](https://github.com/jonathascosta/Arrows/pull/9)   |
 | T9   | owner | [#10](https://github.com/jonathascosta/Arrows/pull/10) |
 | T10  | owner | [#11](https://github.com/jonathascosta/Arrows/pull/11) |
+| T11  | done  | [#16](https://github.com/jonathascosta/Arrows/pull/16) |
+| T12  | open  |                                                        |
+| T13  | open  |                                                        |
+| T14  | open  |                                                        |
+| T15  | open  |                                                        |
+| T16  | open  |                                                        |
 
 T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an
 iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts (the secrets
