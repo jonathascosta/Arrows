@@ -81,7 +81,7 @@ jobs:
       - name: The app ships no puzzle picker
         run: |
           test ! -e apps/game/ios/App/App/public/dev.html
-          ! compgen -G 'apps/game/ios/App/App/public/assets/dev-*.js'
+          if compgen -G 'apps/game/ios/App/App/public/assets/dev-*.js'; then exit 1; fi
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3'
