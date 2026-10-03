@@ -1,1 +1,1 @@
-puzzle,logic,brain,daily,maze,path,tap,calm,offline,league,mind,escape,zen,board
+logic,brain,daily,maze,path,calm,offline,league,mind,escape,zen,solve,strategy,focus
