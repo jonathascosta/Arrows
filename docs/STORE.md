@@ -21,9 +21,9 @@ Monetization, the decisions log); how the app is built and uploaded is in
 The listing's name is **Arrows: Tap Puzzle** (Arrows was taken), subtitle "Clear the board of
 arrows" ("Limpe o tabuleiro de flechas"), under Games, Puzzle and Board; on the home screen the
 app is still Arrows (`CFBundleDisplayName` in `Info.plist`). The keywords leave out the words of
-the name and the subtitle, which the App Store already searches. Support goes to the
-repository's issues; the privacy policy is at
-`https://jonathascosta.github.io/Arrows/privacy.html` once published.
+the name and the subtitle, which the App Store already searches. Support goes to the repository's
+issues; the privacy policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once
+published.
 
 ## The owner's steps
 

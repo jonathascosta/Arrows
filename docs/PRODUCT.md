@@ -356,7 +356,8 @@ beyond English and Portuguese.
 - Store name (owner's decision) (2026-10-03): the App Store listing is named Arrows: Tap Puzzle in
   both languages, since Arrows was taken; the home screen keeps Arrows; the keywords leave out
   words the name or the subtitle already carry ("puzzle", "tap" and "board" in English, "flecha"
-  in Portuguese), for "strategy", "focus" and "solve", and "estratégia".
+  in Portuguese) and add "strategy", "focus" and "solve" in English and "estratégia" in
+  Portuguese.
 
 ## Open questions
 
