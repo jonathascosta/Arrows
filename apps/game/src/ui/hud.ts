@@ -19,6 +19,8 @@ export class Hud {
   private readonly chances: Chances;
   private readonly time: HTMLSpanElement;
   private readonly hintLabel: HTMLSpanElement;
+  /** "(plays an ad)" and the AD badge: gone while a hint shows, since showing it again is free. */
+  private readonly adMarks: readonly HTMLSpanElement[];
   private readonly back: HTMLAnchorElement;
 
   constructor(doc: Document, theme: Theme, backHref: string, reducedMotion: () => boolean) {
@@ -55,11 +57,14 @@ export class Hud {
       [iconSpan(doc, theme.icons.grid, 'icon'), el(doc, 'span', {}, [t('tools.grid')])],
     );
     this.hintLabel = el(doc, 'span', { class: 'tool-label' }, [t('tools.hint')]);
+    this.adMarks = [
+      el(doc, 'span', { class: 'sr-only' }, [t('tools.adNote')]),
+      el(doc, 'span', { class: 'ad-badge', 'aria-hidden': 'true' }, [t('tools.ad')]),
+    ];
     this.hintButton = el(doc, 'button', { class: 'tool hint', type: 'button' }, [
       iconSpan(doc, theme.icons.hint, 'icon'),
       this.hintLabel,
-      el(doc, 'span', { class: 'sr-only' }, [t('tools.adNote')]),
-      el(doc, 'span', { class: 'ad-badge', 'aria-hidden': 'true' }, [t('tools.ad')]),
+      ...this.adMarks,
     ]);
     this.toolbar = el(doc, 'nav', { class: 'toolbar' }, [this.gridButton, this.hintButton]);
   }
@@ -95,9 +100,10 @@ export class Hud {
     this.hintButton.disabled = !enabled;
   }
 
-  /** "Hint shown" while a hinted arrow is on the board. */
+  /** "Hint shown", without the ad marks, while a hinted arrow is on the board. */
   setHintShown(shown: boolean): void {
     this.hintLabel.textContent = t(shown ? 'tools.hintShown' : 'tools.hint');
     this.hintButton.classList.toggle('shown', shown);
+    for (const mark of this.adMarks) mark.hidden = shown;
   }
 }

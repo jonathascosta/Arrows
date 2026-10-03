@@ -67,6 +67,14 @@ const PAIRS: [string, string, string, number][] = [
     [`${tier} tier badge on a card`, color, colors.surfaceRaised, 4.5],
     [`finished ${tier} level number`, colors.onPrimary, color, 4.5],
   ]),
+  // Score screen: the card's labels and score, the league line's dot.
+  ['score card label', colors.textMuted, colors.surfaceRaised, 4.5],
+  ['score figure', colors.title, colors.surfaceRaised, 4.5],
+  ['league dot', colors.hint, colors.background, 3],
+  // Test ads: light text on the dark card, its buttons inverted, the focus ring.
+  ['test ad text', colors.onPrimary, colors.primary, 4.5],
+  ['test ad button label', colors.primary, colors.onPrimary, 4.5],
+  ['focus ring on the test ad', colors.focus, colors.primary, 3],
 ];
 
 /**

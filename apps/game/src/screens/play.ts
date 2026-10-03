@@ -1,5 +1,7 @@
 import { head } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
+import { NO_ADS } from '../ads/ads.ts';
+import type { AdProvider } from '../ads/ads.ts';
 import { cellCenter, boardBounds } from '../board/geometry.ts';
 import type { GestureAction } from '../board/gestures.ts';
 import { GestureTracker } from '../board/gestures.ts';
@@ -34,6 +36,7 @@ import { el } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
 import { Overlay } from '../ui/overlay.ts';
 import type { OverlayContent } from '../ui/overlay.ts';
+import { ScoreScreen } from '../ui/score.ts';
 
 /** A board that has just been won or lost. */
 export interface BoardResult {
@@ -48,7 +51,7 @@ export interface BoardResult {
   readonly chancesLost: number;
 }
 
-/** What the end-of-board sheet can say about a result, when it was recorded. */
+/** What the score screen can say about a result, when it was recorded. */
 export interface ResultNote {
   /** The streak after this win; left out when the win does not count (a replay). */
   readonly streak?: number;
@@ -58,7 +61,12 @@ export interface ResultNote {
   readonly newBest?: boolean;
   /** A daily's first win earned its star, and maybe its month's trophy. */
   readonly star?: 'day' | 'month';
-  /** League points this board earned, and the player's league and rank after it. */
+  /** The board's points, as the league scores it; left out when the board was lost. */
+  readonly score?: number;
+  /**
+   * League points this board earned, and the player's league and rank after it;
+   * left out, with a score, when the board already counted today.
+   */
   readonly league?: { readonly points: number; readonly league: string; readonly rank: number };
   /** An event board's first win: where it stands, and the badge when it completed the event. */
   readonly event?: { readonly board: number; readonly total: number; readonly badge?: string };
@@ -94,14 +102,20 @@ export interface PlayScreenOptions {
   readonly exitFor?: (ref: PuzzleRef) => Exit;
   /** The board after a win, if any; when left out, a level leads to the next level. */
   readonly next?: (ref: PuzzleRef) => NextBoard | null;
+  /** The interstitial before the score screen and the rewarded ad before a hint; none when left out. */
+  readonly ads?: AdProvider;
 }
+
+/** Why the timer is held: the page is hidden, or an ad is playing. */
+type Hold = 'hidden' | 'ad';
 
 /** Marks the moment a board is on screen, for tests and profiling. */
 export const BOARD_READY_MARK = 'arrows:board-ready';
 
 /**
- * The play screen: HUD, board, grid toggle and the end-of-board overlay. It
- * turns input into session calls and session results into drawing.
+ * The play screen: HUD, board, grid toggle, the lost sheet and the score
+ * screen, and the ads between them. It turns input into session calls and
+ * session results into drawing.
  */
 export class PlayScreen {
   readonly element: HTMLDivElement;
@@ -109,6 +123,7 @@ export class PlayScreen {
   private readonly stage: HTMLElement;
   private readonly renderer: BoardRenderer;
   private readonly overlay: Overlay;
+  private readonly score: ScoreScreen;
   private readonly status: HTMLParagraphElement;
   private readonly gestures = new GestureTracker();
   private readonly disposers: (() => void)[] = [];
@@ -123,6 +138,9 @@ export class PlayScreen {
   /** Boards lost on this puzzle since it was opened: a win is first-try only at zero. */
   private losses = 0;
   private note: ResultNote | undefined;
+  /** An ad is on screen: the board takes no input until it closes. */
+  private adShowing = false;
+  private readonly holds = new Set<Hold>();
   private readonly options: PlayScreenOptions;
 
   constructor(root: HTMLElement, options: PlayScreenOptions) {
@@ -135,12 +153,14 @@ export class PlayScreen {
     this.renderer = new BoardRenderer(this.stage, theme, options.reducedMotion);
     this.status = el(doc, 'p', { class: 'sr-only', 'aria-live': 'polite' });
     this.overlay = new Overlay(doc);
+    this.score = new ScoreScreen(doc);
     this.element = el(doc, 'div', { class: 'play' }, [
       this.hud.topbar,
       this.stage,
       this.hud.toolbar,
       this.status,
       this.overlay.element,
+      this.score.element,
     ]);
     root.replaceChildren(this.element);
     this.view = createViewport(1, 1, boardBounds(1, 1, 0));
@@ -228,55 +248,68 @@ export class PlayScreen {
       });
       return;
     }
+    // The interstitial runs between the win and its score, and nowhere else (docs/PRODUCT.md).
+    await this.showAd(() => this.ads.showInterstitial(), undefined);
+    if (this.session !== session) return;
+    this.showScore(loaded, session);
+  }
+
+  /** The score screen for the board just won (docs/DESIGN.md, Win). */
+  private showScore(loaded: LoadedPuzzle, session: PlaySession): void {
     const { ref } = loaded;
-    const lines = [
-      t('won.summary', {
-        time: formatDuration(session.elapsedMs(this.options.now())),
-        chances: state.lives,
-        total: state.livesAtStart,
-      }),
-    ];
-    const note = this.note;
-    if (note !== undefined) {
-      if (note.streak !== undefined) {
-        lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
+    const { state } = session;
+    const note = this.note ?? {};
+    const lines: string[] = [];
+    if (note.streak !== undefined) {
+      lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
+    }
+    if (note.star !== undefined && ref.kind === 'daily') {
+      lines.push(t('won.star', { day: formatDayShort(ref.dateKey) }));
+      if (note.star === 'month') {
+        lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
       }
-      if (note.star !== undefined && ref.kind === 'daily') {
-        lines.push(t('won.star', { day: formatDayShort(ref.dateKey) }));
-        if (note.star === 'month') {
-          lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
-        }
+    }
+    if (note.event !== undefined) {
+      lines.push(t('won.eventBoard', { n: note.event.board, total: note.event.total }));
+      if (note.event.badge !== undefined) {
+        lines.push(t('won.eventComplete', { badge: note.event.badge }));
       }
-      if (note.event !== undefined) {
-        lines.push(t('won.eventBoard', { n: note.event.board, total: note.event.total }));
-        if (note.event.badge !== undefined) {
-          lines.push(t('won.eventComplete', { badge: note.event.badge }));
-        }
-      }
-      if (note.league !== undefined) {
-        lines.push(
-          t('won.league', {
+    }
+    const league =
+      note.league !== undefined
+        ? t('won.league', {
             points: tn('league.points', note.league.points),
             league: note.league.league,
             rank: ordinal(note.league.rank),
-          }),
-        );
-      }
-      if (note.newBest === true) lines.push(t('won.newBest'));
-      else if (note.bestMs !== undefined) {
-        lines.push(t('won.best', { time: formatDuration(note.bestMs) }));
-      }
-    }
+          })
+        : note.score !== undefined
+          ? t('won.leagueCounted')
+          : undefined;
+    const best =
+      note.newBest === true
+        ? t('won.newBest')
+        : note.bestMs !== undefined
+          ? t('won.best', { time: formatDuration(note.bestMs) })
+          : undefined;
     const next =
       this.options.next !== undefined
         ? this.options.next(ref)
         : ref.kind === 'level'
           ? { ref: { kind: 'level', level: ref.level + 1 } as const, label: t('won.next') }
           : null;
-    this.showOverlay({
-      kind: 'won',
-      title: t('won.title'),
-      body: lines.join(' '),
+    this.coverBoard();
+    this.score.show({
+      heading: t('won.heading', { title: loaded.title, subtitle: loaded.subtitle }),
+      tier: loaded.tier,
+      lines,
+      time: formatDuration(session.elapsedMs(this.options.now())),
+      ...(best !== undefined ? { best } : {}),
+      chancesLost: t('won.chancesLostOf', {
+        n: state.livesAtStart - state.lives,
+        total: state.livesAtStart,
+      }),
+      ...(note.score !== undefined ? { score: note.score } : {}),
+      ...(league !== undefined ? { league } : {}),
       action: next?.label ?? t('won.again'),
       onAction: () => {
         if (next !== null) this.options.navigate(next.ref);
@@ -284,6 +317,37 @@ export class PlayScreen {
       },
       secondary: this.home(),
     });
+  }
+
+  private get ads(): AdProvider {
+    return this.options.ads ?? NO_ADS;
+  }
+
+  /**
+   * Shows an ad with the board out of reach and the timer held, and gives its
+   * answer; an ad that fails gives `failed` (no reward, or straight on).
+   */
+  private async showAd<T>(show: () => Promise<T>, failed: T): Promise<T> {
+    this.adShowing = true;
+    this.hold('ad');
+    try {
+      return await show();
+    } catch {
+      return failed;
+    } finally {
+      this.adShowing = false;
+      this.release('ad');
+    }
+  }
+
+  private hold(reason: Hold): void {
+    if (this.holds.size === 0) this.session?.pause(this.options.now());
+    this.holds.add(reason);
+  }
+
+  private release(reason: Hold): void {
+    if (!this.holds.delete(reason)) return;
+    if (this.holds.size === 0) this.session?.resume(this.options.now());
   }
 
   private exit(): Exit {
@@ -298,21 +362,33 @@ export class PlayScreen {
     return { label: exit.link, href: exit.href };
   }
 
-  /** Shows the end-of-board card and takes everything behind it out of reach. */
+  /** Shows the lost sheet and takes everything behind it out of reach. */
   private showOverlay(content: OverlayContent): void {
-    for (const element of this.background()) element.toggleAttribute('inert', true);
+    this.coverBoard();
     // A lost board fades only now, under the sheet: until then the losing tap
     // flashes like any other blocked tap.
     if (content.kind === 'lost') this.element.dataset.faded = 'true';
     this.overlay.show(content);
   }
 
+  /** Takes the board and its chrome out of reach, under a sheet or the score screen. */
+  private coverBoard(): void {
+    for (const element of this.background()) element.toggleAttribute('inert', true);
+  }
+
+  /** Hides the lost sheet or the score screen, and gives the board back. */
   private hideOverlay(): void {
-    if (!this.overlay.visible) return;
+    if (!this.overlay.visible && !this.score.visible) return;
     this.overlay.hide();
+    this.score.hide();
     delete this.element.dataset.faded;
     for (const element of this.background()) element.toggleAttribute('inert', false);
     this.stage.focus();
+  }
+
+  /** A sheet, the score screen or an ad is in front of the board. */
+  private get covered(): boolean {
+    return this.overlay.visible || this.score.visible || this.adShowing;
   }
 
   private background(): HTMLElement[] {
@@ -373,12 +449,12 @@ export class PlayScreen {
     );
     on(this.stage, 'contextmenu', (event) => event.preventDefault());
 
-    on(this.hud.hintButton, 'click', () => this.showHint());
+    on(this.hud.hintButton, 'click', () => void this.showHint());
     on(this.hud.gridButton, 'click', () => this.toggleGrid());
 
     onTarget(doc, 'keydown', (event) => {
       if (!(event instanceof KeyboardEvent)) return;
-      if (event.target instanceof HTMLButtonElement || this.overlay.visible) return;
+      if (event.target instanceof HTMLButtonElement || this.covered) return;
       const centre = { x: this.view.stageWidth / 2, y: this.view.stageHeight / 2 };
       switch (event.key) {
         case '+':
@@ -392,7 +468,7 @@ export class PlayScreen {
           this.view = resetView(this.view);
           break;
         case 'h':
-          this.showHint();
+          void this.showHint();
           return;
         case 'g':
           this.toggleGrid();
@@ -404,9 +480,8 @@ export class PlayScreen {
     });
 
     onTarget(doc, 'visibilitychange', () => {
-      const now = this.options.now();
-      if (doc.visibilityState === 'hidden') this.session?.pause(now);
-      else this.session?.resume(now);
+      if (doc.visibilityState === 'hidden') this.hold('hidden');
+      else this.release('hidden');
     });
 
     const ResizeObserverImpl = globalThis.ResizeObserver as typeof ResizeObserver | undefined;
@@ -461,7 +536,7 @@ export class PlayScreen {
 
   private tapAt(x: number, y: number, double: boolean): void {
     const session = this.session;
-    if (session === null || this.overlay.visible) return;
+    if (session === null || this.covered) return;
     const cell = cellAt(this.view, x, y);
     const result = session.tapCell(cell.x, cell.y, this.options.now());
     const previousEmpty = this.lastTapEmpty;
@@ -499,9 +574,30 @@ export class PlayScreen {
     }
   }
 
-  private showHint(): void {
+  /**
+   * A hint plays a rewarded ad first: no reward, no hint. A hint still on the
+   * board is brought into view again without another ad.
+   */
+  private async showHint(): Promise<void> {
     const session = this.session;
-    if (session === null || this.overlay.visible) return;
+    if (session === null || this.covered) return;
+    if (session.state.status !== 'playing') {
+      this.announce(t('status.noHint'));
+      return;
+    }
+    const shown = this.renderer.hintedArrow;
+    if (shown !== null) {
+      this.reveal(session, shown);
+      return;
+    }
+    // Null when the ad could not show: no reward either, but nothing was closed early.
+    const earned = await this.showAd<boolean | null>(() => this.ads.showRewarded(), null);
+    // The player may have left while the ad played; the board itself took no input.
+    if (this.session !== session) return;
+    if (earned !== true) {
+      this.announce(t(earned === null ? 'status.noAd' : 'status.noReward'));
+      return;
+    }
     const id = session.hint();
     if (id === null) {
       this.announce(t('status.noHint'));
@@ -509,6 +605,11 @@ export class PlayScreen {
     }
     this.renderer.setHint(id);
     this.hud.setHintShown(true);
+    this.reveal(session, id);
+  }
+
+  /** Brings the hinted arrow into view and says so. */
+  private reveal(session: PlaySession, id: number): void {
     const arrow = session.puzzle.arrows[id]!;
     this.view = ensureVisible(this.view, cellCenter(head(arrow)), 48);
     this.applyView();

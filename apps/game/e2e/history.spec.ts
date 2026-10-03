@@ -29,7 +29,7 @@ withCache(
     });
     await press(page.getByRole('link', { name: 'Play', exact: true }), touch);
     await solveWithHints(page, touch, generateLevel(1).puzzle);
-    await expect(page.locator('.overlay[data-overlay="won"]')).toBeVisible();
+    await expect(page.locator('.score-screen')).toBeVisible();
 
     // A page restored from the cache fires pageshow but not load.
     await page.goBack({ waitUntil: 'commit' });

@@ -100,7 +100,7 @@ test('winning a day earns its star, kept after a reload', async ({ page, touch }
   test.slow();
   await page.goto('./?daily=2026-10-12');
   await solveWithHints(page, touch, generateDaily('2026-10-12').puzzle);
-  const sheet = page.locator('.overlay[data-overlay="won"]');
+  const sheet = page.locator('.score-screen');
   await expect(sheet).toContainText('A star for Mon 12 Oct.');
   await press(sheet.getByRole('link', { name: 'Calendar' }), touch);
   await expect(page).toHaveURL(/\?calendar=2026-10$/);

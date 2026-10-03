@@ -3,10 +3,12 @@ import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { boardSizeForLevel, DRAWINGS, renderAscii, TIER_ORDER, tierForLevel } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
+import { ADS_KEY } from './ads/ads.ts';
 import { loadPuzzle, tierLabel } from './puzzles.ts';
 import type { PuzzleRef } from './route.ts';
 import { localDateKey } from './daily/days.ts';
 import { puzzleHref } from './route.ts';
+import { browserStore } from './persistence/store.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 import { el } from './ui/dom.ts';
@@ -130,6 +132,25 @@ const drawingRef = (): PuzzleRef => ({
   tier: tierSelect.value as Tier,
 });
 
+// Test ads: a card in place of each ad, to try the flow (docs/PRODUCT.md, Monetization).
+const store = browserStore();
+const adsInput = el(document, 'input', { type: 'checkbox', name: 'ads' });
+adsInput.checked = store.getItem(ADS_KEY) === 'test';
+adsInput.addEventListener('change', () => {
+  if (adsInput.checked) store.setItem(ADS_KEY, 'test');
+  else store.removeItem(ADS_KEY);
+});
+const adsSection = el(document, 'section', { class: 'dev-card' }, [
+  el(document, 'h2', {}, ['Ads']),
+  el(document, 'label', { class: 'dev-check' }, [
+    adsInput,
+    el(document, 'span', {}, ['Show test ads: before the score screen and before every hint']),
+  ]),
+  el(document, 'p', { class: 'dev-note' }, [
+    'The web build shows no ads. With this on, the game shows a test card where an ad would be.',
+  ]),
+]);
+
 root.replaceChildren(
   el(document, 'main', { class: 'dev' }, [
     el(document, 'h1', {}, ['Arrows · puzzles']),
@@ -144,6 +165,7 @@ root.replaceChildren(
       drawingRef,
       'drawing',
     ),
+    adsSection,
     preview,
   ]),
 );

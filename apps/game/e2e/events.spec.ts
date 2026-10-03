@@ -65,7 +65,7 @@ test('a board won counts, opens the next, and the progress survives a reload', a
     touch,
     loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 1 }).puzzle,
   );
-  const sheet = page.locator('.overlay[data-overlay="won"]');
+  const sheet = page.locator('.score-screen');
   await expect(sheet).toContainText('Board 1 of 6 done.');
   await press(sheet.getByRole('button', { name: 'Next board' }), touch);
   await expect(page).toHaveURL(/\?event=autumn-2026&board=2$/);
@@ -94,7 +94,7 @@ test('the last board earns the badge', async ({ page, touch }) => {
     touch,
     loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 6 }).puzzle,
   );
-  await expect(page.locator('.overlay[data-overlay="won"]')).toContainText(
+  await expect(page.locator('.score-screen')).toContainText(
     'Every board won: the Autumn 2026 badge is yours!',
   );
   await page.goto('./');

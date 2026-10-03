@@ -1,6 +1,7 @@
 import '@fontsource/instrument-serif/latin-400.css';
 import '@fontsource-variable/geist/wght.css';
 import './styles.css';
+import { adsFor } from './ads/ads.ts';
 import { App } from './app.ts';
 import { DAILY_KEY } from './persistence/daily.ts';
 import { EVENTS_KEY } from './persistence/events.ts';
@@ -17,9 +18,10 @@ if (root === null) throw new Error('index.html has no #app element');
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+const store = browserStore();
 const app = new App(root, {
   theme: DEFAULT_THEME,
-  store: browserStore(),
+  store,
   now: () => performance.now(),
   reducedMotion: () => reducedMotion.matches,
   clock: () => new Date(),
@@ -27,6 +29,8 @@ const app = new App(root, {
   // An empty search would keep the current one: the home screen is './'.
   replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
   pickerHref: 'dev.html',
+  // No ads on the web; the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
+  ads: adsFor(store, document),
 });
 
 app.show(location.search);

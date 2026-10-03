@@ -29,7 +29,7 @@ test('a won level moves the path, and the path survives a reload', async ({ page
   await press(page.getByRole('link', { name: 'Play', exact: true }), touch);
   await expect(page).toHaveURL(/\?level=1$/);
   await solveWithHints(page, touch, generateLevel(1).puzzle);
-  const sheet = page.locator('.overlay[data-overlay="won"]');
+  const sheet = page.locator('.score-screen');
   await expect(sheet).toContainText('First try. Win streak is now 1.');
 
   // The win is stored the moment the board is won: a reload now keeps it.
@@ -65,15 +65,13 @@ test('a lost board ends the streak, and winning that level later does not count'
 
   await press(page.getByRole('link', { name: 'Play', exact: true }), touch);
   await solveWithHints(page, touch, generateLevel(3).puzzle);
-  await expect(page.locator('.overlay[data-overlay="won"]')).toContainText(
+  await expect(page.locator('.score-screen')).toContainText(
     'Not on the first try, so the streak starts again.',
   );
   await press(page.getByRole('button', { name: 'Next level' }), touch);
   await expect(page).toHaveURL(/\?level=4$/);
   await solveWithHints(page, touch, generateLevel(4).puzzle);
-  await expect(page.locator('.overlay[data-overlay="won"]')).toContainText(
-    'First try. Win streak is now 1.',
-  );
+  await expect(page.locator('.score-screen')).toContainText('First try. Win streak is now 1.');
   await page.goBack();
   await expect(page.locator('h1')).toHaveText('Level 3');
   await page.goto('./');

@@ -104,8 +104,8 @@ time. A lost chance differs from an intact one by shape as well as colour.
   figures, no pill.
 - The board fills the middle.
 - Bottom tool bar, two raised buttons: **Grid** (icon and label) and a wider **Hint** with an
-  `AD` badge at its end, since a hint always plays a rewarded ad. After a hint the button reads
-  "Hint shown".
+  `AD` badge at its end, since a new hint always plays a rewarded ad. After a hint the button
+  reads "Hint shown" and loses the badge: pressing it again shows the same arrow, with no ad.
 
 ### Win, the score screen (after the interstitial)
 
@@ -115,9 +115,24 @@ time. A lost chance differs from an intact one by shape as well as colour.
   and the time on the right), Chances lost ("1 of 3"), Score (large serif figure).
 - One line with an orange dot: "+38 points in Gold league · now 8th".
 - Primary button "Next level" (or "Play again" off the level path), text button "Home".
-- As built in T6 (still the T2 sheet until T7 builds this screen): an event board's first win
-  adds "Board 3 of 6 done." and, on the last board, "Every board won: the Autumn 2026 badge is
-  yours!"; the primary button reads "Next board" while the event runs and boards are left.
+- As built in T7: a full screen over the board, on `background`, in a column 480 px wide at
+  most. The tier line is "{title} · {line under the title}", so a daily reads "DAILY · OCT 12,
+  2026 · MEDIUM" and an event board "MAPLE LEAF · AUTUMN · 3 OF 6". The line under "Solved" holds
+  what the win did: the streak, a daily's star and trophy ("A star for Mon 12 Oct."), an event's
+  board and badge ("Board 3 of 6 done."); a replay has none. Next to the time, "best 01:31" on a
+  replay or "new best". The league line reads "Already counted in today’s league." when the
+  board earned its points earlier that day. The primary button reads "Next board" on an event
+  while boards are left; a daily's text button is "Calendar". Below 640 px tall the spacing
+  tightens so the screen fits an iPhone SE without scrolling.
+
+### Ads
+
+- The interstitial and the rewarded ad come from the ad network (T8) and look like it. The web
+  build shows none.
+- The test ads of the puzzle picker are a full-screen card on `primary` with `onPrimary` text:
+  the `AD` badge, "Test ad" in serif, one line saying which ad would show, and inverted
+  buttons ("Close ad"; for the rewarded ad "Watch to the end" and the text button "Close
+  without the reward").
 
 ### Lose
 
