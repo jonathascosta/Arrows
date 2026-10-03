@@ -2,6 +2,7 @@ import '@fontsource/instrument-serif/latin-400.css';
 import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { App } from './app.ts';
+import { PROGRESS_KEY } from './persistence/progress.ts';
 import { browserStore } from './persistence/store.ts';
 import { localDateKey } from './route.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
@@ -26,3 +27,11 @@ const app = new App(root, {
 
 app.show(location.search);
 window.addEventListener('popstate', () => app.show(location.search));
+// A page restored from the back-forward cache, or progress saved in another
+// tab, would otherwise show an out-of-date home screen.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) app.refresh();
+});
+window.addEventListener('storage', (event) => {
+  if (event.key === null || event.key === PROGRESS_KEY) app.refresh();
+});

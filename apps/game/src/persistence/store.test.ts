@@ -38,11 +38,44 @@ describe('WebStore', () => {
     expect(localStorage.getItem('arrows.test')).toBeNull();
   });
 
-  it('never throws: a refused write is lost, a refused read is empty', () => {
+  it('never throws, and keeps a refused write for the rest of the visit', () => {
     const store = new WebStore(brokenStorage());
+    expect(store.getItem('a')).toBeNull();
     expect(() => store.setItem('a', '1')).not.toThrow();
+    expect(store.getItem('a')).toBe('1');
     expect(() => store.removeItem('a')).not.toThrow();
     expect(store.getItem('a')).toBeNull();
+  });
+
+  it('still reads a storage that refuses writes, as a full quota does', () => {
+    localStorage.clear();
+    localStorage.setItem('arrows.test', 'saved');
+    const quota = (): never => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    };
+    const storage: Storage = {
+      get length() {
+        return localStorage.length;
+      },
+      clear: () => localStorage.clear(),
+      key: (index) => localStorage.key(index),
+      getItem: (key) => localStorage.getItem(key),
+      setItem: quota,
+      removeItem: quota,
+    };
+    const store = new WebStore(storage);
+    expect(store.getItem('arrows.test')).toBe('saved');
+    store.setItem('arrows.test', 'newer');
+    expect(store.getItem('arrows.test')).toBe('newer');
+    expect(localStorage.getItem('arrows.test')).toBe('saved');
+  });
+
+  it('reads what another tab wrote since', () => {
+    localStorage.clear();
+    const store = new WebStore(localStorage);
+    store.setItem('arrows.test', 'mine');
+    localStorage.setItem('arrows.test', 'theirs');
+    expect(store.getItem('arrows.test')).toBe('theirs');
   });
 });
 
@@ -51,19 +84,21 @@ describe('browserStore', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uses localStorage when it works', () => {
+  it('uses localStorage when the browser exposes it', () => {
     localStorage.clear();
     const store = browserStore();
     expect(store).toBeInstanceOf(WebStore);
     store.setItem('arrows.test', 'y');
     expect(localStorage.getItem('arrows.test')).toBe('y');
-    // The probe leaves nothing behind.
     expect(localStorage.length).toBe(1);
   });
 
-  it('falls back to memory when localStorage refuses writes or is missing', () => {
-    vi.stubGlobal('localStorage', brokenStorage());
+  it('falls back to memory when touching localStorage throws or it is missing', () => {
+    vi.spyOn(globalThis, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    });
     expect(browserStore()).toBeInstanceOf(MemoryStore);
+    vi.restoreAllMocks();
     vi.stubGlobal('localStorage', undefined);
     expect(browserStore()).toBeInstanceOf(MemoryStore);
   });

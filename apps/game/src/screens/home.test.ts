@@ -23,9 +23,14 @@ describe('HomeScreen', () => {
     const { root } = mount({ streak: 6 });
     expect(root.querySelector('h1')?.textContent).toBe('Arrows');
     expect(document.title).toBe('Arrows');
+    // Screen readers read the hidden text; the short visible one is hidden from them.
     const streak = root.querySelector('.streak')!;
-    expect(streak.getAttribute('aria-label')).toBe('Win streak: 6');
-    expect(streak.textContent).toBe('Streak 6');
+    expect(streak.tagName).toBe('P');
+    expect(streak.querySelector('.sr-only')?.textContent).toBe('Win streak: 6');
+    expect(streak.querySelector(':scope > [aria-hidden="true"]:not(.icon)')?.textContent).toBe(
+      'Streak 6',
+    );
+    expect(streak.hasAttribute('aria-label')).toBe(false);
     const menu = root.querySelector('a.menu')!;
     expect(menu.getAttribute('href')).toBe('dev.html');
     expect(menu.getAttribute('aria-label')).toBe('Puzzle picker');
@@ -68,7 +73,7 @@ describe('HomeScreen', () => {
     const { root } = mount();
     expect(root.querySelector('.levels-card h2')?.textContent).toBe('Level 1');
     expect(root.querySelector('.levels-card .tier-badge')?.textContent).toBe('Easy');
-    expect(root.querySelector('.streak')?.textContent).toBe('Streak 0');
+    expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 0');
     expect(root.querySelector('.play-button')?.getAttribute('href')).toBe('./?level=1');
   });
 
@@ -77,9 +82,11 @@ describe('HomeScreen', () => {
     const daily = root.querySelector('a.daily')!;
     expect(daily.getAttribute('href')).toBe('./?daily=2026-10-03');
     expect(daily.textContent).toContain('Sat 3 Oct');
+    // Not a link, and drawn as one that opens nothing yet.
     const league = root.querySelector('.league')!;
     expect(league.tagName).toBe('DIV');
-    expect(league.getAttribute('aria-disabled')).toBe('true');
+    expect(league.querySelector('a')).toBeNull();
+    expect(league.getAttribute('data-soon')).toBe('true');
     expect(league.textContent).toContain('Opens soon');
     const event = root.querySelector('a.event-card')!;
     expect(EVENT_REF).toEqual({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' });

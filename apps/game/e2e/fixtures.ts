@@ -63,3 +63,28 @@ export async function solveWithHints(page: Page, touch: boolean, puzzle: Puzzle)
     );
   }
 }
+
+export const PROGRESS_KEY = 'arrows.progress';
+
+/** Puts stored progress in place, as an earlier visit would have left it. */
+export async function storeProgress(
+  page: Page,
+  progress: { currentLevel: number; streak: number },
+): Promise<void> {
+  const value = JSON.stringify({
+    version: 1,
+    bestTimes: {},
+    bestStreak: progress.streak,
+    ...progress,
+  });
+  await page.evaluate(([key, json]) => localStorage.setItem(key!, json!), [PROGRESS_KEY, value]);
+}
+
+export async function expectHome(page: Page, level: number, streak: number): Promise<void> {
+  await expect(page.locator('.levels-card h2')).toHaveText(`Level ${level}`);
+  await expect(page.locator('.streak .sr-only')).toHaveText(`Win streak: ${streak}`);
+  await expect(page.getByRole('link', { name: 'Play', exact: true })).toHaveAttribute(
+    'href',
+    `./?level=${level}`,
+  );
+}

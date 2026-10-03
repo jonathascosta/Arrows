@@ -133,19 +133,28 @@ by seed and shows what the solver measured, and the home screen's menu button le
 ### Progress and navigation
 
 Progress lives under one key, `arrows.progress`, as JSON with `version: 1`: the current level,
-the best time per level, the streak and the best streak, and the level a board was last lost on
-until that level is won (so a win after leaving and coming back is not a first try). Chances
-belong to a board and are not stored. `parseProgress` reads field by field and falls back to the
-initial value for anything missing or malformed, and to a fresh start for an unknown version;
-the place for a migration is marked in it. `browserStore()` probes localStorage and falls back
-to memory where it is refused, so the game runs without saving rather than failing.
+the best time per level won, the streak and the best streak, and the levels lost and not won
+since (so a win after leaving and coming back is not a first try). Chances belong to a board and
+are not stored. `parseProgress` reads field by field and falls back to the initial value for
+anything missing or malformed; the place for a migration is marked in it. A record with a newer
+version, written by a later build, is never overwritten: an older build plays on in memory.
+
+`ProgressStore` reads the store on every call and writes from what it just read, so a second tab,
+or a page the browser kept in its back-forward cache, never writes an out-of-date copy over newer
+progress. `WebStore` reads localStorage each time and keeps a write it refuses (a full quota) in
+memory for the rest of the visit; `browserStore()` falls back to memory only where touching
+localStorage throws.
 
 The play screen reports a result through `record` at the tap that wins or loses, before the last
 animation, so leaving during it still counts; `firstTry` is false once a board of that puzzle was
 lost while it was open. Only `App` writes progress, and only for levels: dailies and events leave
-the path and the streak alone. Links on the home screen and the back button load the page anew;
+the path and the streak alone, and a replay of a level already won only keeps its best time.
+
+Links on the home screen and the back button load the page anew, so each adds a history entry;
 "Next level" pushes the new address onto the history, and `popstate` shows what the address
-names.
+names. When the browser restores a page from its back-forward cache (`pageshow` with
+`persisted`), or another tab saves progress (`storage`), `App.refresh` draws the home screen
+again if it is showing; a board in play is left as it is.
 
 ### Rendering and input
 

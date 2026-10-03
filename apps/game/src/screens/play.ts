@@ -36,7 +36,8 @@ export interface BoardResult {
 
 /** What the end-of-board sheet can say about a result, when it was recorded. */
 export interface ResultNote {
-  readonly streak: number;
+  /** The streak after this win; left out when the win does not count (a replay). */
+  readonly streak?: number;
   /** The best time to show; left out on a first win, where it is this time. */
   readonly bestMs?: number;
   /** This time beat an earlier best. */
@@ -121,6 +122,9 @@ export class PlayScreen {
 
   destroy(): void {
     for (const dispose of this.disposers.splice(0)) dispose();
+    // A board still finishing sees that it is gone and stops.
+    this.session = null;
+    this.loaded = null;
     this.element.remove();
   }
 
@@ -189,7 +193,9 @@ export class PlayScreen {
     ];
     const note = this.note;
     if (note !== undefined) {
-      lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
+      if (note.streak !== undefined) {
+        lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
+      }
       if (note.newBest === true) lines.push(t('won.newBest'));
       else if (note.bestMs !== undefined) {
         lines.push(t('won.best', { time: formatDuration(note.bestMs) }));

@@ -1,8 +1,16 @@
 import { createGame, freeArrows, generateDaily, generateLevel } from '@arrows/engine';
-import { expect, play, press, solveWithHints, tapArrow, test } from './fixtures.ts';
+import {
+  expect,
+  expectHome,
+  play,
+  press,
+  PROGRESS_KEY,
+  solveWithHints,
+  storeProgress,
+  tapArrow,
+  test,
+} from './fixtures.ts';
 import type { Page } from '@playwright/test';
-
-const PROGRESS_KEY = 'arrows.progress';
 
 /** Loses the open level by tapping an arrow that is blocked at the start. */
 async function loseLevel(page: Page, touch: boolean, level: number): Promise<void> {
@@ -12,29 +20,6 @@ async function loseLevel(page: Page, touch: boolean, level: number): Promise<voi
   const id = puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
   for (let i = 0; i < game.livesAtStart; i++) await tapArrow(page, touch, id);
   await expect(page.locator('.overlay[data-overlay="lost"]')).toBeVisible();
-}
-
-/** Puts stored progress in place, as an earlier visit would have left it. */
-async function storeProgress(
-  page: Page,
-  progress: { currentLevel: number; streak: number },
-): Promise<void> {
-  const value = JSON.stringify({
-    version: 1,
-    bestTimes: {},
-    bestStreak: progress.streak,
-    ...progress,
-  });
-  await page.evaluate(([key, json]) => localStorage.setItem(key!, json!), [PROGRESS_KEY, value]);
-}
-
-async function expectHome(page: Page, level: number, streak: number): Promise<void> {
-  await expect(page.locator('.levels-card h2')).toHaveText(`Level ${level}`);
-  await expect(page.locator('.streak')).toHaveAttribute('aria-label', `Win streak: ${streak}`);
-  await expect(page.getByRole('link', { name: 'Play', exact: true })).toHaveAttribute(
-    'href',
-    `./?level=${level}`,
-  );
 }
 
 test('a won level moves the path, and the path survives a reload', async ({ page, touch }) => {
@@ -104,7 +89,8 @@ test('the home cards open the daily and the event board', async ({ page, touch }
   await expect(play(page)).toBeVisible();
 
   await page.goto('./');
-  await expect(page.locator('.league')).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.locator('.league')).toHaveAttribute('data-soon', 'true');
+  await expect(page.locator('.league a')).toHaveCount(0);
   await press(page.locator('a.event-card'), touch);
   await expect(page).toHaveURL(/\?drawing=butterfly&tier=hard$/);
   await expect(page.locator('h1')).toHaveText('Butterfly');

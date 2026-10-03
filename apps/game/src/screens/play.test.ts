@@ -284,8 +284,9 @@ describe('PlayScreen', () => {
 
   it('tells the streak and the best time on the win sheet', async () => {
     const notes: ResultNote[] = [
-      { streak: 4, bestMs: 61_000, newBest: false },
+      { streak: 4 },
       { streak: 0, bestMs: 2000, newBest: true },
+      { bestMs: 61_000, newBest: false },
     ];
     const { screen, root } = mount({ kind: 'level', level: 1 }, () => notes.shift());
     const arrows = generateLevel(1).puzzle.arrows.length;
@@ -294,13 +295,18 @@ describe('PlayScreen', () => {
 
     solveWithHints(root, arrows);
     await vi.advanceTimersByTimeAsync(1000);
-    expect(body()).toBe('00:00 · 3 of 3 chances left. First try. Win streak is now 4. Best 01:01.');
+    expect(body()).toBe('00:00 · 3 of 3 chances left. First try. Win streak is now 4.');
     screen.open({ kind: 'level', level: 1 });
     solveWithHints(root, arrows);
     await vi.advanceTimersByTimeAsync(1000);
     expect(body()).toBe(
       '00:00 · 3 of 3 chances left. Not on the first try, so the streak starts again. New best time!',
     );
+    // A replay: no streak line, the best time.
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe('00:00 · 3 of 3 chances left. Best 01:01.');
     // Nothing recorded (a daily or an event): only the time and the chances.
     screen.open({ kind: 'level', level: 1 });
     solveWithHints(root, arrows);
@@ -399,6 +405,16 @@ describe('PlayScreen', () => {
     clock.now = 105_000;
     await vi.advanceTimersByTimeAsync(300);
     expect(root.querySelector('.time')?.textContent).toBe('00:15');
+  });
+
+  it('stops a board that was finishing when the screen is destroyed', async () => {
+    const { screen, root, results } = mount();
+    solveWithHints(root, generateLevel(1).puzzle.arrows.length);
+    expect(results).toHaveLength(1);
+    const overlay = root.querySelector<HTMLElement>('.overlay')!;
+    screen.destroy();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(overlay.hidden).toBe(true);
   });
 
   it('cleans up its listeners and its clock on destroy', () => {

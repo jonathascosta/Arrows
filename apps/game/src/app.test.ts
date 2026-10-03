@@ -1,8 +1,8 @@
-import { createGame, freeArrows, generateLevel, head } from '@arrows/engine';
+import { createGame, freeArrows, head } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './app.ts';
 import { cellCenter } from './board/geometry.ts';
-import { PROGRESS_KEY } from './persistence/progress.ts';
+import { PROGRESS_KEY, ProgressStore } from './persistence/progress.ts';
 import { MemoryStore } from './persistence/store.ts';
 import { loadPuzzle } from './puzzles.ts';
 import type { PuzzleRef } from './route.ts';
@@ -62,8 +62,8 @@ async function solve(root: HTMLElement, ref: PuzzleRef): Promise<void> {
 }
 
 /** Taps an arrow that is blocked at the start until the board is lost. */
-async function lose(root: HTMLElement, level: number): Promise<void> {
-  const { puzzle } = generateLevel(level);
+async function loseBoard(root: HTMLElement, ref: PuzzleRef): Promise<void> {
+  const { puzzle } = loadPuzzle(ref);
   const game = createGame(puzzle);
   const free = new Set(freeArrows(game));
   const stuck = puzzle.arrows.findIndex((_, id) => !free.has(id));
@@ -71,6 +71,9 @@ async function lose(root: HTMLElement, level: number): Promise<void> {
   for (let i = 0; i < game.livesAtStart; i++) tapCell(root, x, y);
   await vi.advanceTimersByTimeAsync(1000);
 }
+
+const lose = (root: HTMLElement, level: number): Promise<void> =>
+  loseBoard(root, { kind: 'level', level });
 
 interface Harness {
   app: App;
@@ -140,7 +143,7 @@ describe('App', () => {
     const reloaded = mount(store);
     reloaded.app.show('');
     expect(reloaded.root.querySelector('.levels-card h2')?.textContent).toBe('Level 2');
-    expect(reloaded.root.querySelector('.streak')?.textContent).toBe('Streak 1');
+    expect(reloaded.root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 1');
 
     // Next level, from the first app's sheet.
     document.body.replaceChildren(root);
@@ -149,15 +152,33 @@ describe('App', () => {
     expect(root.querySelector('.play h1')?.textContent).toBe('Level 2');
   });
 
-  it('shows the best time when a level is won again', async () => {
+  it('shows the best time on a replay, which leaves the streak alone', async () => {
     const { app, root } = mount();
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
     expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left. First try. Win streak is now 2. Best 00:00.',
+      '00:00 · 3 of 3 chances left. Best 00:00.',
     );
+    app.show('');
+    expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 1');
+  });
+
+  it('draws the home screen again from storage on refresh, and leaves a board alone', () => {
+    const { app, root, store } = mount();
+    app.show('');
+    expect(root.querySelector('.levels-card h2')?.textContent).toBe('Level 1');
+    // Another tab, or this page before the browser cached it, saved progress since.
+    new ProgressStore(store).recordWin({ level: 1, elapsedMs: 1000, firstTry: true });
+    app.refresh();
+    expect(root.querySelector('.levels-card h2')?.textContent).toBe('Level 2');
+    expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 1');
+    app.show('?level=2');
+    const board = root.querySelector('.play');
+    app.refresh();
+    expect(root.querySelector('.play')).toBe(board);
+    expect(root.querySelector('.home')).toBeNull();
   });
 
   it('ends the streak on a lost board, and the retry that wins does not count', async () => {
@@ -166,7 +187,7 @@ describe('App', () => {
     await solve(root, { kind: 'level', level: 1 });
     app.show('?level=2');
     await lose(root, 2);
-    expect(JSON.parse(store.getItem(PROGRESS_KEY)!)).toMatchObject({ streak: 0, lostLevel: 2 });
+    expect(JSON.parse(store.getItem(PROGRESS_KEY)!)).toMatchObject({ streak: 0, lostLevels: [2] });
     root.querySelector<HTMLButtonElement>('.overlay button')!.click();
     await solve(root, { kind: 'level', level: 2 });
     expect(root.querySelector('.overlay')?.textContent).toContain(
@@ -174,7 +195,7 @@ describe('App', () => {
     );
     app.show('');
     expect(root.querySelector('.levels-card h2')?.textContent).toBe('Level 3');
-    expect(root.querySelector('.streak')?.textContent).toBe('Streak 0');
+    expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 0');
   });
 
   it('counts no streak for a level lost, left and won after a reload', async () => {
@@ -189,14 +210,17 @@ describe('App', () => {
     );
   });
 
-  it('leaves the path and the streak alone on dailies and events', async () => {
+  it('leaves the path and the streak alone on dailies and events, won or lost', async () => {
     const { app, root, store } = mount();
     const daily: PuzzleRef = { kind: 'daily', dateKey: '2026-10-03' };
     app.show('?daily=2026-10-03');
     await solve(root, daily);
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).not.toContain(
-      'streak',
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
+      '00:00 · 3 of 3 chances left.',
     );
+    app.show('?drawing=butterfly&tier=hard');
+    await loseBoard(root, { kind: 'drawing', drawingId: 'butterfly', tier: 'hard' });
+    expect(root.querySelector('.overlay')?.getAttribute('data-overlay')).toBe('lost');
     expect(store.getItem(PROGRESS_KEY)).toBeNull();
   });
 });

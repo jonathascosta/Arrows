@@ -482,6 +482,7 @@ body {
   align-items: center;
   gap: 6px;
   min-height: 40px;
+  margin: 0;
   padding: 0 14px;
   border-radius: 999px;
   background: var(--color-surface);
@@ -503,6 +504,15 @@ body {
   box-shadow: var(--shadow-raised);
   color: var(--color-text);
   text-decoration: none;
+}
+
+/* A card that opens nothing yet: an outline on the page, not a raised card. */
+.card[data-soon] {
+  /* The border takes its width out of the padding, so the text lines up with the raised cards. */
+  padding: 16.5px;
+  border: 1.5px solid var(--color-divider);
+  background: none;
+  box-shadow: none;
 }
 
 .card-head {

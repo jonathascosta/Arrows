@@ -2,56 +2,76 @@ import type { KeyValueStore } from './store.ts';
 
 export const PROGRESS_KEY = 'arrows.progress';
 
+/** The shape this build reads and writes. */
+export const PROGRESS_VERSION = 1;
+
 /**
  * What the player has done on the level path (docs/PRODUCT.md, Levels).
  * Stored as JSON with a version from day one, so a later shape can migrate
  * the old one instead of losing it.
  */
 export interface Progress {
-  readonly version: 1;
+  readonly version: typeof PROGRESS_VERSION;
   /** The next level to play: one past the highest level won. */
   readonly currentLevel: number;
-  /** Best time per level, in milliseconds, keyed by level number. */
+  /** Best time per level won, in milliseconds, keyed by level number. */
   readonly bestTimes: Readonly<Record<string, number>>;
-  /** Consecutive first-try wins on levels. */
+  /** Consecutive first-try wins on new levels. */
   readonly streak: number;
   readonly bestStreak: number;
   /**
-   * The level a board was last lost on, until that level is won: winning it is
-   * not a first try even after a reload.
+   * Levels a board was lost on and that have not been won since: winning one
+   * of them is not a first try, even after a reload.
    */
-  readonly lostLevel: number | null;
+  readonly lostLevels: readonly number[];
 }
 
 export const INITIAL_PROGRESS: Progress = {
-  version: 1,
+  version: PROGRESS_VERSION,
   currentLevel: 1,
   bestTimes: {},
   streak: 0,
   bestStreak: 0,
-  lostLevel: null,
+  lostLevels: [],
 };
 
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 
+const isLevel = (value: unknown): value is number => isCount(value) && value >= 1;
+
+function readJson(raw: string | null): Record<string, unknown> | null {
+  if (raw === null) return null;
+  try {
+    const data: unknown = JSON.parse(raw);
+    return typeof data === 'object' && data !== null && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Reads stored progress. Anything missing, malformed or from an unknown
- * future version falls back field by field to the initial values, so a bad
- * write costs at most what it touched.
+ * Whether stored progress was written by a newer build. This build cannot
+ * read it and must not overwrite it: going back to an older build (a TestFlight
+ * downgrade) would otherwise lose the newer progress.
+ */
+export function isNewerRecord(raw: string | null): boolean {
+  const version = readJson(raw)?.version;
+  return typeof version === 'number' && version > PROGRESS_VERSION;
+}
+
+/**
+ * Reads stored progress. Nothing stored, broken JSON or another version gives
+ * the initial progress. In a version 1 record, each missing or malformed field
+ * falls back to its initial value on its own, so a bad write costs at most
+ * what it touched.
  */
 export function parseProgress(raw: string | null): Progress {
-  if (raw === null) return INITIAL_PROGRESS;
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    return INITIAL_PROGRESS;
-  }
-  if (typeof data !== 'object' || data === null) return INITIAL_PROGRESS;
-  const record = data as Record<string, unknown>;
+  const record = readJson(raw);
   // Version 1 is the only one so far; a migration from it goes here when a version 2 exists.
-  if (record.version !== 1) return INITIAL_PROGRESS;
+  if (record?.version !== PROGRESS_VERSION) return INITIAL_PROGRESS;
   const bestTimes: Record<string, number> = {};
   const times = record.bestTimes;
   if (typeof times === 'object' && times !== null && !Array.isArray(times)) {
@@ -59,15 +79,16 @@ export function parseProgress(raw: string | null): Progress {
       if (/^[1-9]\d*$/.test(level) && isCount(ms)) bestTimes[level] = ms;
     }
   }
-  const currentLevel =
-    isCount(record.currentLevel) && record.currentLevel >= 1 ? record.currentLevel : 1;
+  const currentLevel = isLevel(record.currentLevel) ? record.currentLevel : 1;
   const streak = isCount(record.streak) ? record.streak : 0;
   const bestStreak = isCount(record.bestStreak) ? Math.max(record.bestStreak, streak) : streak;
-  const lostLevel = isCount(record.lostLevel) && record.lostLevel >= 1 ? record.lostLevel : null;
-  return { version: 1, currentLevel, bestTimes, streak, bestStreak, lostLevel };
+  const lostLevels = Array.isArray(record.lostLevels)
+    ? [...new Set(record.lostLevels.filter(isLevel))]
+    : [];
+  return { version: PROGRESS_VERSION, currentLevel, bestTimes, streak, bestStreak, lostLevels };
 }
 
-export interface LevelWin {
+export interface LevelResult {
   readonly level: number;
   readonly elapsedMs: number;
   /** No board was lost on this level while it was open. */
@@ -76,6 +97,8 @@ export interface LevelWin {
 
 export interface WinRecord {
   readonly progress: Progress;
+  /** The level had been won before: the streak is left as it was. */
+  readonly replay: boolean;
   /** Counted as a first try: no board lost on the level, in this visit or a stored one. */
   readonly firstTry: boolean;
   readonly streak: number;
@@ -87,40 +110,52 @@ export interface WinRecord {
   readonly newBest: boolean;
 }
 
-/** The progress of this device, read once and written on every change. */
+/**
+ * The progress of this device. Every read and every change goes to the store,
+ * so another tab, or a page the browser kept from earlier, never writes back
+ * an out-of-date copy over newer progress.
+ */
 export class ProgressStore {
-  private value: Progress;
   private readonly store: KeyValueStore;
+  /** Progress kept in memory while the store holds a newer build's record. */
+  private detached: Progress | null = null;
 
   constructor(store: KeyValueStore) {
     this.store = store;
-    this.value = parseProgress(store.getItem(PROGRESS_KEY));
   }
 
   get progress(): Progress {
-    return this.value;
+    const raw = this.store.getItem(PROGRESS_KEY);
+    if (isNewerRecord(raw)) return this.detached ?? INITIAL_PROGRESS;
+    return parseProgress(raw);
   }
 
   bestTime(level: number): number | undefined {
-    return this.value.bestTimes[String(level)];
+    return this.progress.bestTimes[String(level)];
   }
 
-  recordWin(win: LevelWin): WinRecord {
-    const previous = this.bestTime(win.level);
+  recordWin(win: LevelResult): WinRecord {
+    const value = this.progress;
+    const key = String(win.level);
+    const previous = value.bestTimes[key];
+    const replay = previous !== undefined;
     const elapsed = Math.max(0, Math.round(win.elapsedMs));
     const bestMs = previous === undefined ? elapsed : Math.min(previous, elapsed);
-    const firstTry = win.firstTry && this.value.lostLevel !== win.level;
-    const streak = firstTry ? this.value.streak + 1 : 0;
-    this.save({
-      ...this.value,
-      currentLevel: Math.max(this.value.currentLevel, win.level + 1),
-      bestTimes: { ...this.value.bestTimes, [String(win.level)]: bestMs },
+    const firstTry = win.firstTry && !value.lostLevels.includes(win.level);
+    // A replay leaves the streak alone (docs/PRODUCT.md, Levels).
+    const streak = replay ? value.streak : firstTry ? value.streak + 1 : 0;
+    const progress: Progress = {
+      ...value,
+      currentLevel: Math.max(value.currentLevel, win.level + 1),
+      bestTimes: { ...value.bestTimes, [key]: bestMs },
       streak,
-      bestStreak: Math.max(this.value.bestStreak, streak),
-      lostLevel: this.value.lostLevel === win.level ? null : this.value.lostLevel,
-    });
+      bestStreak: Math.max(value.bestStreak, streak),
+      lostLevels: value.lostLevels.filter((level) => level !== win.level),
+    };
+    this.save(progress);
     return {
-      progress: this.value,
+      progress,
+      replay,
       firstTry,
       streak,
       bestMs,
@@ -129,14 +164,29 @@ export class ProgressStore {
     };
   }
 
-  /** A lost board ends the streak, and winning its level later does not start a new one. */
+  /**
+   * A lost board on a level not won yet ends the streak, and winning that level
+   * later does not start a new one. A lost replay changes nothing.
+   */
   recordLoss(level: number): Progress {
-    this.save({ ...this.value, streak: 0, lostLevel: level });
-    return this.value;
+    const value = this.progress;
+    if (value.bestTimes[String(level)] !== undefined) return value;
+    const progress: Progress = {
+      ...value,
+      streak: 0,
+      lostLevels: value.lostLevels.includes(level)
+        ? value.lostLevels
+        : [...value.lostLevels, level],
+    };
+    this.save(progress);
+    return progress;
   }
 
   private save(progress: Progress): void {
-    this.value = progress;
+    if (isNewerRecord(this.store.getItem(PROGRESS_KEY))) {
+      this.detached = progress;
+      return;
+    }
     this.store.setItem(PROGRESS_KEY, JSON.stringify(progress));
   }
 }

@@ -132,8 +132,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
   progress bar, "4 of 12 boards · 3 days left".
 
 Until the later tasks fill them, the cards are placeholders: Daily shows today's date and opens
-today's board (stars and the count come with T4), League shows "Bronze · Opens soon" and does
-nothing (T5), and the event card opens the butterfly at Hard (T6). The level strip is not
+today's board (stars and the count come with T4), League shows "Bronze · Opens soon" as an
+outline on the page instead of a raised card and does nothing (T5), and the event card opens the
+butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level strip is not
 tappable: Play opens the current level.
 
 ### Daily challenge

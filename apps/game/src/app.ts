@@ -43,6 +43,15 @@ export class App {
     else this.showPuzzle(ref);
   }
 
+  /**
+   * Draws the home screen again from the stored progress, when it is showing:
+   * after the browser restores the page from its back-forward cache, or when
+   * another tab has saved progress. A board in play is left as it is.
+   */
+  refresh(): void {
+    if (this.home !== null) this.showHome();
+  }
+
   private showHome(): void {
     this.play?.destroy();
     this.play = null;
@@ -73,7 +82,10 @@ export class App {
     this.play.open(ref);
   }
 
-  /** Levels move the path and the streak; dailies and events do not (docs/PRODUCT.md). */
+  /**
+   * Levels move the path and the streak; dailies and events do not, and a
+   * replay of a level already won only keeps its best time (docs/PRODUCT.md).
+   */
   private record(result: BoardResult): ResultNote | undefined {
     if (result.ref.kind !== 'level') return undefined;
     if (result.outcome === 'lost') {
@@ -86,7 +98,7 @@ export class App {
       firstTry: result.firstTry,
     });
     // A first win has no earlier best to compare with: the sheet shows only its time.
-    if (win.previousBestMs === undefined) return { streak: win.streak };
-    return { streak: win.streak, bestMs: win.bestMs, newBest: win.newBest };
+    if (!win.replay) return { streak: win.streak };
+    return { bestMs: win.bestMs, newBest: win.newBest };
   }
 }

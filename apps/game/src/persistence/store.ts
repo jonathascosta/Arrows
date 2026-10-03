@@ -26,15 +26,23 @@ export class MemoryStore implements KeyValueStore {
   }
 }
 
-/** Wraps a Web Storage, swallowing the errors private modes and full quotas throw. */
+/**
+ * Wraps a Web Storage, swallowing the errors private modes and full quotas
+ * throw. A write the storage refuses is kept in memory and read back from
+ * there for the rest of the visit; everything else is read from the storage
+ * each time, so writes from other tabs show.
+ */
 export class WebStore implements KeyValueStore {
   private readonly storage: Storage;
+  /** Writes the storage refused; null marks a refused removal. */
+  private readonly unsaved = new Map<string, string | null>();
 
   constructor(storage: Storage) {
     this.storage = storage;
   }
 
   getItem(key: string): string | null {
+    if (this.unsaved.has(key)) return this.unsaved.get(key) ?? null;
     try {
       return this.storage.getItem(key);
     } catch {
@@ -45,29 +53,31 @@ export class WebStore implements KeyValueStore {
   setItem(key: string, value: string): void {
     try {
       this.storage.setItem(key, value);
+      this.unsaved.delete(key);
     } catch {
-      // Quota or a blocked storage: the game goes on without saving.
+      // Quota or a blocked storage: the visit goes on without saving.
+      this.unsaved.set(key, value);
     }
   }
 
   removeItem(key: string): void {
     try {
       this.storage.removeItem(key);
+      this.unsaved.delete(key);
     } catch {
-      // As above.
+      this.unsaved.set(key, null);
     }
   }
 }
 
-/** localStorage when the browser allows it, memory otherwise (some private modes). */
+/**
+ * localStorage when the browser exposes it, even read-only (a full quota still
+ * reads the saved progress); memory where touching it throws or it is missing.
+ */
 export function browserStore(): KeyValueStore {
   try {
     const storage = globalThis.localStorage as Storage | undefined;
-    if (storage === undefined) return new MemoryStore();
-    const probe = '__arrows_probe__';
-    storage.setItem(probe, probe);
-    storage.removeItem(probe);
-    return new WebStore(storage);
+    return storage === undefined ? new MemoryStore() : new WebStore(storage);
   } catch {
     return new MemoryStore();
   }

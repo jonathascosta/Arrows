@@ -42,15 +42,12 @@ export class HomeScreen {
     const top = el(doc, 'header', { class: 'home-top' }, [
       el(doc, 'h1', { class: 'wordmark' }, [t('app.name')]),
       el(doc, 'div', { class: 'home-actions' }, [
-        el(
-          doc,
-          'span',
-          { class: 'chip streak', 'aria-label': t('home.streakLabel', { n: progress.streak }) },
-          [
-            iconSpan(doc, theme.icons.streak, 'icon'),
-            el(doc, 'span', { 'aria-hidden': 'true' }, [t('home.streak', { n: progress.streak })]),
-          ],
-        ),
+        // Plain text for screen readers: an aria-label on an element with no role is not read.
+        el(doc, 'p', { class: 'chip streak' }, [
+          iconSpan(doc, theme.icons.streak, 'icon'),
+          el(doc, 'span', { class: 'sr-only' }, [t('home.streakLabel', { n: progress.streak })]),
+          el(doc, 'span', { 'aria-hidden': 'true' }, [t('home.streak', { n: progress.streak })]),
+        ]),
         el(
           doc,
           'a',
@@ -122,7 +119,8 @@ export class HomeScreen {
         el(doc, 'span', { class: 'card-note' }, [t('home.dailyNote')]),
       ],
     );
-    const league = el(doc, 'div', { class: 'card mode-card league', 'aria-disabled': 'true' }, [
+    // Not a link until T5: drawn flat, unlike the cards that open something.
+    const league = el(doc, 'div', { class: 'card mode-card league', 'data-soon': 'true' }, [
       el(doc, 'span', { class: 'card-label' }, [t('home.league')]),
       el(doc, 'span', { class: 'card-title small' }, [t('home.leagueTitle')]),
       el(doc, 'span', { class: 'card-note' }, [t('home.leagueNote')]),
