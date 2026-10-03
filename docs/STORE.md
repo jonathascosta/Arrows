@@ -54,23 +54,29 @@ published.
 5. **Upload a build.** Set the TestFlight workflow's secrets (ARCHITECTURE.md, iOS). The API key
    is the team's, the one Trilha uses. The certificate is new, made once for these workflows, and
    the games to come sign with it too; revoke neither it nor Trilha's. Without a Mac, make it
-   with OpenSSL (in Git Bash on Windows, put `MSYS_NO_PATHCONV=1` before the first command, or
-   it mangles the subject):
+   with OpenSSL, in a folder outside the repository (the key it writes is not encrypted; the
+   `MSYS_NO_PATHCONV=1` prefix stops Git Bash on Windows rewriting the subject, and does nothing
+   elsewhere):
 
    ```sh
-   openssl req -new -newkey rsa:2048 -nodes -keyout dist.key -out dist.csr -subj "/CN=Jonathas Costa/C=BR"
+   mkdir -p ~/apple-signing && cd ~/apple-signing
+   MSYS_NO_PATHCONV=1 openssl req -new -newkey rsa:2048 -nodes -keyout dist.key -out dist.csr -subj "/CN=Jonathas Costa/C=BR"
    # Certificates, Identifiers & Profiles: a new Apple Distribution certificate from dist.csr,
-   # downloaded as distribution.cer.
+   # downloaded into this folder as distribution.cer.
    openssl x509 -inform DER -in distribution.cer -out dist.pem
+   # The .p12's password, typed without echo and kept out of the shell's history.
+   read -rsp "Password: " P12_PASSWORD && echo && export P12_PASSWORD
    # The older encryption, which the macOS keychain imports.
    openssl pkcs12 -export -inkey dist.key -in dist.pem -out dist.p12 \
-     -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1 -passout pass:<password>
+     -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1 -passout env:P12_PASSWORD
+   unset P12_PASSWORD
    ```
 
-   Keep `dist.key` and `dist.p12` safe: they sign every game. The secret takes `dist.p12` in
-   base64 (`base64 -w0 dist.p12`). Then run the `TestFlight` workflow, install the build from
-   TestFlight and play it: the consent message (in the EEA), the tracking prompt, the ads,
-   Settings, Credits and the privacy policy.
+   Keep `dist.key` and `dist.p12` safe: they sign every game. `IOS_DISTRIBUTION_CERTIFICATE_P12`
+   takes `dist.p12` in base64 (`base64 -w0 dist.p12`), and
+   `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` the password. Then run the `TestFlight` workflow,
+   install the build from TestFlight and play it: the consent message (in the EEA), the tracking
+   prompt, the ads, Settings, Credits and the privacy policy.
 
 6. **Upload the listing.** Run the `App Store listing` workflow: it sends the text and the
    screenshots of both languages to the version being prepared, and submits nothing.
