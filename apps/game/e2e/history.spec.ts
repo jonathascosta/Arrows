@@ -2,11 +2,17 @@ import { generateLevel } from '@arrows/engine';
 import { expectHome, press, solveWithHints, storeProgress, test } from './fixtures.ts';
 import { expect } from '@playwright/test';
 
-// Playwright turns the back-forward cache off; players' browsers keep it on.
+// Playwright turns the back-forward cache off; players' browsers keep it on. The headless
+// shell Playwright runs by default has no such cache at all, so where no browser is given (CI)
+// this spec runs the full Chromium build, which `playwright install chromium` also installs.
 const withCache = test.extend({
   launchOptions: [
     async ({ launchOptions }, use) => {
-      await use({ ...launchOptions, ignoreDefaultArgs: ['--disable-back-forward-cache'] });
+      await use({
+        ...launchOptions,
+        ...(launchOptions.executablePath === undefined ? { channel: 'chromium' } : {}),
+        ignoreDefaultArgs: ['--disable-back-forward-cache'],
+      });
     },
     { scope: 'worker' },
   ],
