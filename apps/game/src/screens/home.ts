@@ -188,7 +188,7 @@ export class HomeScreen {
 
   /**
    * The event card (docs/DESIGN.md, Home): a thumbnail of the next board, the
-   * event's name, the drawing, a bar with a segment per board, and the boards
+   * event's name, the drawing, a bar filled by the boards won, and the boards
    * won with the days left. It opens the next board while the event runs.
    */
   private eventCard(doc: Document, theme: Theme, options: HomeScreenOptions): HTMLElement {
@@ -214,13 +214,15 @@ export class HomeScreen {
         : daysLeft === 1
           ? t('home.eventLastDay')
           : t('home.eventDaysLeft', { n: daysLeft });
+    // One bar filled by the share of boards won: 300 boards are too many for a segment each.
+    const share = Math.round((progress.won.length / progress.total) * 1000) / 10;
     const bar = el(
       doc,
       'span',
       { class: 'event-progress', 'aria-hidden': 'true' },
-      Array.from({ length: progress.total }, (_, i) =>
-        el(doc, 'span', progress.won.includes(i + 1) ? { 'data-done': 'true' } : {}),
-      ),
+      progress.won.length === 0
+        ? []
+        : [el(doc, 'span', { class: 'event-progress-fill', style: `width: ${share}%` })],
     );
     const title = progress.complete
       ? el(doc, 'span', { class: 'card-title small badge-earned' }, [

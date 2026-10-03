@@ -52,7 +52,10 @@ async function seed(page: Page): Promise<void> {
     );
     localStorage.setItem(
       'arrows.events',
-      JSON.stringify({ version: 1, events: { 'autumn-2026': [1, 2, 3] } }),
+      JSON.stringify({
+        version: 1,
+        events: { 'autumn-2026': Array.from({ length: 180 }, (_, i) => i + 1) },
+      }),
     );
   }, daysWon());
 }
@@ -127,7 +130,7 @@ for (const { locale, folder } of LANGUAGES) {
       await shoot(page, folder, '4-league');
 
       // 5. An event board drawn as a picture.
-      await page.goto('./?event=autumn-2026&board=4');
+      await page.goto('./?event=autumn-2026&board=181');
       await expect(page.locator('[data-arrow]').first()).toBeVisible();
       await shoot(page, folder, '5-event');
 
