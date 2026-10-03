@@ -287,7 +287,7 @@ localization beyond English (strings are externalized from day one so Portuguese
 - The iOS app (session decisions in T8, open to the owner) (2026-10-03): the name Arrows and the
   app id `com.jonathascosta.arrows` (confirm before the first TestFlight upload, which fixes
   the id); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
-  skipped, so the board never waits on the network; with the real network, no ad still means no
+  skipped, so the board never waits more than four seconds on the network; with the real network, no ad still means no
   hint, as T7 decided; a placeholder icon.
 
 ## Open questions

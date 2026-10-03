@@ -3,6 +3,9 @@
 # after the web build has been copied in (`cap sync ios`). Everything secret comes
 # from the environment; docs/ARCHITECTURE.md (iOS) lists it.
 
+require "base64"
+require "tmpdir"
+
 default_platform(:ios)
 
 APP_ID = "com.jonathascosta.arrows"
@@ -23,7 +26,7 @@ platform :ios do
     )
 
     # The certificate is on disk only for the import, outside the repository.
-    certificate = File.join(ENV.fetch("RUNNER_TEMP", Dir.tmpdir), "distribution.p12")
+    certificate = File.join(ENV.fetch("RUNNER_TEMP") { Dir.tmpdir }, "distribution.p12")
     begin
       File.binwrite(certificate, Base64.decode64(ENV.fetch("IOS_DISTRIBUTION_CERTIFICATE_P12")))
       import_certificate(
@@ -53,7 +56,7 @@ platform :ios do
       profile_name: lane_context[SharedValues::SIGH_NAME]
     )
 
-    # Every upload needs a higher build number than the last: the workflow's run number.
+    # Every upload needs a higher build number than the last: run number × 100 + attempt.
     build_number = ENV.fetch("BUILD_NUMBER")
     admob_app_id = ENV["ADMOB_APP_ID"].to_s.empty? ? TEST_ADMOB_APP_ID : ENV["ADMOB_APP_ID"]
     build_app(

@@ -114,6 +114,12 @@ export default defineConfig([
               group: ['@capacitor/*', '!@capacitor/core', '@capacitor-community/*'],
               message: 'Capacitor plugins load only in the app: import them in platform/native.ts.',
             },
+            {
+              // A static import would pull every plugin into the web build; main.ts
+              // loads it with a dynamic import(), which this rule does not see.
+              regex: '(^|/)native(\\.ts)?$',
+              message: 'Load platform/native.ts only with a dynamic import(), in the app.',
+            },
           ],
         },
       ],

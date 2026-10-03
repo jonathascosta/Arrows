@@ -255,8 +255,8 @@ unless a hinted arrow is still on the board, which is brought into view again fo
 reward, no hint. A won board, once its last arrow has left, asks for the interstitial, and the
 score screen follows when it closes. A lost board shows its sheet at once. While an ad loads or
 plays the board and its bars are `inert` (Back cannot leave the ad to show over another screen),
-the Hint button reads "Loading ad…" for a hint's ad, and the timer is held, with the page being hidden as the other reason to
-hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
+the Hint button reads "Loading ad…" for a hint's ad, and the timer is held, with the page being
+hidden as the other reason to hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
 rejects) counts as no reward, or as an interstitial already over. The board's result is
 recorded at the winning tap, before any ad, so leaving during the interstitial loses nothing.
 
@@ -300,8 +300,8 @@ app it imports `platform/native.ts`, a chunk of its own, so the web never loads 
 `nativePlatform` reads every saved key from `Preferences` into a `PreferencesStore` before the
 app starts (the game reads its records synchronously; writes go to memory at once and are
 saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads
-(each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine (`impact` light, `notification` warning, success,
-error). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
+(each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine
+(`impact` light, `notification` warning, success, error). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
 
 `AdMobAds` loads each kind of ad ahead and shows it when its moment comes. The plugin's show
