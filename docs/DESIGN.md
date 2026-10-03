@@ -29,36 +29,40 @@ their licence files are in those packages and go into the app's credits in T10.
 
 The theme object in `apps/game/src/theme/` carries these names and values.
 
-| Token           | Value     | Use                                                       |
-| :-------------- | :-------- | :-------------------------------------------------------- |
-| `background`    | `#F4F0E8` | Screens                                                   |
-| `surface`       | `#E9E3D6` | Quiet surfaces: round back buttons, chips, day cells      |
-| `surfaceRaised` | `#FCFAF6` | Cards, sheets, tool bar buttons, the player's league row  |
-| `shadow`        | layered   | Soft layered shadow under raised surfaces (values to set) |
-| `text`          | `#2A2723` | Body text                                                 |
-| `textMuted`     | `#6E675C` | Secondary text                                            |
-| `title`         | `#1E1B17` | Titles                                                    |
-| `divider`       | `#DDD5C6` | Hairlines, card separators                                |
-| `stroke`        | `#2B2925` | Arrow bodies on plain boards                              |
-| `head`          | `#2B2925` | Arrowheads on plain boards                                |
-| `hint`          | `#C9741F` | Hinted arrow, stars, small accents                        |
-| `grid`          | `#E8E1D3` | Cell grid under the board                                 |
-| `chance`        | `#2B2925` | Intact chance                                             |
-| `chanceLost`    | `#D6CEBF` | Lost chance; the faded board after a loss                 |
-| `blocked`       | `#B93D2A` | Blocked arrow flash, breaking chance                      |
-| `primary`       | `#2B2925` | Primary buttons                                           |
-| `onPrimary`     | `#FCFAF6` | Text on primary buttons                                   |
-| `tierEasy`      | `#3D784B` | Tier accents (design: `#3F7D4E`, darkened for 4.5:1)      |
-| `tierMedium`    | `#3C6FA0` |                                                           |
-| `tierHard`      | `#7A4FA6` |                                                           |
-| `tierSuperHard` | `#A83E34` |                                                           |
-| `drawing1`      | `#D9822B` | Event board palette: orange                               |
-| `drawing2`      | `#C9A227` | yellow                                                    |
-| `drawing3`      | `#7A4E2D` | brown                                                     |
-| `drawing4`      | `#4F8A5B` | green                                                     |
+| Token           | Value     | Use                                                                            |
+| :-------------- | :-------- | :----------------------------------------------------------------------------- |
+| `background`    | `#F4F0E8` | Screens                                                                        |
+| `surface`       | `#E9E3D6` | Quiet surfaces: round back buttons, chips, day cells                           |
+| `surfaceRaised` | `#FCFAF6` | Cards, sheets, tool bar buttons, the player's league row                       |
+| `shadow`        | layered   | Soft layered shadow under raised surfaces (provisional values in `default.ts`) |
+| `text`          | `#2A2723` | Body text                                                                      |
+| `textMuted`     | `#6E675C` | Secondary text                                                                 |
+| `title`         | `#1E1B17` | Titles                                                                         |
+| `divider`       | `#DDD5C6` | Hairlines, card separators                                                     |
+| `stroke`        | `#2B2925` | Arrow bodies on plain boards                                                   |
+| `head`          | `#2B2925` | Arrowheads on plain boards                                                     |
+| `hint`          | `#C9741F` | Hinted arrow, stars, small accents                                             |
+| `grid`          | `#E8E1D3` | Cell grid under the board                                                      |
+| `chance`        | `#2B2925` | Intact chance                                                                  |
+| `chanceLost`    | `#D6CEBF` | Lost chance; the faded board after a loss                                      |
+| `blocked`       | `#B93D2A` | Blocked arrow flash, breaking chance                                           |
+| `primary`       | `#2B2925` | Primary buttons                                                                |
+| `onPrimary`     | `#FCFAF6` | Text on primary buttons                                                        |
+| `focus`         | `#C9741F` | Keyboard focus ring (not in the delivery; the hint colour, 3:1)                |
+| `tierEasy`      | `#3D784B` | Tier accents (design: `#3F7D4E`, darkened for 4.5:1)                           |
+| `tierMedium`    | `#3C6FA0` |                                                                                |
+| `tierHard`      | `#7A4FA6` |                                                                                |
+| `tierSuperHard` | `#A83E34` |                                                                                |
+| `drawing1`      | `#D9822B` | Event board palette: orange                                                    |
+| `drawing2`      | `#C9A227` | yellow                                                                         |
+| `drawing3`      | `#7A4E2D` | brown                                                                          |
+| `drawing4`      | `#4F8A5B` | green                                                                          |
 
-Every text and icon pairing meets WCAG AA (4.5:1 for text, 3:1 for large titles, icons and
-strokes); `apps/game/src/theme/contrast.test.ts` checks them. Only `tierEasy` needed a change.
+Every text pairing meets WCAG AA (4.5:1; 3:1 only for the large serif titles), and every icon,
+focus ring and arrow stroke on plain boards meets 3:1. `apps/game/src/theme/contrast.test.ts`
+checks each pairing the screens use. Only `tierEasy` needed a change for that. The drawing palette
+is the exception: `drawing1` (orange, 2.57:1) and `drawing2` (yellow, 2.13:1) stay below 3:1 on the
+background, as delivered; the test lists them as known gaps (see the open points).
 
 Tier colour appears only as an accent: the tier label, the tier badge, the level strip. Never as
 the arrow stroke and never as a board tint, because the stroke colour already carries the drawing
@@ -154,7 +158,13 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
 
 ## Open points
 
-- `shadow`: the delivery says "layered"; the values still have to be picked.
+- `shadow`: the delivery says "layered"; `default.ts` sets provisional values to confirm with
+  the design.
+- Drawing contrast: orange (2.57:1) and yellow (2.13:1) arrows are below 3:1 on the paper
+  background. A darker pair would read better on event boards; owner and design to decide.
+- Hint on drawings: the hint colour against the orange of the drawings is 1.20:1, so with reduced
+  motion (no pulse) a hinted orange arrow barely stands out on the butterfly. A hint treatment that
+  does not rely on colour alone (a halo, a thicker stroke) is worth designing.
 - Drawing palette: four colours are defined. Drawings that need more (the heart needs red) take
   `drawing5` onwards, still to be designed; until then red maps to `tierSuperHard`.
 - Chance direction: the chances point right, like the board's heads. Pointing them up was

@@ -119,7 +119,10 @@ export class Chances {
     // With reduced motion the pose changes at once and the red is held as long.
     const motion = tween(
       chanceBreakMs,
-      (progress) => this.pose(item, 1 - (1 - progress) * (1 - progress)),
+      (progress) => {
+        // A reset (a retry, a new board) overtakes the break: stop posing at once.
+        if (item.generation === generation) this.pose(item, 1 - (1 - progress) * (1 - progress));
+      },
       reduced,
     );
     const hold = new Promise<void>((resolve) => {

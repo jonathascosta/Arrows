@@ -30,7 +30,12 @@ export class Hud {
     this.title = el(doc, 'h1');
     this.tier = el(doc, 'p', { class: 'tier' });
     this.chances = new Chances(doc, theme, reducedMotion);
-    this.time = el(doc, 'span', { class: 'time', role: 'timer' }, ['00:00']);
+    this.time = el(
+      doc,
+      'span',
+      { class: 'time', role: 'timer', 'aria-label': t('hud.timer', { time: '00:00' }) },
+      ['00:00'],
+    );
     this.topbar = el(doc, 'header', { class: 'topbar' }, [
       back,
       el(doc, 'div', { class: 'title' }, [this.title, this.tier]),

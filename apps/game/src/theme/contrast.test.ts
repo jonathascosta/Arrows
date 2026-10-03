@@ -17,7 +17,7 @@ export function contrast(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-const { colors, tiers } = DEFAULT_THEME;
+const { colors, tiers, drawingPalette } = DEFAULT_THEME;
 
 /**
  * Every pairing the screens use, with the WCAG AA minimum for its role: 4.5:1
@@ -30,6 +30,7 @@ const PAIRS: [string, string, string, number][] = [
   ['muted text on background', colors.textMuted, colors.background, 4.5],
   ['muted text on raised surface', colors.textMuted, colors.surfaceRaised, 4.5],
   ['title on background', colors.title, colors.background, 4.5],
+  ['sheet title on raised surface', colors.title, colors.surfaceRaised, 4.5],
   ['button label on primary', colors.onPrimary, colors.primary, 4.5],
   ['back icon on surface', colors.text, colors.surface, 3],
   ['easy tier label', tiers.easy, colors.background, 4.5],
@@ -40,12 +41,32 @@ const PAIRS: [string, string, string, number][] = [
   ['hinted arrow', colors.hint, colors.background, 3],
   ['blocked arrow', colors.blocked, colors.background, 3],
   ['intact chance', colors.chance, colors.background, 3],
-  ['hint label when shown', colors.hint, colors.surfaceRaised, 3],
+  ['hint icon when shown', colors.hint, colors.surfaceRaised, 3],
+  ['focus ring on background', colors.focus, colors.background, 3],
+  ['focus ring on raised surface', colors.focus, colors.surfaceRaised, 3],
 ];
+
+/**
+ * Drawing colours come from the design and are not all strong enough for a
+ * stroke on the paper background. The ones below 3:1 are listed here and in
+ * docs/DESIGN.md (open points) so the gap stays visible; any other colour must
+ * reach 3:1.
+ */
+const DRAWING_BELOW_3_TO_1 = new Set(['orange', 'yellow']);
 
 describe('theme contrast (WCAG AA)', () => {
   it.each(PAIRS)('%s', (_name, foreground, background, minimum) => {
     expect(contrast(foreground, background)).toBeGreaterThanOrEqual(minimum);
+  });
+
+  it.each(Object.entries(drawingPalette))('drawing colour %s on the background', (name, color) => {
+    const ratio = contrast(color, colors.background);
+    if (DRAWING_BELOW_3_TO_1.has(name)) {
+      // A known gap: the test fails if the colour is fixed, so the list gets updated.
+      expect(ratio).toBeLessThan(3);
+    } else {
+      expect(ratio).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it('keeps a lost chance quiet but present, and tells it apart by shape', () => {

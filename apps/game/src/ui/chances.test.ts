@@ -80,6 +80,24 @@ describe('Chances', () => {
     expect(chances.element.querySelector('path')?.hasAttribute('transform')).toBe(false);
   });
 
+  it('with motion, a reset during a break leaves the chance intact and unsplit', async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+    const chances = mount(false);
+    chances.set(3, 3);
+    chances.set(2, 3);
+    frames.shift()!(0);
+    // A retry, or a new board, before the break has finished.
+    chances.set(3, 3);
+    while (frames.length > 0) frames.shift()!(1000);
+    await vi.advanceTimersByTimeAsync(DEFAULT_THEME.motion.chanceBreakMs);
+    await chances.idle();
+    expect(classesOf(chances)).toEqual(['intact', 'intact', 'intact']);
+    for (const path of chances.element.querySelectorAll('path')) {
+      expect(path.hasAttribute('transform')).toBe(false);
+    }
+  });
+
   it('rebuilds when the total changes', () => {
     const chances = mount(true);
     chances.set(3, 3);

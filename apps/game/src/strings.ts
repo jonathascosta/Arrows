@@ -30,7 +30,7 @@ const en = {
   'won.next': 'Next level',
   'won.again': 'Play again',
   'lost.title': 'Out of chances',
-  'lost.body': 'Retry plays the same puzzle again, with fresh chances and the timer reset.',
+  'lost.body': 'Retry plays the same puzzle again, with {total} fresh chances and the timer reset.',
   'lost.retry': 'Retry',
 } as const;
 
@@ -56,6 +56,25 @@ export function tn(
 ): string {
   const form = plurals.select(n) === 'one' ? 'one' : 'other';
   return t(`${key}.${form}`, { ...params, n });
+}
+
+const SMALL_NUMBERS = [
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+];
+
+/** Small counts in words, as running text prefers ("three fresh chances"); digits from 11. */
+export function spellOut(n: number): string {
+  return SMALL_NUMBERS[n] ?? String(n);
 }
 
 /** `2026-10-02` as `Oct 2, 2026`. */

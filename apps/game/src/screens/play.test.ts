@@ -140,8 +140,18 @@ describe('PlayScreen', () => {
     expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 2 chances left.');
     tapCell(root, x, y);
     expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 1 chance left.');
+    // A hint is up when the board is lost: the loss clears it.
+    root.querySelector<HTMLButtonElement>('.hint')!.click();
+    expect(root.querySelectorAll('.hinted')).toHaveLength(1);
     tapCell(root, x, y);
+    // The losing tap flashes like any blocked tap; the board is not faded yet.
+    expect(root.querySelector(`[data-arrow="${stuck}"]`)?.classList.contains('blocked')).toBe(true);
+    expect(play.dataset.status).toBe('lost');
+    expect(play.dataset.faded).toBeUndefined();
+    expect(root.querySelectorAll('.hinted')).toHaveLength(0);
+    expect(root.querySelector('.hint .tool-label')?.textContent).toBe('Hint');
     await vi.advanceTimersByTimeAsync(1000);
+    expect(play.dataset.faded).toBe('true');
 
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.hidden).toBe(false);
@@ -149,6 +159,9 @@ describe('PlayScreen', () => {
     expect(play.dataset.status).toBe('lost');
     expect(root.querySelectorAll('.chance.lost')).toHaveLength(3);
     expect(overlay.querySelector('h2')?.textContent).toBe('Out of chances');
+    expect(overlay.querySelector('p')?.textContent).toBe(
+      'Retry plays the same puzzle again, with three fresh chances and the timer reset.',
+    );
     expect(overlay.querySelector('a')?.getAttribute('href')).toBe('dev.html');
     expect(overlay.querySelector('a')?.textContent).toBe('Home');
     // Everything behind the sheet is out of reach while it shows.
@@ -161,6 +174,7 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.chances')?.getAttribute('data-chances')).toBe('3');
     expect(root.querySelectorAll('.chance.lost')).toHaveLength(0);
     expect(play.dataset.status).toBe('playing');
+    expect(play.dataset.faded).toBeUndefined();
     expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length));
     expect(root.querySelectorAll('[data-arrow]')).toHaveLength(puzzle.arrows.length);
     expect([...root.querySelectorAll('.body')].map((p) => p.getAttribute('d'))).toEqual(before);

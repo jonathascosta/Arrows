@@ -18,7 +18,7 @@ import { PlaySession } from '../game/session.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
-import { formatDuration, t, tn } from '../strings.ts';
+import { formatDuration, spellOut, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
@@ -131,7 +131,7 @@ export class PlayScreen {
       this.showOverlay({
         kind: 'lost',
         title: t('lost.title'),
-        body: t('lost.body'),
+        body: t('lost.body', { total: spellOut(state.livesAtStart) }),
         action: t('lost.retry'),
         onAction: () => this.restart(),
         secondary: this.home(),
@@ -164,12 +164,16 @@ export class PlayScreen {
   /** Shows the end-of-board card and takes everything behind it out of reach. */
   private showOverlay(content: OverlayContent): void {
     for (const element of this.background()) element.toggleAttribute('inert', true);
+    // A lost board fades only now, under the sheet: until then the losing tap
+    // flashes like any other blocked tap.
+    if (content.kind === 'lost') this.element.dataset.faded = 'true';
     this.overlay.show(content);
   }
 
   private hideOverlay(): void {
     if (!this.overlay.visible) return;
     this.overlay.hide();
+    delete this.element.dataset.faded;
     for (const element of this.background()) element.toggleAttribute('inert', false);
     this.stage.focus();
   }
@@ -343,6 +347,8 @@ export class PlayScreen {
         return;
       case 'blocked':
         void this.renderer.bump(result.arrowId, result.blockedBy);
+        // A hint means nothing on a lost board: clear it before the label refreshes.
+        if (session.state.status === 'lost') this.renderer.setHint(null);
         this.refresh();
         this.announce(tn('status.blocked', session.state.lives));
         if (session.state.status === 'lost') void this.finish('lost');

@@ -255,12 +255,12 @@ body {
   fill: currentColor;
 }
 
-/* A lost board fades under the sheet. */
-.play[data-status='lost'] .arrow {
+/* A lost board fades once the sheet is up (not on the losing tap, which flashes first). */
+.play[data-faded] .arrow {
   color: var(--color-chance-lost);
 }
 
-.play[data-status='lost'] .arrow .head {
+.play[data-faded] .arrow .head {
   fill: currentColor;
 }
 
@@ -311,7 +311,8 @@ body {
   text-align: left;
 }
 
-.tool.hint.shown {
+/* The icon carries the hint colour; the label stays in text colour for 4.5:1. */
+.tool.hint.shown .icon {
   color: var(--color-hint);
 }
 

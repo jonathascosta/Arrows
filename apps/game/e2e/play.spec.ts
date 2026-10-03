@@ -130,3 +130,37 @@ test('the grid toggles and the hint button lights one arrow', async ({ page, tou
   await press(page.locator('.toolbar .hint'), touch);
   await expect(page.locator('.arrow.hinted')).toHaveCount(1);
 });
+
+test('the losing tap flashes red, and the board fades only under the sheet', async ({
+  page,
+  touch,
+}) => {
+  // Without transitions the computed colours are final at once.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const { puzzle } = generateLevel(1);
+  const free = new Set(freeArrows(createGame(puzzle)));
+  const id = puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
+  await page.goto('./?level=1');
+  await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
+  const colorOf = (selector: string) =>
+    page.locator(selector).evaluate((element) => getComputedStyle(element).color);
+  const blocked = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-blocked').trim(),
+  );
+  const lost = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--color-chance-lost').trim(),
+  );
+  const rgb = (hex: string) =>
+    `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+
+  await tapArrow(page, touch, id);
+  await tapArrow(page, touch, id);
+  await expect(page.locator('.chances')).toHaveAttribute('data-chances', '1');
+  await tapArrow(page, touch, id);
+  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(blocked));
+  await expect(play(page)).not.toHaveAttribute('data-faded');
+
+  await expect(page.locator('.overlay[data-overlay="lost"]')).toBeVisible();
+  await expect(play(page)).toHaveAttribute('data-faded', 'true');
+  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(lost));
+});

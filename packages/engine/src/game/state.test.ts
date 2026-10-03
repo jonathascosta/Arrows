@@ -49,7 +49,7 @@ describe('game state', () => {
     expect(arrowAt(state, 9, 9)).toBeNull();
   });
 
-  it('costs a drop for a blocked arrow and names the blockers', () => {
+  it('costs a life for a blocked arrow and names the blockers', () => {
     const start = createGame(puzzle);
     const { state, outcome } = tap(start, 2);
     expect(outcome).toEqual({ kind: 'blocked', arrowId: 2, blockedBy: [0] });
@@ -59,7 +59,7 @@ describe('game state', () => {
     expect(state.remaining.has(2)).toBe(true);
   });
 
-  it('loses at zero drops and ignores taps afterwards', () => {
+  it('loses at zero lives and ignores taps afterwards', () => {
     let state = createGame(puzzle, { lives: 2 });
     state = tap(state, 2).state;
     state = tap(state, 2).state;

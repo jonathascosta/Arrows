@@ -32,7 +32,7 @@ describe('PlaySession', () => {
     expect(session.elapsedMs(1500)).toBe(500);
   });
 
-  it('costs a drop on a blocked arrow and names the blocker', () => {
+  it('costs a chance on a blocked arrow and names the blocker', () => {
     const session = new PlaySession(puzzle);
     const id = blockedArrow(puzzle);
     const { x, y } = puzzle.arrows[id]!.cells[0]!;
@@ -65,7 +65,7 @@ describe('PlaySession', () => {
     expect(session.hintsUsed).toBe(puzzle.arrows.length);
   });
 
-  it('retries the same puzzle with removed arrows back, fresh drops, timer and hint count', () => {
+  it('retries the same puzzle with removed arrows back, fresh chances, timer and hint count', () => {
     const session = new PlaySession(puzzle);
     const removed = session.hint()!;
     const { x: hx, y: hy } = head(puzzle.arrows[removed]!);

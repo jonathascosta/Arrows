@@ -193,8 +193,9 @@ Lighthouse accessibility above 90 on every screen of the web build.
 ### T10. Store readiness
 
 App icon, launch screen, App Store screenshots from the web build at iPhone sizes, privacy
-manifest, ads consent (App Tracking Transparency prompt), and the store listing text in the
-repository.
+manifest, ads consent (App Tracking Transparency prompt), credits with the licences of the
+bundled fonts (Instrument Serif and Geist, SIL Open Font License), and the store listing text in
+the repository.
 
 ## After v1
 
