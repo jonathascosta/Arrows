@@ -42,6 +42,10 @@ describe('parseLeagueState', () => {
       { ...valid.summary, rank: 0 },
       { ...valid.summary, day: 'yesterday' },
       { ...valid.summary, league: 9 },
+      { ...valid.summary, rank: 31 },
+      // Off either end of the ladder: never written by the game.
+      { ...valid.summary, league: 6, outcome: 'promoted' },
+      { ...valid.summary, league: 0, outcome: 'relegated' },
     ]) {
       expect(parseLeagueState(JSON.stringify({ ...valid, summary })).summary).toBeNull();
     }

@@ -156,8 +156,8 @@ with a different label, and the promise made on the rules screen is kept.
 - Points: every board won counts for the day it is won on (levels, dailies and event boards), by
   tier and size, time against par (a second per cell) and chances lost, with the bonus for event
   boards. Each board counts once a day: winning the same board again that day adds nothing.
-- The player joins a day's table by winning a board that day. Until then the table shows them at
-  0 points; a day without a board won leaves the league as it is.
+- The player joins a day's table by winning a board that day. Until then the table lists them
+  last, without a rank and without a move; a day without a board won leaves the league as it is.
 - The first time the game opens on a new day, the last day played is settled with its final table:
   the top 10 move up (not from Legend), the bottom 10 move down (not from Bronze). A summary shows
   the final rank and the move, once. Days missed in between change nothing.
@@ -227,6 +227,9 @@ localization beyond English (strings are externalized from day one so Portuguese
 
 ## Open questions
 
+- Each board earns league points once a day, but every past daily and every level already won
+  can still be replayed for points each day. Should replays earn less, or nothing? (T5 session
+  note.)
 - Should replays of a level already won count towards the win streak? The session decided no in
   T3, so the streak cannot be pumped by replaying an easy level (see Levels and the decisions
   log); the owner may reverse it.

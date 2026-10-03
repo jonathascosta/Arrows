@@ -143,7 +143,7 @@ describe('HomeScreen', () => {
       reducedMotion: () => true,
     });
     expect(root.querySelector('a.league .card-title')?.textContent).toBe('Bronze · 1st');
-    expect(root.querySelector('a.league .card-note')?.textContent).toBe('Resets in 7h 48m');
+    expect(root.querySelector('a.league .card-note')?.textContent).toBe('Resets in 7h\u00a048m');
   });
 
   it('opens a sheet over the page and gives the page back when it closes', () => {

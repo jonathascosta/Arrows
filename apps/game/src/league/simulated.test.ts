@@ -55,6 +55,34 @@ describe('SimulatedLeagueProvider', () => {
     expect(view.rows.some((row) => row.zone === 'down')).toBe(false);
   });
 
+  it('keeps a player who has not won a board today last, without a move', () => {
+    const { league } = mount();
+    // Just after midnight every character is at 0 too: still last, not "1st, moves up".
+    for (const hour of [0, 16]) {
+      const view = league.view(at('2026-10-14', hour, 30));
+      expect(view.joined).toBe(false);
+      expect(view.player).toMatchObject({ rank: 30, zone: 'stay', score: 0 });
+      expect(view.rows.slice(0, 29).every((row) => row.kind === 'character')).toBe(true);
+      expect(view.rows.map((row) => row.rank)).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
+      expect(view.rows.filter((row) => row.zone === 'up')).toHaveLength(10);
+    }
+    // In a league with relegation, the characters ranked 21 to 29 move down; the player does not.
+    const { league: gold, store } = mount();
+    new LeagueStore(store).save({
+      version: 1,
+      league: 2,
+      day: '2026-10-14',
+      points: 0,
+      boards: [],
+      summary: null,
+    });
+    const view = gold.view(at('2026-10-14', 16));
+    expect(view.rows.filter((row) => row.zone === 'down').map((row) => row.rank)).toEqual([
+      21, 22, 23, 24, 25, 26, 27, 28, 29,
+    ]);
+    expect(view.player.zone).toBe('stay');
+  });
+
   it('moves the characters during the day', () => {
     const { league } = mount();
     const morning = league.view(at('2026-10-14', 6)).rows.reduce((sum, row) => sum + row.score, 0);

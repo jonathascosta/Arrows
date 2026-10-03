@@ -3,7 +3,6 @@ import type { FinishedBoard } from '../league/provider.ts';
 import { SimulatedLeagueProvider } from '../league/simulated.ts';
 import { LeagueStore } from '../persistence/league.ts';
 import { MemoryStore } from '../persistence/store.ts';
-import { ordinal } from '../strings.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
 import { avatarColour, initials, LEAGUE_TICK_MS, LeagueScreen } from './league.ts';
 
@@ -61,7 +60,7 @@ describe('LeagueScreen', () => {
     expect(root.querySelector('h1')?.textContent).toBe('Daily league');
     expect(document.title).toBe('Daily league · Arrows');
     expect(root.querySelector('.league-name')?.textContent).toBe('Bronze');
-    expect(root.querySelector('.league-reset')?.textContent).toBe('Resets in 7h 48m');
+    expect(root.querySelector('.league-reset')?.textContent).toBe('Resets in 7h\u00a048m');
     expect(root.querySelector('.league-rules')?.textContent).toBe(
       'Top 10 move up to Silver. Nobody moves down from Bronze. You’re playing against the game’s characters until the league has players.',
     );
@@ -108,20 +107,19 @@ describe('LeagueScreen', () => {
     ).toMatch(/^var\(--avatar-\d\)$/);
     expect(character.querySelector('.tag')?.textContent).toBe('character');
 
-    // The player at 0 points: below everyone who has scored (ties go to the player),
-    // raised, "You", and in the zone that moves down from Gold.
+    // Before a board is won today the player has no place: last, no rank, no move.
     const player = root.querySelector<HTMLElement>('.league-row[data-kind="player"]')!;
-    const rank = Number(player.dataset.rank);
-    expect(rank).toBeGreaterThan(20);
-    expect(
-      rows.slice(0, rank - 1).every((row) => Number(row.querySelector('.score')!.textContent) > 0),
-    ).toBe(true);
+    expect(player.dataset.rank).toBe('30');
+    expect(player.dataset.zone).toBe('stay');
+    expect(player.querySelector('.rank')?.textContent).toBe('–');
     expect(player.getAttribute('aria-current')).toBe('true');
     expect(player.querySelector('.row-name')?.textContent).toBe('You');
     expect(player.querySelector('.tag')).toBeNull();
     expect(player.querySelector('.sr-only')?.textContent).toBe(
-      `${ordinal(rank)}, You, 0 points, moves down`,
+      'You, not in today’s table until you win a board',
     );
+    // The characters take ranks 1 to 29, the last nine of them in the zone that moves down.
+    expect(rows.filter((row) => row.dataset.zone === 'down')).toHaveLength(9);
   });
 
   it('reads each row as one sentence', () => {
@@ -140,8 +138,11 @@ describe('LeagueScreen', () => {
     new SimulatedLeagueProvider(store, 'You').record(big, now);
     const { root } = mount(store, now);
     expect(root.querySelector<HTMLElement>('.league-join')?.hidden).toBe(true);
-    expect(root.querySelector('.league-row[data-kind="player"]')?.getAttribute('data-rank')).toBe(
-      '1',
+    const player = root.querySelector('.league-row[data-kind="player"]')!;
+    expect(player.getAttribute('data-rank')).toBe('1');
+    expect(player.querySelector('.rank')?.textContent).toBe('1');
+    expect(player.querySelector('.sr-only')?.textContent).toMatch(
+      /^1st, You, \d+ points, moves up$/,
     );
   });
 
@@ -176,9 +177,10 @@ describe('LeagueScreen', () => {
     expect(sheet.querySelector('p')?.textContent).toMatch(
       /^You finished 1st in Bronze on Wed 14 Oct, with \d+ points, and moved up to Silver\.$/,
     );
+    // Shown is seen, before Continue.
+    expect(provider.summary(clock.now)).toBeNull();
     sheet.querySelector('button')!.click();
     expect(sheet.hidden).toBe(true);
-    expect(provider.summary(clock.now)).toBeNull();
     // Seen: the next tick does not bring it back.
     vi.advanceTimersByTime(LEAGUE_TICK_MS);
     expect(sheet.hidden).toBe(true);

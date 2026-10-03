@@ -1,6 +1,15 @@
 import type { DayOutcome, LeagueName, Tier } from '@arrows/engine';
 import type { DateKey } from '../daily/days.ts';
-import type { DaySummary } from '../persistence/league.ts';
+
+/** How a day ended, shown once on the next day (docs/PRODUCT.md, Daily league). */
+export interface DaySummary {
+  readonly day: DateKey;
+  /** The league the day was played in, as an index into `LEAGUES`. */
+  readonly league: number;
+  readonly rank: number;
+  readonly points: number;
+  readonly outcome: DayOutcome;
+}
 
 /** Where a rank sits in the table: moving up, staying, or moving down at midnight. */
 export type Zone = 'up' | 'stay' | 'down';
@@ -63,5 +72,3 @@ export interface LeagueProvider {
   summary(now: Date): DaySummary | null;
   dismissSummary(): void;
 }
-
-export type { DayOutcome };

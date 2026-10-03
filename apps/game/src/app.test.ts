@@ -442,4 +442,34 @@ describe('App', () => {
     expect(root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
     expect(root.querySelector('.league-name')?.textContent).toBe('Silver');
   });
+
+  it('shows the summary once, wherever it shows first', () => {
+    const yesterday = (): MemoryStore => {
+      const store = new MemoryStore();
+      new SimulatedLeagueProvider(store, 'You').record(
+        {
+          key: 'level:900',
+          tier: 'superHard',
+          cellCount: 2000,
+          timeSeconds: 1,
+          chancesLost: 0,
+          event: false,
+        },
+        noon('2026-10-02'),
+      );
+      return store;
+    };
+    // On the home screen, then "See the league" without Continue.
+    const first = mount(yesterday(), '2026-10-03');
+    first.app.show('');
+    expect(first.root.querySelector('.overlay[data-overlay="summary"]')).not.toBeNull();
+    first.app.show('?league');
+    expect(first.root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
+    // In the league, then back to the home screen without Continue.
+    const second = mount(yesterday(), '2026-10-03');
+    second.app.show('?league');
+    expect(second.root.querySelector('.overlay')?.getAttribute('data-overlay')).toBe('summary');
+    second.app.show('');
+    expect(second.root.querySelector('.overlay')).toBeNull();
+  });
 });

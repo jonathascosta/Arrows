@@ -124,7 +124,7 @@ daily, opens the calendar.
 | `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                                          |
 | `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                                  |
 | `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                                         |
-| `app.ts`                 | The shell: shows the screen an address names, records level and daily results in their stores, pushes the next level onto the history, and opens the calendar instead of a day that cannot be opened yet                                                                                                                                                           |
+| `app.ts`                 | The shell: shows the screen an address names, records level, daily and league results in their stores, pushes the next level onto the history, opens the calendar instead of a day that cannot be opened yet, and shows the league's summary of the last day played once                                                                                           |
 | `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                                 |
 | `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                                               |
 | `screens/league.ts`      | The daily league: the league's name and countdown, the rules, the table of 30 with avatars, tags and the dividers where moves happen; the rules and the day's summary in sheets; a 30 s clock that moves the table and settles the day at midnight                                                                                                                 |
@@ -134,7 +134,7 @@ daily, opens the calendar.
 | `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won) and `LeagueStore` (the player's league and day) on top of it                                                                                                  |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
 | `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                                      |
-| `route.ts`, `puzzles.ts` | URL to route (home, calendar, puzzle), reference to generated puzzle                                                                                                                                                                                                                                                                                               |
+| `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle                                                                                                                                                                                                                         |
 | `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                                           |
 
 ### Progress and navigation
@@ -193,6 +193,15 @@ last day played with its final table (`standings` at the end of the day, `resolv
 the days missed between, so several missed days settle once. A stored day after today (a clock
 set back) is dropped unsettled. The summary shows once, on the home screen or the league,
 whichever comes first.
+
+Until a board is won today the player is not in the day's table: the view lists them last,
+without a move, below characters still at 0 (the engine's `standings` would give them the tie).
+
+Two limits are accepted. The home screen does not tick: its League card shows the countdown as it
+was when drawn, and the day settles on the next screen drawn (the league screen ticks every
+30 s). Where the clocks go back at midnight (Santiago, Asunción, Havana), the local date goes back
+an hour: a board won in that hour reads as a clock set back and is dropped, and the repeated
+day can settle twice. The day key may move to a fixed time zone later (docs/PRODUCT.md).
 
 The win sheet's league line comes from `App.record`: every board won is scored with
 `scoreBoard` (tier, cells, time, chances lost, and the event bonus for drawings). A server-backed

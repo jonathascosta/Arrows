@@ -1,22 +1,13 @@
-import { LEAGUES } from '@arrows/engine';
+import { LEAGUE_SIZE, LEAGUES } from '@arrows/engine';
 import type { DayOutcome } from '@arrows/engine';
 import type { DateKey } from '../daily/days.ts';
+import type { DaySummary } from '../league/provider.ts';
 import { isDateKey } from '../daily/days.ts';
 import { isCount, readJson, RecordSlot } from './record.ts';
 import type { KeyValueStore } from './store.ts';
 
 export const LEAGUE_KEY = 'arrows.league';
 export const LEAGUE_VERSION = 1;
-
-/** How a day ended, shown once on the next day (docs/PRODUCT.md, Daily league). */
-export interface DaySummary {
-  readonly day: DateKey;
-  /** The league the day was played in, as an index into `LEAGUES`. */
-  readonly league: number;
-  readonly rank: number;
-  readonly points: number;
-  readonly outcome: DayOutcome;
-}
 
 /** The player's place in the daily league. */
 export interface LeagueState {
@@ -55,11 +46,15 @@ function parseSummary(value: unknown): DaySummary | null {
     !isLeague(league) ||
     !isCount(rank) ||
     rank < 1 ||
+    rank > LEAGUE_SIZE ||
     !isCount(points) ||
     !OUTCOMES.includes(outcome as DayOutcome)
   ) {
     return null;
   }
+  // A move off either end of the ladder cannot happen: such a record was not written by the game.
+  if (outcome === 'promoted' && league === LEAGUES.length - 1) return null;
+  if (outcome === 'relegated' && league === 0) return null;
   return { day, league, rank, points, outcome: outcome as DayOutcome };
 }
 

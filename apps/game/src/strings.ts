@@ -59,6 +59,7 @@ const en = {
   'league.join': 'Win a board today to join the table.',
   'league.table': '{league} table',
   'league.you': 'You',
+  'league.notJoined': 'not in today’s table until you win a board',
   'league.character': 'character',
   'league.points.one': '1 point',
   'league.points.other': '{n} points',
@@ -242,11 +243,12 @@ export function ordinal(n: number): string {
   return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
 }
 
-/** Time left as `7h 48m`, or `12m` within the hour; minutes round up, so never `0m`. */
+/** Time left as `7h 48m` (one unbreakable piece), or `12m` within the hour; minutes round up, so never `0m`. */
 export function formatCountdown(ms: number): string {
   const minutes = Math.max(1, Math.ceil(ms / 60_000));
   const hours = Math.floor(minutes / 60);
-  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+  // A no-break space: the time never splits across lines.
+  return hours > 0 ? `${hours}h\u00a0${minutes % 60}m` : `${minutes}m`;
 }
 
 /** Milliseconds as `mm:ss`, or `h:mm:ss` from an hour on. */

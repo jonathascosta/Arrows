@@ -1,6 +1,5 @@
 import { LEAGUES } from '@arrows/engine';
-import type { LeagueProvider, LeagueRow, LeagueView } from '../league/provider.ts';
-import type { DaySummary } from '../persistence/league.ts';
+import type { DaySummary, LeagueProvider, LeagueRow, LeagueView } from '../league/provider.ts';
 import { formatCountdown, formatDayShort, ordinal, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
@@ -166,7 +165,7 @@ export class LeagueScreen {
       if (row.zone === 'down' && previous?.zone !== 'down') {
         items.push(this.divider(doc, t('league.belowDown'), 'down'));
       }
-      items.push(this.row(doc, row));
+      items.push(this.row(doc, row, view.joined));
     }
     this.table.replaceChildren(...items);
 
@@ -178,17 +177,16 @@ export class LeagueScreen {
       if (mine !== null && 'scrollIntoView' in mine) mine.scrollIntoView({ block: 'center' });
     }
 
+    // Shown is seen, here as on the home screen: it never shows twice.
     const summary = this.options.league.summary(now);
     if (summary !== null && !this.overlay.visible) {
+      this.options.league.dismissSummary();
       this.showSheet({
         kind: 'summary',
         title: t('league.summaryTitle'),
         body: summaryText(summary),
         action: t('league.continue'),
-        onAction: () => {
-          this.options.league.dismissSummary();
-          this.hideSheet();
-        },
+        onAction: () => this.hideSheet(),
       });
     }
   }
@@ -200,17 +198,20 @@ export class LeagueScreen {
     ]);
   }
 
-  private row(doc: Document, row: LeagueRow): HTMLElement {
+  private row(doc: Document, row: LeagueRow, joined: boolean): HTMLElement {
     const player = row.kind === 'player';
-    const tag = player ? t('league.you') : t('league.character');
-    const said = [
-      ordinal(row.rank),
-      row.name,
-      ...(player ? [] : [tag]),
-      tn('league.points', row.score),
-      ...(row.zone === 'up' ? [t('league.movesUp')] : []),
-      ...(row.zone === 'down' ? [t('league.movesDown')] : []),
-    ].join(', ');
+    // Before a board is won today the player has no place in the table: no rank, no move.
+    const ranked = !player || joined;
+    const said = ranked
+      ? [
+          ordinal(row.rank),
+          row.name,
+          ...(player ? [] : [t('league.character')]),
+          tn('league.points', row.score),
+          ...(row.zone === 'up' ? [t('league.movesUp')] : []),
+          ...(row.zone === 'down' ? [t('league.movesDown')] : []),
+        ].join(', ')
+      : `${row.name}, ${t('league.notJoined')}`;
     const avatar = el(doc, 'span', { class: 'avatar', 'aria-hidden': 'true' }, [
       player ? initials(t('league.you')) : initials(row.name),
     ]);
@@ -230,14 +231,15 @@ export class LeagueScreen {
       },
       [
         el(doc, 'span', { class: 'sr-only' }, [said]),
-        el(doc, 'span', { class: 'rank', 'aria-hidden': 'true' }, [String(row.rank)]),
-        avatar,
-        el(doc, 'span', { class: 'row-name', 'aria-hidden': 'true' }, [
-          player ? t('league.you') : row.name,
+        el(doc, 'span', { class: 'rank', 'aria-hidden': 'true' }, [
+          ranked ? String(row.rank) : '–',
         ]),
-        ...(player
-          ? []
-          : [el(doc, 'span', { class: 'tag', 'aria-hidden': 'true' }, [t('league.character')])]),
+        avatar,
+        // The name with its tag under it: the name keeps the width on a small phone.
+        el(doc, 'span', { class: 'row-who', 'aria-hidden': 'true' }, [
+          el(doc, 'span', { class: 'row-name' }, [player ? t('league.you') : row.name]),
+          ...(player ? [] : [el(doc, 'span', { class: 'tag' }, [t('league.character')])]),
+        ]),
         el(doc, 'span', { class: 'score', 'aria-hidden': 'true' }, [String(row.score)]),
       ],
     );
@@ -248,7 +250,7 @@ export class LeagueScreen {
     this.overlay.show(content);
   }
 
-  /** Closes the sheet; focus goes back to `returnTo` or the page's heading. */
+  /** Closes the sheet; focus goes back to `returnTo` or the back link. */
   private hideSheet(returnTo?: HTMLElement): void {
     this.overlay.hide();
     for (const part of this.page) part.toggleAttribute('inert', false);

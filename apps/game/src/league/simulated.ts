@@ -13,11 +13,12 @@ import {
 import type { PlayerEntry, Row } from '@arrows/engine';
 import type { DateKey } from '../daily/days.ts';
 import { localDateKey, msUntilMidnight, secondsOfDay } from '../daily/days.ts';
-import type { DaySummary, LeagueState } from '../persistence/league.ts';
+import type { LeagueState } from '../persistence/league.ts';
 import { LeagueStore } from '../persistence/league.ts';
 import type { KeyValueStore } from '../persistence/store.ts';
 import type {
   BoardAward,
+  DaySummary,
   FinishedBoard,
   LeagueProvider,
   LeagueRow,
@@ -26,6 +27,16 @@ import type {
 } from './provider.ts';
 
 export const PLAYER_ID = 'player';
+
+/** The table with the player last and staying put: they have not joined today yet. */
+function waiting(rows: readonly LeagueRow[], league: number): LeagueRow[] {
+  const characters = rows.filter((row) => row.kind === 'character');
+  const player = rows.find((row) => row.kind === 'player')!;
+  return [
+    ...characters.map((row, i) => ({ ...row, rank: i + 1, zone: zoneOf(i + 1, league) })),
+    { ...player, rank: LEAGUE_SIZE, zone: 'stay' as const },
+  ];
+}
 
 function player(points: number, name: string): PlayerEntry {
   return { id: PLAYER_ID, name, avatar: -1, score: points };
@@ -55,7 +66,11 @@ export class SimulatedLeagueProvider implements LeagueProvider {
   view(now: Date): LeagueView {
     const state = this.today(now);
     const day = state.day!;
-    const rows = this.table(state.league, day, state.points, secondsOfDay(now));
+    const joined = state.boards.length > 0;
+    const table = this.table(state.league, day, state.points, secondsOfDay(now));
+    // Until a board is won today the player is not in today's table: below every
+    // character, even those still at 0, and moving nowhere (docs/PRODUCT.md).
+    const rows = joined ? table : waiting(table, state.league);
     const league = state.league;
     return {
       day,
@@ -63,7 +78,7 @@ export class SimulatedLeagueProvider implements LeagueProvider {
       name: LEAGUES[league]!,
       rows,
       player: rows.find((row) => row.kind === 'player')!,
-      joined: state.boards.length > 0,
+      joined,
       msUntilReset: msUntilMidnight(now),
       up: league < LEAGUES.length - 1 ? LEAGUES[league + 1]! : null,
       down: league > 0 ? LEAGUES[league - 1]! : null,

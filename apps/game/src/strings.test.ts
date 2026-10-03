@@ -108,8 +108,9 @@ describe('ordinal', () => {
 
 describe('formatCountdown', () => {
   it('shows hours and minutes, rounding minutes up', () => {
-    expect(formatCountdown((7 * 60 + 47) * 60_000 + 30_000)).toBe('7h 48m');
-    expect(formatCountdown(3_600_000)).toBe('1h 0m');
+    // A no-break space keeps the time on one line.
+    expect(formatCountdown((7 * 60 + 47) * 60_000 + 30_000)).toBe('7h\u00a048m');
+    expect(formatCountdown(3_600_000)).toBe('1h\u00a00m');
     expect(formatCountdown(12 * 60_000)).toBe('12m');
     expect(formatCountdown(5_000)).toBe('1m');
     expect(formatCountdown(0)).toBe('1m');

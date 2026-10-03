@@ -39,8 +39,12 @@ test('the table lists 30 with the player, the characters and where moves happen'
   await expect(page.locator('.league-row[data-kind="character"] .tag').first()).toHaveText(
     'character',
   );
+  // Not joined yet: last, no rank, no move.
   const player = page.locator('.league-row[data-kind="player"]');
   await expect(player.locator('.row-name')).toHaveText('You');
+  await expect(player).toHaveAttribute('data-rank', '30');
+  await expect(player).toHaveAttribute('data-zone', 'stay');
+  await expect(player.locator('.rank')).toHaveText('–');
   await expect(player).toBeInViewport();
   await expect(page.locator('.league-divider')).toHaveText(['Above moves up']);
 
@@ -118,4 +122,40 @@ test('the summary shows in the league too, and the rules open on the info button
   await expect(sheet).toContainText('Each board counts once a day.');
   await press(sheet.getByRole('button', { name: 'Got it' }), touch);
   await expect(sheet).toBeHidden();
+});
+
+test.describe('on a 320 px phone', () => {
+  test.use({ viewport: { width: 320, height: 640 } });
+
+  test('every name reads in full, and the page never scrolls sideways', async ({ page }) => {
+    await page.goto('./?league');
+    await storeLeague(page, { league: 6, day: '2026-10-14', points: 12_345, boards: ['level:1'] });
+    await page.reload();
+    await expect(page.locator('.league-row')).toHaveCount(30);
+    const cut = await page
+      .locator('.row-name')
+      .evaluateAll((names) =>
+        names
+          .filter((name) => name.scrollWidth > name.clientWidth + 1)
+          .map((name) => name.textContent),
+      );
+    expect(cut).toEqual([]);
+    // Room for a name: the tag sits under it rather than beside it (it once left 41 px).
+    const narrowest = await page
+      .locator('.row-who')
+      .evaluateAll((cells) => Math.min(...cells.map((cell) => cell.clientWidth)));
+    expect(narrowest).toBeGreaterThanOrEqual(100);
+    const widths = await page.evaluate(() => [
+      document.documentElement.scrollWidth,
+      document.documentElement.clientWidth,
+    ]);
+    expect(widths[0]).toBe(widths[1]);
+    // Five-digit scores fit their column.
+    const scores = await page
+      .locator('.league-row .score')
+      .evaluateAll(
+        (cells) => cells.filter((cell) => cell.scrollWidth > cell.clientWidth + 1).length,
+      );
+    expect(scores).toBe(0);
+  });
 });

@@ -100,8 +100,8 @@ export class App {
   }
 
   /**
-   * Draws the home screen or the calendar again from storage, when one is
-   * showing: after the browser restores the page from its back-forward cache,
+   * Draws the home screen, the calendar or the league again from storage, when
+   * one is showing: after the browser restores the page from its back-forward cache,
    * or when another tab has saved progress. A board in play is left as it is.
    */
   refresh(): void {
@@ -138,19 +138,19 @@ export class App {
           reducedMotion: this.options.reducedMotion,
         }),
     );
-    // The first screen of a new day says how the last day played ended, once.
+    // The first screen of a new day says how the last day played ended. Shown is
+    // seen, here as in the league: it never shows twice.
     const summary = this.league.summary(now);
     if (summary !== null) {
+      this.league.dismissSummary();
       home.showSheet({
         kind: 'summary',
         title: t('league.summaryTitle'),
         body: summaryText(summary),
         action: t('league.continue'),
-        onAction: () => this.league.dismissSummary(),
+        onAction: () => undefined,
         secondary: { label: t('league.see'), href: LEAGUE_HREF },
       });
-      // Following the link to the league counts as seen too.
-      this.league.dismissSummary();
     }
   }
 

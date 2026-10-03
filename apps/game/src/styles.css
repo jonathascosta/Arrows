@@ -914,8 +914,9 @@ body {
 .league-row {
   position: relative;
   display: grid;
-  /* The score column has a width of its own, so the tags line up down the table. */
-  grid-template-columns: 26px 38px minmax(0, 1fr) auto minmax(4.5ch, max-content);
+  /* Rank, avatar, the name with its tag under it, and a score column wide enough for
+     five digits, so every row lines up. */
+  grid-template-columns: 24px 38px minmax(0, 1fr) 6ch;
   align-items: center;
   gap: 10px;
   min-height: 52px;
@@ -952,15 +953,23 @@ body {
   letter-spacing: 0.02em;
 }
 
+.row-who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* Names wrap rather than lose letters on a small phone. */
 .row-name {
-  overflow: hidden;
   font-size: 0.98rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .tag {
-  padding: 2px 7px;
+  padding: 1px 7px;
   border: 1px solid var(--color-divider);
   border-radius: 999px;
   color: var(--color-text-muted);
@@ -970,7 +979,6 @@ body {
 }
 
 .league-row .score {
-  grid-column: 5;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   text-align: right;
