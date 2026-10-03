@@ -79,7 +79,9 @@ describe('theme', () => {
   it('uses the arrowhead of docs/DESIGN.md', () => {
     const { board } = DEFAULT_THEME;
     expect(board.strokeWidth).toBe(0.12);
-    expect(board.headTip).toBe(0.42);
+    // The tip and the tail's round end on the cell's edge, a node of the grid.
+    expect(board.headTip).toBe(0.5);
+    expect(board.tailReach).toBe(0.44);
     expect(board.headDepth).toBe(0.42);
     expect(board.headHalfWidth * 2).toBeCloseTo(0.34);
   });

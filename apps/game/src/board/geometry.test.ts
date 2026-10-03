@@ -68,8 +68,11 @@ describe('headPoints', () => {
     expect(Math.abs(left!.x - right!.x)).toBeCloseTo(2 * style.headHalfWidth);
   });
 
-  it('keeps the tip inside the head cell even with the stroke around it', () => {
-    expect(style.headTip + style.strokeWidth / 2).toBeLessThan(0.5);
+  it('lands the tip and the end of the tail on the edge of the cell, a node of the grid', () => {
+    // The head is filled, not stroked: its tip is where it is drawn.
+    expect(style.headTip).toBe(0.5);
+    // The body's round cap reaches half a stroke past its last point.
+    expect(style.tailReach + style.strokeWidth / 2).toBeCloseTo(0.5);
   });
 
   it('covers the end of the body line', () => {
@@ -142,16 +145,41 @@ describe('exitTrack', () => {
 });
 
 describe('gridData and bounds', () => {
-  it('draws each edge of a rectangle once', () => {
-    // 2x1: 3 vertical edges and 4 horizontal ones.
-    const d = gridData(rectangleMask(2, 1));
-    expect(d.match(/v1/g)).toHaveLength(3);
-    expect(d.match(/h1/g)).toHaveLength(4);
+  it('draws a line every half cell, through the centres and along the edges', () => {
+    // 2x1: three horizontal lines (top edge, centre, bottom edge), five vertical ones.
+    expect(gridData(rectangleMask(2, 1))).toBe(
+      'M0 0H2M0 0.5H2M0 1H2M0 0V1M0.5 0V1M1 0V1M1.5 0V1M2 0V1',
+    );
+  });
+
+  it('has a node at every corner, tip and tail end of an arrow', () => {
+    const d = gridData(rectangleMask(3, 2));
+    // Centre lines (corners) and edge lines (tips and tails) both run the board's length.
+    expect(d).toContain('M0 0.5H3');
+    expect(d).toContain('M0 1H3');
+    expect(d).toContain('M2.5 0V2');
+    expect(d).toContain('M3 0V2');
   });
 
   it('skips inactive cells of a drawing', () => {
-    const d = gridData(maskFromAscii(['A.', '..']));
-    expect(d).toBe('M0 0h1M0 0v1M1 0v1M0 1h1');
+    expect(gridData(maskFromAscii(['A.', '..']))).toBe('M0 0H1M0 0.5H1M0 1H1M0 0V1M0.5 0V1M1 0V1');
+  });
+
+  it('draws an edge where a cell on either side of it is active', () => {
+    // Diagonal cells: the edge line between the rows runs under one and over the other.
+    const d = gridData(maskFromAscii(['A.', '.A']));
+    expect(d).toContain('M0 1H2');
+    expect(d).toContain('M1 0V2');
+    expect(d).not.toContain('M0 0.5H2');
+    // An L: the edge under the top row spans only the cells that touch it.
+    expect(gridData(maskFromAscii(['AA', 'A.']))).toContain('M0 1H2');
+    expect(gridData(maskFromAscii(['AA', 'A.']))).toContain('M0 2H1');
+  });
+
+  it('breaks a line where a drawing has a gap', () => {
+    expect(gridData(maskFromAscii(['A.A']))).toBe(
+      'M0 0H1M2 0H3M0 0.5H1M2 0.5H3M0 1H1M2 1H3M0 0V1M0.5 0V1M1 0V1M2 0V1M2.5 0V1M3 0V1',
+    );
   });
 
   it('adds the margin around the board', () => {

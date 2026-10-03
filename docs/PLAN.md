@@ -223,10 +223,11 @@ documents say so.
 
 ### T13. The grid on the arrows' lines
 
-The grid toggle drew the cells' edges, while arrows run through the cells' centres.
+The grid toggle drew the cells' edges, a line every cell, while the arrows' corners sit on the
+cells' centres and their tips and tails short of the edges.
 
-Acceptance: the grid's lines run through the centres, where the arrows and their rays run, so a
-player can follow a ray to the arrow it would hit.
+Acceptance: a line every half cell, through the centres and along the edges, and arrows drawn
+so that the tip of the head, every corner and the end of the tail sit on the grid's nodes.
 
 ### T14. Harder Hard and Super Hard
 
@@ -278,7 +279,7 @@ API within the budget in the product document, Android, iPad.
 | T10  | owner | [#11](https://github.com/jonathascosta/Arrows/pull/11) |
 | T11  | done  | [#16](https://github.com/jonathascosta/Arrows/pull/16) |
 | T12  | open  |                                                        |
-| T13  | open  |                                                        |
+| T13  | done  | [#18](https://github.com/jonathascosta/Arrows/pull/18) |
 | T14  | open  |                                                        |
 | T15  | open  |                                                        |
 | T16  | open  |                                                        |
