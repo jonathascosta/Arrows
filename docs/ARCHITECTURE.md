@@ -491,14 +491,11 @@ build at 430 by 932 points at 3× (1290 by 2796 pixels) through six screens of a
 weeks in (`apps/game/store/screenshots.spec.ts`, `playwright.store.config.ts`). The page's
 clock is paused at a fixed date and moves only when the script runs it (ahead after a board's
 first tap, so its timer shows a time, and a second before each picture), so every run takes
-the same pictures, byte for byte. Two more workflows run by hand:
-
-- `app-store-listing.yml` uploads the text and the screenshots with fastlane (`deliver`, lane
-  `listing`), with the App Store Connect API key of the TestFlight workflow. It uploads no build
-  and submits nothing.
-- `pages.yml` builds the web app for GitHub Pages and publishes the privacy policy page, the
-  icon and the build's `assets` folder, at the address the listing gives. The folder holds the
-  game's scripts too, but none of the game's pages is published.
+the same pictures, byte for byte. `app-store-listing.yml`, run by hand, uploads the text and the
+screenshots with fastlane (`deliver`, lane `listing`), with the App Store Connect API key of the
+TestFlight workflow. It uploads no build and submits nothing. The listing's support, marketing
+and privacy URLs point to the owner's site, jonathas.net, which hosts a copy of `privacy.html`
+(docs/STORE.md).
 
 ## Enforced rules
 
