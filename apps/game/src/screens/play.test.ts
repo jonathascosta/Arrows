@@ -259,8 +259,17 @@ describe('PlayScreen', () => {
     const { root, results, clock } = mount();
     const { puzzle } = generateLevel(1);
     loseLevelOne(root);
+    const { analysis } = generateLevel(1);
     expect(results).toEqual([
-      { ref: { kind: 'level', level: 1 }, outcome: 'lost', elapsedMs: 0, firstTry: true },
+      {
+        ref: { kind: 'level', level: 1 },
+        outcome: 'lost',
+        elapsedMs: 0,
+        firstTry: true,
+        tier: 'easy',
+        cellCount: analysis.cellCount,
+        chancesLost: 3,
+      },
     ]);
     await vi.advanceTimersByTimeAsync(1000);
     root.querySelector<HTMLElement>('.overlay button')!.click();
@@ -268,7 +277,7 @@ describe('PlayScreen', () => {
     solveWithHints(root, puzzle.arrows.length);
     // Recorded at the winning tap, before the last arrow has left.
     expect(results).toHaveLength(2);
-    expect(results[1]).toMatchObject({ outcome: 'won', firstTry: false });
+    expect(results[1]).toMatchObject({ outcome: 'won', firstTry: false, chancesLost: 0 });
     await vi.advanceTimersByTimeAsync(1000);
     expect(results).toHaveLength(2);
   });
@@ -301,6 +310,14 @@ describe('PlayScreen', () => {
     await vi.advanceTimersByTimeAsync(1000);
     expect(body()).toBe(
       '00:00 · 3 of 3 chances left. Not on the first try, so the streak starts again. New best time!',
+    );
+    // League points come after the streak.
+    notes.unshift({ streak: 2, league: { points: 38, league: 'Gold', rank: 8 } });
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe(
+      '00:00 · 3 of 3 chances left. First try. Win streak is now 2. +38 points in Gold league · now 8th.',
     );
     // A replay: no streak line, the best time.
     screen.open({ kind: 'level', level: 1 });

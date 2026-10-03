@@ -131,10 +131,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-Until the later tasks fill them, two cards are placeholders: League shows "Bronze · Opens soon"
-as an outline on the page instead of a raised card and does nothing (T5), and the event card
-opens the butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level
-strip is not tappable: Play opens the current level.
+Until T6 fills it, the event card is a placeholder: it opens the butterfly at Hard. The menu
+button opens the puzzle picker until there is a menu. The level strip is not tappable: Play
+opens the current level.
 
 ### Daily challenge
 
@@ -165,6 +164,16 @@ and shows the month's stars ("★ 10 of 31").
 - Rows: rank, a round avatar with initials on a palette colour, the name, a `character` tag, the
   score right-aligned. The player's row is raised, with a dark avatar and "You".
 - Labelled dividers after rank 10 ("ABOVE MOVES UP") and before rank 21 ("BELOW MOVES DOWN").
+
+As built in T5: the rows sit on the page, the player's raised on `surfaceRaised`; the avatar
+colours are the `avatars` tokens (the tier colours, the drawings' brown, a teal and a rust, each
+reaching 4.5:1 under initials in `onPrimary`), picked by the character's name; the player's
+avatar is `primary` with "Y". The tag is an outlined pill. Bronze has no bottom divider and
+Legend no top one, and the rules paragraph says so. Before a board is won today, "Win a board
+today to join the table." shows under the rules. The info button opens the rules in a sheet; the
+day's summary ("While you were away") is a sheet too, on the home screen or here. The home
+screen's League card shows "Gold · 8th" and "Resets in 7h 48m" once a board is won today, and
+"Win a board to join today" before.
 
 ## Screenshots
 

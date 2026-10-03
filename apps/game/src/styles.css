@@ -358,6 +358,12 @@ body {
   display: none;
 }
 
+/* Over a screen that scrolls: pinned to the window, above everything. */
+.overlay.floating {
+  position: fixed;
+  z-index: 10;
+}
+
 .sheet {
   width: 100%;
   padding: 28px 24px calc(20px + env(safe-area-inset-bottom));
@@ -504,15 +510,6 @@ body {
   box-shadow: var(--shadow-raised);
   color: var(--color-text);
   text-decoration: none;
-}
-
-/* A card that opens nothing yet: an outline on the page, not a raised card. */
-.card[data-soon] {
-  /* The border takes its width out of the padding, so the text lines up with the raised cards. */
-  padding: 16.5px;
-  border: 1.5px solid var(--color-divider);
-  background: none;
-  box-shadow: none;
 }
 
 .card-head {
@@ -843,6 +840,160 @@ body {
   color: var(--color-text-muted);
   font-size: 0.85rem;
   text-align: center;
+}
+
+/* Daily league */
+
+.league-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.league-screen .topbar {
+  padding: 0;
+}
+
+.league-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.league-name {
+  margin: 0;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.9rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.league-reset {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.league-rules,
+.league-join {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.league-join {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.league-join[hidden] {
+  display: none;
+}
+
+.league-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.league-row {
+  position: relative;
+  display: grid;
+  /* The score column has a width of its own, so the tags line up down the table. */
+  grid-template-columns: 26px 38px minmax(0, 1fr) auto minmax(4.5ch, max-content);
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  color: var(--color-text);
+}
+
+/* The player: raised, with a dark avatar. */
+.league-row[data-kind='player'] {
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+  font-weight: 650;
+}
+
+.league-row .rank {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--avatar, var(--color-primary));
+  color: var(--color-on-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.row-name {
+  overflow: hidden;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag {
+  padding: 2px 7px;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.league-row .score {
+  grid-column: 5;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: right;
+}
+
+.league-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.league-divider::before,
+.league-divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--color-divider);
+  content: '';
 }
 
 /* Dev page */

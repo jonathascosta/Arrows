@@ -8,14 +8,19 @@ import { levelStrip } from '../levelStrip.ts';
 import type { Progress } from '../persistence/progress.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
-import { calendarHref, puzzleHref } from '../route.ts';
-import { formatDayShort, t } from '../strings.ts';
+import type { LeagueView } from '../league/provider.ts';
+import { calendarHref, LEAGUE_HREF, puzzleHref } from '../route.ts';
+import { formatCountdown, formatDayShort, ordinal, t } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
+import { Overlay } from '../ui/overlay.ts';
+import type { OverlayContent } from '../ui/overlay.ts';
 
 export interface HomeScreenOptions {
   readonly theme: Theme;
   readonly progress: Progress;
+  /** The league now, for the League card. */
+  readonly league: LeagueView;
   /** The daily challenge days won, for the Daily card's stars. */
   readonly finishedDays: ReadonlySet<DateKey>;
   /** Today's date key in local time, for the Daily card. */
@@ -123,10 +128,19 @@ export class HomeScreen {
       ]),
     ]);
     // Not a link until T5: drawn flat, unlike the cards that open something.
-    const league = el(doc, 'div', { class: 'card mode-card league', 'data-soon': 'true' }, [
+    const { league } = options;
+    const leagueCard = el(doc, 'a', { class: 'card mode-card league', href: LEAGUE_HREF }, [
       el(doc, 'span', { class: 'card-label' }, [t('home.league')]),
-      el(doc, 'span', { class: 'card-title small' }, [t('home.leagueTitle')]),
-      el(doc, 'span', { class: 'card-note' }, [t('home.leagueNote')]),
+      el(doc, 'span', { class: 'card-title small' }, [
+        league.joined
+          ? t('home.leagueRank', { league: league.name, rank: ordinal(league.player.rank) })
+          : league.name,
+      ]),
+      el(doc, 'span', { class: 'card-note' }, [
+        league.joined
+          ? t('league.resets', { time: formatCountdown(league.msUntilReset) })
+          : t('home.leagueJoin'),
+      ]),
     ]);
 
     const event = loadPuzzle(EVENT_REF);
@@ -152,7 +166,7 @@ export class HomeScreen {
     this.element = el(doc, 'main', { class: 'home' }, [
       top,
       levels,
-      el(doc, 'div', { class: 'card-row' }, [daily, league]),
+      el(doc, 'div', { class: 'card-row' }, [daily, leagueCard]),
       eventCard,
     ]);
     root.replaceChildren(this.element);
@@ -161,5 +175,23 @@ export class HomeScreen {
 
   destroy(): void {
     this.element.remove();
+  }
+
+  /** A sheet over the home screen, such as the league's summary of the last day played. */
+  showSheet(content: OverlayContent): void {
+    const doc = this.element.ownerDocument;
+    const overlay = new Overlay(doc, { floating: true });
+    const page = [...this.element.children];
+    for (const part of page) part.toggleAttribute('inert', true);
+    this.element.append(overlay.element);
+    overlay.show({
+      ...content,
+      onAction: () => {
+        overlay.element.remove();
+        for (const part of page) part.toggleAttribute('inert', false);
+        this.element.querySelector<HTMLElement>('.play-button')?.focus();
+        content.onAction();
+      },
+    });
   }
 }

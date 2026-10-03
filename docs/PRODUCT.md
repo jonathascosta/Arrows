@@ -153,6 +153,17 @@ day climbs the low leagues in a day or two and needs around 20 boards a day to h
 calibration suite enforces those bands. When a backend exists, real players join the same table
 with a different label, and the promise made on the rules screen is kept.
 
+- Points: every board won counts for the day it is won on (levels, dailies and event boards), by
+  tier and size, time against par (a second per cell) and chances lost, with the bonus for event
+  boards. Each board counts once a day: winning the same board again that day adds nothing.
+- The player joins a day's table by winning a board that day. Until then the table shows them at
+  0 points; a day without a board won leaves the league as it is.
+- The first time the game opens on a new day, the last day played is settled with its final table:
+  the top 10 move up (not from Legend), the bottom 10 move down (not from Bronze). A summary shows
+  the final rank and the move, once. Days missed in between change nothing.
+- The win sheet says what a board earned ("+38 points in Gold league · now 8th").
+- Every new player starts in Bronze.
+
 ### Events and championships
 
 Time-limited sets of drawing boards (a butterfly, a surfboard) with their own progress and a
@@ -210,6 +221,9 @@ localization beyond English (strings are externalized from day one so Portuguese
 - Daily challenge (session decisions in T4, open to the owner) (2026-10-03): the calendar starts
   on 1 January 2026 until the launch month is known; a day won late still earns its star; a
   daily's sheets lead back to the calendar instead of home.
+- Daily league (session decisions in T5, open to the owner) (2026-10-03): each board earns points
+  once a day, so replaying one board cannot win a league; a day without a board won does not
+  relegate, so time away costs nothing; several missed days settle only the last day played.
 
 ## Open questions
 

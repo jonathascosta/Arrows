@@ -1,4 +1,5 @@
 import { head } from '@arrows/engine';
+import type { Tier } from '@arrows/engine';
 import { cellCenter, boardBounds } from '../board/geometry.ts';
 import type { GestureAction } from '../board/gestures.ts';
 import { GestureTracker } from '../board/gestures.ts';
@@ -19,7 +20,15 @@ import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
 import { monthOf } from '../daily/days.ts';
-import { formatDayShort, formatDuration, formatMonth, spellOut, t, tn } from '../strings.ts';
+import {
+  formatDayShort,
+  formatDuration,
+  formatMonth,
+  ordinal,
+  spellOut,
+  t,
+  tn,
+} from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
@@ -33,6 +42,10 @@ export interface BoardResult {
   readonly elapsedMs: number;
   /** No board was lost on this puzzle before this result. */
   readonly firstTry: boolean;
+  /** What the league scores: the board's tier and size, and the chances lost on it. */
+  readonly tier: Tier;
+  readonly cellCount: number;
+  readonly chancesLost: number;
 }
 
 /** What the end-of-board sheet can say about a result, when it was recorded. */
@@ -45,6 +58,8 @@ export interface ResultNote {
   readonly newBest?: boolean;
   /** A daily's first win earned its star, and maybe its month's trophy. */
   readonly star?: 'day' | 'month';
+  /** League points this board earned, and the player's league and rank after it. */
+  readonly league?: { readonly points: number; readonly league: string; readonly rank: number };
 }
 
 /** Where leaving a puzzle goes: its back button and the sheets' second link. */
@@ -167,11 +182,15 @@ export class PlayScreen {
     const session = this.session;
     const loaded = this.loaded;
     if (session === null || loaded === null) return;
+    const { state } = session;
     this.note = this.options.record?.({
       ref: loaded.ref,
       outcome,
       elapsedMs: session.elapsedMs(this.options.now()),
       firstTry: this.losses === 0,
+      tier: loaded.tier,
+      cellCount: loaded.analysis.cellCount,
+      chancesLost: state.livesAtStart - state.lives,
     });
     if (outcome === 'lost') this.losses++;
   }
@@ -217,6 +236,15 @@ export class PlayScreen {
         if (note.star === 'month') {
           lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
         }
+      }
+      if (note.league !== undefined) {
+        lines.push(
+          t('won.league', {
+            points: tn('league.points', note.league.points),
+            league: note.league.league,
+            rank: ordinal(note.league.rank),
+          }),
+        );
       }
       if (note.newBest === true) lines.push(t('won.newBest'));
       else if (note.bestMs !== undefined) {

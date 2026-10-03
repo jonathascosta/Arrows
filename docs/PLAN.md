@@ -213,7 +213,7 @@ API within the budget in the product document, Android, iPad.
 | T2b  | done  | [#3](https://github.com/jonathascosta/Arrows/pull/3) |
 | T3   | done  | [#4](https://github.com/jonathascosta/Arrows/pull/4) |
 | T4   | done  | [#5](https://github.com/jonathascosta/Arrows/pull/5) |
-| T5   | open  |                                                      |
+| T5   | done  | [#6](https://github.com/jonathascosta/Arrows/pull/6) |
 | T6   | open  |                                                      |
 | T7   | open  |                                                      |
 | T8   | open  |                                                      |

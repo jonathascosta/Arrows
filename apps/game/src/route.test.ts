@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { calendarHref, parseRoute, puzzleHref, puzzleSearch, routeHref } from './route.ts';
+import {
+  calendarHref,
+  parseRoute,
+  puzzleHref,
+  puzzleKey,
+  puzzleSearch,
+  routeHref,
+} from './route.ts';
 import type { PuzzleRef, Route } from './route.ts';
 
 const play = (ref: PuzzleRef): Route => ({ screen: 'play', ref });
@@ -41,6 +48,7 @@ describe('parseRoute', () => {
       { screen: 'home' },
       { screen: 'calendar', month: null },
       { screen: 'calendar', month: '2026-02' },
+      { screen: 'league' },
       play({ kind: 'level', level: 1 }),
       play({ kind: 'daily', dateKey: '2026-12-31' }),
       play({ kind: 'drawing', drawingId: 'heart', tier: 'superHard' }),
@@ -53,5 +61,15 @@ describe('parseRoute', () => {
     expect(calendarHref()).toBe('./?calendar');
     expect(calendarHref('2026-09')).toBe('./?calendar=2026-09');
     expect(routeHref({ screen: 'home' })).toBe('./');
+  });
+});
+
+describe('puzzleKey', () => {
+  it('names each board once, whatever its address', () => {
+    expect(puzzleKey({ kind: 'level', level: 12 })).toBe('level:12');
+    expect(puzzleKey({ kind: 'daily', dateKey: '2026-10-03' })).toBe('daily:2026-10-03');
+    expect(puzzleKey({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' })).toBe(
+      'drawing:butterfly:hard',
+    );
   });
 });

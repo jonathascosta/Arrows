@@ -80,15 +80,21 @@ test('a lost board ends the streak, and winning that level later does not count'
   await expectHome(page, 5, 1);
 });
 
-test('the home cards open the calendar and the event board', async ({ page, touch }) => {
+test('the home cards open the calendar, the league and the event board', async ({
+  page,
+  touch,
+}) => {
   await page.goto('./');
   await press(page.locator('a.daily'), touch);
   await expect(page).toHaveURL(/\?calendar$/);
   await expect(page.locator('h1')).toHaveText('Daily challenge');
 
   await page.goto('./');
-  await expect(page.locator('.league')).toHaveAttribute('data-soon', 'true');
-  await expect(page.locator('.league a')).toHaveCount(0);
+  await press(page.locator('a.league'), touch);
+  await expect(page).toHaveURL(/\?league$/);
+  await expect(page.locator('h1')).toHaveText('Daily league');
+
+  await page.goto('./');
   await press(page.locator('a.event-card'), touch);
   await expect(page).toHaveURL(/\?drawing=butterfly&tier=hard$/);
   await expect(page.locator('h1')).toHaveText('Butterfly');

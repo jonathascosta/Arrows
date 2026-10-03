@@ -10,6 +10,8 @@ import {
   localDateKey,
   mondayIndex,
   monthOf,
+  msUntilMidnight,
+  secondsOfDay,
 } from './days.ts';
 
 describe('localDateKey', () => {
@@ -95,5 +97,25 @@ describe('date and month keys', () => {
     expect(isPlayableDay('2026-10-04', today)).toBe(false);
     expect(isPlayableDay('2025-12-31', today)).toBe(false);
     expect(isPlayableDay('2026-02-30', today)).toBe(false);
+  });
+});
+
+describe('the local clock', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('counts seconds from local midnight', () => {
+    expect(secondsOfDay(new Date(2026, 9, 14, 0, 0, 0))).toBe(0);
+    expect(secondsOfDay(new Date(2026, 9, 14, 13, 30, 15))).toBe(48_615);
+  });
+
+  it('counts down to the next local midnight, on short and long days too', () => {
+    expect(msUntilMidnight(new Date(2026, 9, 14, 23, 0))).toBe(3_600_000);
+    vi.stubEnv('TZ', 'Europe/London');
+    // 25 October 2026 has 25 hours in London: from midnight to midnight.
+    expect(msUntilMidnight(new Date(2026, 9, 25, 0, 0))).toBe(25 * 3_600_000);
+    // 29 March 2026 has 23.
+    expect(msUntilMidnight(new Date(2026, 2, 29, 0, 0))).toBe(23 * 3_600_000);
   });
 });
