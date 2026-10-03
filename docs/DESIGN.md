@@ -42,7 +42,7 @@ The theme object in `apps/game/src/theme/` carries these names and values.
 | `stroke`        | `#2B2925`                                                             | Arrow bodies on plain boards                                                                                           |
 | `head`          | `#2B2925`                                                             | Arrowheads on plain boards                                                                                             |
 | `hint`          | `#C9741F`                                                             | Hinted arrow, stars, small accents                                                                                     |
-| `grid`          | `#E8E1D3`                                                             | Grid lines under the board, through the cell centres                                                                   |
+| `grid`          | `#E8E1D3`                                                             | Grid lines under the board, every half cell: through the cell centres and along their edges                            |
 | `chance`        | `#2B2925`                                                             | Intact chance                                                                                                          |
 | `chanceLost`    | `#D6CEBF`                                                             | Lost chance; the faded board after a loss                                                                              |
 | `blocked`       | `#B93D2A`                                                             | Blocked arrow flash, breaking chance                                                                                   |
@@ -74,11 +74,12 @@ palette and the hint and blocked states.
 
 Stroke `0.12` of a cell, round cap and round join, lines through cell centres. The tail's round
 end reaches the tail cell's edge (`0.44` behind its centre, plus half the stroke). Arrowhead: a
-sharp-cornered triangle, tip on the head cell's edge (`0.5` from its centre), length `0.42`,
-width `0.34`. The grid is a hairline in `grid`, a line every half cell, through the cell centres
-and along their edges, across each run of active cells: its nodes are where an arrow's corners
-(the centres), the tip of its head and the end of its tail (the edges) land, and its rays run
-along its lines.
+sharp-cornered triangle, tip on the head cell's edge (`0.5` from its centre), length `0.42`, width
+`0.34`. The grid is a hairline in `grid`, a line every half cell, through the cell centres and
+along their edges, across each run of active cells: its nodes are where an arrow's corners (the
+centres), the tip of its head and the end of its tail (the edges) land, and its rays run along its
+lines. A highlighted arrow (hint, blocked, blocker) has a wider stroke, so its tail's round end
+reaches a little past the edge.
 
 ## Chances
 

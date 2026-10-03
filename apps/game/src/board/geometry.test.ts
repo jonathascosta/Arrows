@@ -165,6 +165,17 @@ describe('gridData and bounds', () => {
     expect(gridData(maskFromAscii(['A.', '..']))).toBe('M0 0H1M0 0.5H1M0 1H1M0 0V1M0.5 0V1M1 0V1');
   });
 
+  it('draws an edge where a cell on either side of it is active', () => {
+    // Diagonal cells: the edge line between the rows runs under one and over the other.
+    const d = gridData(maskFromAscii(['A.', '.A']));
+    expect(d).toContain('M0 1H2');
+    expect(d).toContain('M1 0V2');
+    expect(d).not.toContain('M0 0.5H2');
+    // An L: the edge under the top row spans only the cells that touch it.
+    expect(gridData(maskFromAscii(['AA', 'A.']))).toContain('M0 1H2');
+    expect(gridData(maskFromAscii(['AA', 'A.']))).toContain('M0 2H1');
+  });
+
   it('breaks a line where a drawing has a gap', () => {
     expect(gridData(maskFromAscii(['A.A']))).toBe(
       'M0 0H1M2 0H3M0 0.5H1M2 0.5H3M0 1H1M2 1H3M0 0V1M0.5 0V1M1 0V1M2 0V1M2.5 0V1M3 0V1',

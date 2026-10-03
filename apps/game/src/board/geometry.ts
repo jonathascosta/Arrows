@@ -129,10 +129,10 @@ export function exitDuration(travel: number, motion: ThemeMotion): number {
 export function gridData(mask: Mask): string {
   const active = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.active[y * mask.width + x] === 1;
-  // Line k (in half cells) crosses cell row/column j when it runs through its
-  // centre (k = 2j + 1) or along one of its edges (k = 2j or 2j + 2).
-  const crosses = (k: number, j: number): boolean =>
-    k === 2 * j + 1 || k === 2 * j || k === 2 * j + 2;
+  // Line k is k half cells from the top (or the left). An odd line runs through
+  // the centres of row (k - 1) / 2; an even one along the edge between rows
+  // k / 2 - 1 and k / 2, so it is drawn where either of them is active.
+  const touching = (k: number): number[] => [Math.floor((k - 1) / 2), Math.floor(k / 2)];
   const parts: string[] = [];
   const runs = (
     lines: number,
@@ -150,14 +150,8 @@ export function gridData(mask: Mask): string {
     }
   };
   // Horizontal line k runs over column x when an active cell of that column touches it.
-  const rowsOn = (k: number, x: number): boolean =>
-    x >= 0 &&
-    x < mask.width &&
-    [Math.floor((k - 1) / 2), Math.floor(k / 2)].some((y) => crosses(k, y) && active(x, y));
-  const columnsOn = (k: number, y: number): boolean =>
-    y >= 0 &&
-    y < mask.height &&
-    [Math.floor((k - 1) / 2), Math.floor(k / 2)].some((x) => crosses(k, x) && active(x, y));
+  const rowsOn = (k: number, x: number): boolean => touching(k).some((y) => active(x, y));
+  const columnsOn = (k: number, y: number): boolean => touching(k).some((x) => active(x, y));
   runs(2 * mask.height, mask.width, rowsOn, (k, from, to) => `M${from} ${k / 2}H${to}`);
   runs(2 * mask.width, mask.height, columnsOn, (k, from, to) => `M${k / 2} ${from}V${to}`);
   return parts.join('');
