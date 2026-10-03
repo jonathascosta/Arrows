@@ -29,11 +29,11 @@ test('the event card opens the first board, drawn in the drawing’s colours', a
   await page.goto('./');
   const card = page.locator('a.event-card');
   await expect(card.locator('.card-label')).toHaveText('Autumn event');
-  await expect(card.locator('.card-title')).toHaveText('Maple Leaf');
+  await expect(card.locator('.card-title')).toHaveText('Maple leaf');
   await expect(card.locator('.card-note')).toHaveText('0 of 6 boards · 48 days left');
   await press(card, touch);
   await expect(page).toHaveURL(/\?event=autumn-2026&board=1$/);
-  await expect(page.locator('h1')).toHaveText('Maple Leaf');
+  await expect(page.locator('h1')).toHaveText('Maple leaf');
   await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 6');
 
   const { puzzle } = loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 1 });
@@ -117,20 +117,24 @@ test('after the last day the boards close and the card says how far you got', as
   await expect(page.locator('a.event-card')).toHaveCount(0);
 });
 
-test.describe('on a 320 px phone', () => {
-  test.use({ viewport: { width: 320, height: 640 } });
+// Below 375 px the chances and the timer take a row of their own; at 375 px and up they share the
+// title's row. Either way the title and its line read in full.
+for (const width of [320, 360, 375]) {
+  test.describe(`on a ${width} px phone`, () => {
+    test.use({ viewport: { width, height: 640 } });
 
-  test('a board’s title and its place in the event read in full', async ({ page }) => {
-    await page.goto('./?event=autumn-2026&board=1');
-    await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 6');
-    for (const selector of ['.topbar h1', '.topbar .tier']) {
-      const cut = await page
-        .locator(selector)
-        .evaluate((element) => element.scrollWidth > element.clientWidth + 1);
-      expect(cut, selector).toBe(false);
-    }
-    // The chances and the timer are still there, on a row of their own.
-    await expect(page.locator('.chances')).toBeVisible();
-    await expect(page.locator('.time')).toBeVisible();
+    test('a board’s title and its place in the event read in full', async ({ page }) => {
+      await page.goto('./?event=autumn-2026&board=1');
+      await expect(page.locator('.topbar h1')).toHaveText('Maple leaf');
+      await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 6');
+      for (const selector of ['.topbar h1', '.topbar .tier']) {
+        const cut = await page
+          .locator(selector)
+          .evaluate((element) => element.scrollWidth > element.clientWidth + 1);
+        expect(cut, selector).toBe(false);
+      }
+      await expect(page.locator('.chances')).toBeVisible();
+      await expect(page.locator('.time')).toBeVisible();
+    });
   });
-});
+}

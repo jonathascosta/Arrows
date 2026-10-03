@@ -115,6 +115,14 @@ describe('parseManifest', () => {
         '{"palette":{},"drawings":[{"id":"a","name":"A","file":"a.png","legend":{".":"red"}}]}',
       ),
     ).toThrow('legend key "." must be one character');
+    const drawing = (id: string): string =>
+      `{"id":"${id}","name":"A","file":"a.png","legend":{"A":"red"}}`;
+    expect(() =>
+      parseManifest(`{"palette":{},"drawings":[${drawing('leaf')},${drawing('leaf')}]}`),
+    ).toThrow('the id "leaf" is taken (it would be LEAF)');
+    expect(() => parseManifest(`{"palette":{},"drawings":[${drawing('art')}]}`)).toThrow(
+      'the id "art" is taken (it would be ART)',
+    );
   });
 });
 

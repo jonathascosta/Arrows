@@ -218,7 +218,7 @@ export class App {
    */
   private openEventBoard(ref: Extract<PuzzleRef, { kind: 'event' }>): PuzzleRef | null {
     const event = findEvent(ref.eventId)!;
-    if (eventState(event, this.today()) !== 'running') return null;
+    if (!this.eventRuns(event.id)) return null;
     const { next } = this.events.progress(event);
     if (next === null || ref.board <= next) return ref;
     return { kind: 'event', eventId: event.id, board: next };
@@ -274,7 +274,7 @@ export class App {
     }
     if (ref.kind !== 'event') return null;
     const event = findEvent(ref.eventId)!;
-    if (ref.board >= event.boards.length || eventState(event, this.today()) !== 'running') {
+    if (ref.board >= event.boards.length || !this.eventRuns(event.id)) {
       return null;
     }
     return {
@@ -298,21 +298,23 @@ export class App {
   /**
    * Levels move the path and the streak; a replay of a level already won only
    * keeps its best time. A won daily earns its star; a lost one is not stored.
-   * An event board won counts for the event, and the last one earns its badge.
-   * Every board won also earns league points, event boards with the bonus.
+   * An event board won while the event runs counts for the event, and the last
+   * one earns its badge. Every board won also earns league points, event boards
+   * with the bonus while the event runs.
    */
   private record(result: BoardResult): ResultNote | undefined {
     const note = this.recordPuzzle(result);
     if (result.outcome !== 'won') return note;
+    const { ref } = result;
     // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
     const award = this.league.record(
       {
-        key: puzzleKey(result.ref),
+        key: puzzleKey(ref),
         tier: result.tier,
         cellCount: result.cellCount,
         timeSeconds: result.elapsedMs / 1000,
         chancesLost: result.chancesLost,
-        event: result.ref.kind === 'event',
+        event: ref.kind === 'event' && this.eventRuns(ref.eventId),
       },
       this.options.clock(),
     );
@@ -320,10 +322,15 @@ export class App {
     return { ...note, league: award };
   }
 
+  private eventRuns(eventId: string): boolean {
+    return eventState(findEvent(eventId)!, this.today()) === 'running';
+  }
+
   private recordPuzzle(result: BoardResult): ResultNote | undefined {
     const { ref } = result;
     if (ref.kind === 'event') {
-      if (result.outcome === 'lost') return undefined;
+      // A board opened on the last day and won after midnight no longer counts (docs/PRODUCT.md).
+      if (result.outcome === 'lost' || !this.eventRuns(ref.eventId)) return undefined;
       const event = findEvent(ref.eventId)!;
       const win = this.events.recordWin(event, ref.board);
       if (!win.first) return undefined;

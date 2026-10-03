@@ -93,7 +93,8 @@ function noon(day: string): Date {
   return new Date(y!, m! - 1, d, 12, 0);
 }
 
-function mount(store = new MemoryStore(), today = '2026-10-03'): Harness {
+/** The wall clock is local noon on `today`, or `today` itself when it is a clock. */
+function mount(store = new MemoryStore(), today: string | (() => Date) = '2026-10-03'): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
   const urls: string[] = [];
@@ -103,7 +104,7 @@ function mount(store = new MemoryStore(), today = '2026-10-03'): Harness {
     store,
     now: () => 0,
     reducedMotion: () => true,
-    clock: () => noon(today),
+    clock: typeof today === 'string' ? () => noon(today) : today,
     pushUrl: (url) => urls.push(url),
     replaceUrl: (url) => replaced.push(url),
     pickerHref: 'dev.html',
@@ -478,7 +479,7 @@ describe('App', () => {
   it('plays an event’s boards in order while it runs', () => {
     const { app, root, replaced } = mount();
     app.show('?event=autumn-2026&board=1');
-    expect(root.querySelector('.play h1')?.textContent).toBe('Maple Leaf');
+    expect(root.querySelector('.play h1')?.textContent).toBe('Maple leaf');
     expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 1 of 6');
     // A board further on than the next opens the next one instead.
     app.show('?event=autumn-2026&board=4');
@@ -528,6 +529,47 @@ describe('App', () => {
     app.show('');
     expect(root.querySelector('a.event-card')?.getAttribute('href')).toBe(
       './?event=autumn-2026&board=2',
+    );
+  });
+
+  it('counts a board won after the last day for nothing but the league', async () => {
+    const store = new MemoryStore();
+    store.setItem(
+      EVENTS_KEY,
+      JSON.stringify({ version: 1, events: { 'autumn-2026': [1, 2, 3, 4] } }),
+    );
+    // Opened a minute before the event ends, won two minutes later.
+    let clock = new Date(2026, 10, 30, 23, 59);
+    const { app, root } = mount(store, () => clock);
+    const ref: PuzzleRef = { kind: 'event', eventId: 'autumn-2026', board: 5 };
+    app.show('?event=autumn-2026&board=5');
+    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 5 of 6');
+    clock = new Date(2026, 11, 1, 0, 1);
+    await solve(root, ref);
+    const sheet = root.querySelector('.overlay[data-overlay="won"]')!;
+    expect(sheet.querySelector('p')?.textContent).toMatch(
+      /^00:00 · 3 of 3 chances left\. \+\d+ points in Bronze league/,
+    );
+    expect(sheet.querySelector('button')?.textContent).toBe('Play again');
+    expect(JSON.parse(store.getItem(EVENTS_KEY)!)).toEqual({
+      version: 1,
+      events: { 'autumn-2026': [1, 2, 3, 4] },
+    });
+    const { tier, analysis } = loadPuzzle(ref);
+    expect(JSON.parse(store.getItem(LEAGUE_KEY)!)).toMatchObject({
+      day: '2026-12-01',
+      points: scoreBoard({
+        tier,
+        cellCount: analysis.cellCount,
+        timeSeconds: 0,
+        mistakes: 0,
+        event: false,
+      }),
+      boards: ['event:autumn-2026:5'],
+    });
+    app.show('');
+    expect(root.querySelector('.event-card .card-note')?.textContent).toBe(
+      '4 of 6 boards · Ended Mon 30 Nov',
     );
   });
 

@@ -122,7 +122,7 @@ describe('HomeScreen', () => {
     expect(card.getAttribute('href')).toBe('./?event=autumn-2026&board=3');
     expect(card.querySelector('.card-label')?.textContent).toBe('Autumn event');
     // Board 3 is the maple leaf at Hard.
-    expect(card.querySelector('.card-title')?.textContent).toBe('Maple Leaf');
+    expect(card.querySelector('.card-title')?.textContent).toBe('Maple leaf');
     const segments = [...card.querySelectorAll('.event-progress span')];
     expect(segments).toHaveLength(6);
     expect(segments.map((segment) => segment.hasAttribute('data-done'))).toEqual([

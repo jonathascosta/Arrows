@@ -59,11 +59,11 @@ describe('event boards', () => {
     expect(new Set(boards.map((board) => board.puzzle.seed)).size).toBe(6);
     expect(boards[0]!.puzzle.seed).toMatch(/^board:event:autumn-2026:1#/);
     expect(boards.map((board) => board.title)).toEqual([
-      'Maple Leaf',
+      'Maple leaf',
       'Acorn',
-      'Maple Leaf',
+      'Maple leaf',
       'Acorn',
-      'Maple Leaf',
+      'Maple leaf',
       'Acorn',
     ]);
     expect(boards.map((board) => board.tier)).toEqual([

@@ -99,7 +99,7 @@ test('the home cards open the calendar, the league and the event board', async (
   await page.goto('./');
   await press(page.locator('a.event-card'), touch);
   await expect(page).toHaveURL(/\?event=autumn-2026&board=1$/);
-  await expect(page.locator('h1')).toHaveText('Maple Leaf');
+  await expect(page.locator('h1')).toHaveText('Maple leaf');
 });
 
 test('a lost daily leaves the streak alone', async ({ page, touch }) => {

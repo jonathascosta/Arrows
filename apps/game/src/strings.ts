@@ -29,7 +29,6 @@ const en = {
   'home.league': 'League',
   'home.leagueRank': '{league} · {rank}',
   'home.leagueJoin': 'Win a board to join today',
-  'home.event': 'Event',
   'home.eventBoards': '{n} of {total} boards',
   'home.eventDaysLeft': '{n} days left',
   'home.eventLastDay': 'Last day',

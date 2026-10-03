@@ -152,7 +152,7 @@ body {
 
 /* On the narrowest phones the chances and the timer take a row of their own, so the
    title and its line (an event board's "Autumn · 3 of 6") keep the width. */
-@media (max-width: 359px) {
+@media (max-width: 374px) {
   .play .topbar {
     grid-template-columns: auto 1fr;
     row-gap: 6px;

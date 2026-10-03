@@ -52,6 +52,15 @@ export function parseManifest(json: string): Manifest {
     }
     return { id: entry.id, name: entry.name, file: entry.file, legend: entry.legend };
   });
+  // Each drawing becomes a constant of the engine module, next to `ART`.
+  const constants = new Set(['ART']);
+  for (const drawing of drawings) {
+    const constant = constantName(drawing.id);
+    if (constants.has(constant)) {
+      throw new Error(`drawings.json: the id "${drawing.id}" is taken (it would be ${constant})`);
+    }
+    constants.add(constant);
+  }
   return { palette: data.palette, drawings };
 }
 
