@@ -379,9 +379,11 @@ SDK to have started), and maps the haptic cues to the Taptic Engine
 (`impact` light, `notification` warning, success, error, and a heavy impact then success for a
 promotion). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets. The text screens
-scroll the page, as in a browser, so the web view keeps its scrolling (`scrollEnabled`);
-Capacitor turns the web view's bounce off, so the board's screen, which fits the window, stays
-still, and its stage takes every touch itself (`touch-action: none`).
+scroll the page, as in a browser, so the web view keeps its scrolling (`scrollEnabled`;
+`platform/capacitorConfig.test.ts` keeps it on). The board's screen has nothing to scroll: it is
+the window's height with `overflow: hidden` (`e2e/fit.spec.ts` checks it is never taller),
+Capacitor turns the web view's bounce off, and the stage takes every touch itself
+(`touch-action: none`). Sheets and the score screen scroll inside their own box.
 
 `AdConsent` (`ads/consent.ts`) asks for the player's choices while the game is already
 playable: Google's User Messaging Platform first (`requestConsentInfo`, then `showConsentForm`
@@ -475,22 +477,23 @@ the same pictures, byte for byte. Two more workflows run by hand:
 
 ## Enforced rules
 
-| Rule                                 | Enforced by                                                                        |
-| :----------------------------------- | :--------------------------------------------------------------------------------- |
-| No `Math.random` anywhere            | ESLint `no-restricted-properties` (`repo/no-math-random`)                          |
-| Engine has no browser globals        | ESLint `no-restricted-globals` (`repo/engine-purity`)                              |
-| Engine never imports the app         | ESLint `no-restricted-imports` (`repo/engine-purity`)                              |
-| Every generated puzzle is solvable   | `generatePuzzle` throws otherwise; property tests over thousands of seeds          |
-| Tiers stay in their bands            | `levels.calibration.test.ts` over levels 1 to 400                                  |
-| League promotion rates stay in bands | `league.calibration.test.ts` over 120 simulated days per league                    |
-| Level content does not drift         | Fingerprint pins in `levels.test.ts`                                               |
-| Drawings are what the art makes      | `pnpm drawings:check` in CI; `tools/drawings.test.ts` round-trips every PNG        |
-| Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
-| Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`  |
-| Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
-| Both languages have every string     | `strings.test.ts`: the same keys and placeholders, no English words left in pt     |
-| Lighthouse accessibility above 90    | `pnpm test:a11y` (`apps/game/a11y/lighthouse.spec.ts`) in the e2e CI job           |
-| Text screens fit at every text size  | `e2e/fit.spec.ts`: 320 to 390 px wide, 1 to 1.5 times, English and Portuguese      |
+| Rule                                 | Enforced by                                                                          |
+| :----------------------------------- | :----------------------------------------------------------------------------------- |
+| No `Math.random` anywhere            | ESLint `no-restricted-properties` (`repo/no-math-random`)                            |
+| Engine has no browser globals        | ESLint `no-restricted-globals` (`repo/engine-purity`)                                |
+| Engine never imports the app         | ESLint `no-restricted-imports` (`repo/engine-purity`)                                |
+| Every generated puzzle is solvable   | `generatePuzzle` throws otherwise; property tests over thousands of seeds            |
+| Tiers stay in their bands            | `levels.calibration.test.ts` over levels 1 to 400                                    |
+| League promotion rates stay in bands | `league.calibration.test.ts` over 120 simulated days per league                      |
+| Level content does not drift         | Fingerprint pins in `levels.test.ts`                                                 |
+| Drawings are what the art makes      | `pnpm drawings:check` in CI; `tools/drawings.test.ts` round-trips every PNG          |
+| Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS   |
+| Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`    |
+| Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build        |
+| Both languages have every string     | `strings.test.ts`: the same keys and placeholders, no English words left in pt       |
+| Lighthouse accessibility above 90    | `pnpm test:a11y` (`apps/game/a11y/lighthouse.spec.ts`) in the e2e CI job             |
+| Text screens fit at every text size  | `e2e/fit.spec.ts`: 320 to 390 px wide, 1 to 1.5 times, English and Portuguese        |
+| The app's screens scroll             | `platform/capacitorConfig.test.ts`; `e2e/fit.spec.ts` keeps the board's screen still |
 
 ## Testing
 

@@ -15,12 +15,19 @@ const LANGUAGES = [
   { locale: 'pt-BR', settings: 'Ajustes', hint: 'Dica', watch: 'Assistir até o fim' },
 ];
 
-/** What does not fit: the page wider than the screen, or an element narrower than its content. */
-async function misfits(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
+/**
+ * What does not fit: the page wider than the screen, or an element narrower than its content.
+ * On the board's screen (`still`), also a page taller than the screen: the app's web view
+ * scrolls, so the board's screen must have nothing to scroll.
+ */
+async function misfits(page: Page, still: boolean): Promise<string[]> {
+  return page.evaluate((stillPage) => {
     const found: string[] = [];
     const root = document.documentElement;
     if (root.scrollWidth > root.clientWidth) found.push(`the page is ${root.scrollWidth} px wide`);
+    if (stillPage && root.scrollHeight > root.clientHeight) {
+      found.push(`the page is ${root.scrollHeight} px tall`);
+    }
     for (const element of document.querySelectorAll('body *')) {
       // Screen reader text is clipped to a pixel on purpose.
       if (!(element instanceof HTMLElement) || element.closest('.sr-only') !== null) continue;
@@ -31,11 +38,11 @@ async function misfits(page: Page): Promise<string[]> {
       }
     }
     return found;
-  });
+  }, still);
 }
 
 /** Checks the screen as it is at every width and text size. */
-async function expectFits(page: Page, screen: string): Promise<void> {
+async function expectFits(page: Page, screen: string, still = false): Promise<void> {
   const problems: string[] = [];
   for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: 700 });
@@ -43,7 +50,7 @@ async function expectFits(page: Page, screen: string): Promise<void> {
       await page.evaluate((value) => {
         document.documentElement.style.setProperty('--text-scale', String(value));
       }, scale);
-      for (const problem of await misfits(page)) {
+      for (const problem of await misfits(page, still)) {
         problems.push(`${screen} at ${width} px, ×${scale}: ${problem}`);
       }
     }
@@ -130,15 +137,15 @@ for (const { locale, settings, hint, watch } of LANGUAGES) {
       await page.goto('./');
       await page.evaluate(() => localStorage.setItem('arrows.ads', 'test'));
       await page.goto('./?level=1');
-      await expectFits(page, 'Hint');
+      await expectFits(page, 'Hint', true);
       await press(page.getByRole('button', { name: new RegExp(`^${hint}`) }), touch);
       await expect(page.locator('.test-ad')).toBeVisible();
       await expect(page.locator('.hint .ad-badge')).toBeHidden();
-      await expectFits(page, 'Hint, loading its ad');
+      await expectFits(page, 'Hint, loading its ad', true);
       await page.setViewportSize({ width: 390, height: 844 });
       await press(page.getByRole('button', { name: watch }), touch);
       await expect(page.locator('.hint.shown')).toBeVisible();
-      await expectFits(page, 'Hint, shown');
+      await expectFits(page, 'Hint, shown', true);
     });
 
     test('the lost sheet and the score screen fit', async ({ page, touch }) => {
@@ -150,13 +157,13 @@ for (const { locale, settings, hint, watch } of LANGUAGES) {
       await page.goto(`./?level=${level}`);
       for (let i = 0; i < game.livesAtStart; i++) await tapArrow(page, touch, blocked);
       await expect(page.locator('.overlay[data-overlay="lost"]')).toBeVisible();
-      await expectFits(page, 'the lost sheet');
+      await expectFits(page, 'the lost sheet', true);
 
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto('./?level=1');
       await solveWithHints(page, touch, generateLevel(1).puzzle);
       await expect(page.locator('.score-screen')).toBeVisible();
-      await expectFits(page, 'the score screen');
+      await expectFits(page, 'the score screen', true);
     });
   });
 }
