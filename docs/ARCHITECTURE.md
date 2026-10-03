@@ -430,7 +430,7 @@ Two workflows build it on GitHub's macOS runners with the latest stable Xcode:
 | `ADMOB_INTERSTITIAL_ID` (optional)      | The AdMob interstitial unit; Google's test unit without it             |
 | `ADMOB_REWARDED_ID` (optional)          | The AdMob rewarded unit; Google's test unit without it                 |
 
-Before the first run the owner registers the app id `com.jonathascosta.arrows` under
+Before the first run the owner registers the app id `net.jonathas.arrows` under
 Certificates, Identifiers & Profiles and creates the app in App Store Connect with it; the lane
 creates the App Store provisioning profile itself.
 

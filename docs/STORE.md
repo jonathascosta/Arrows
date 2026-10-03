@@ -25,7 +25,7 @@ policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once publishe
 ## The owner's steps
 
 1. **App Store Connect: create the app.** My Apps, New App: iOS, name Arrows, primary language
-   English (U.S.), bundle id `com.jonathascosta.arrows`, any SKU. If the name is taken, pick
+   English (U.S.), bundle id `net.jonathas.arrows`, any SKU. If the name is taken, pick
    another (for example "Arrows: Clear the Board") and put it in both `name.txt` files. Then add
    the Portuguese (Brazil) localisation.
 2. **GitHub Pages: publish the privacy policy.** In the repository's Settings, Pages, set the

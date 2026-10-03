@@ -7,7 +7,7 @@ import { DEFAULT_THEME } from './src/theme/default.ts';
  * to App Store Connect.
  */
 const config: CapacitorConfig = {
-  appId: 'com.jonathascosta.arrows',
+  appId: 'net.jonathas.arrows',
   appName: 'Arrows',
   webDir: 'dist',
   ios: {

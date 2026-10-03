@@ -8,7 +8,7 @@ require "tmpdir"
 
 default_platform(:ios)
 
-APP_ID = "com.jonathascosta.arrows"
+APP_ID = "net.jonathas.arrows"
 # Google's test AdMob app, until the owner's is set (ADMOB_APP_ID).
 TEST_ADMOB_APP_ID = "ca-app-pub-3940256099942544~1458002511"
 
