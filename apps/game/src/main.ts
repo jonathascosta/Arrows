@@ -49,7 +49,8 @@ const app = new App(root, {
   pushUrl: (url) => history.pushState(null, '', url),
   // An empty search would keep the current one: the home screen is './'.
   replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
-  // A tool for testing, in the web build only: the app has none (docs/PRODUCT.md, Settings).
+  // A tool for testing, in the web build only (docs/PRODUCT.md, Settings): the iOS
+  // build leaves the page out, and the app shows no link to it either way.
   pickerHref: native ? null : 'dev.html',
   // No ads on the web; there the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
   ads: platform.ads,

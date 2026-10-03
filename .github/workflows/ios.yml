@@ -38,10 +38,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # The app's build, without the puzzle picker (a tool for testing on the web only).
       - run: pnpm --filter @arrows/game build:ios
-      - name: The app ships no puzzle picker
-        run: test ! -e apps/game/dist/dev.html
       # Copies the web build into the Xcode project and writes its Swift package list.
       - run: pnpm --filter @arrows/game exec cap sync ios
+      # What goes into the bundle carries no puzzle picker (a tool for testing on the web only).
+      - name: The app ships no puzzle picker
+        run: |
+          test ! -e apps/game/ios/App/App/public/dev.html
+          ! compgen -G 'apps/game/ios/App/App/public/assets/dev-*.js'
       - run: xcodebuild -version
       - name: Build the app
         working-directory: apps/game/ios/App
