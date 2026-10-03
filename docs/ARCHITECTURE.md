@@ -434,6 +434,13 @@ Before the first run the owner registers the app id `net.jonathas.arrows` under
 Certificates, Identifiers & Profiles and creates the app in App Store Connect with it; the lane
 creates the App Store provisioning profile itself.
 
+The API key and the distribution certificate belong to the owner's Apple Developer team, not to
+this app: the owner's other apps (Trilha, already on TestFlight, and the games to come) sign and
+upload with the same ones, so neither is revoked or replaced for this app alone, and each game's
+repository holds the same six required secrets (only the AdMob ones differ). The lane neither
+creates nor revokes certificates: it imports the one it is given into a temporary keychain, and
+creates or downloads only this app's profile.
+
 ### Store
 
 [STORE.md](STORE.md) lists what the App Store needs and the owner's steps. The listing's text,
