@@ -22,9 +22,10 @@ how the code is organised. This file says in which order and what "done" means.
    acceptance criteria and the documents, runs the gates, and answers with a verdict (approved,
    or changes requested with findings). The session fixes every blocking finding, pushes, and
    asks the same reviewer to review again, until it approves. The session then posts one comment
-   on the pull request recording the rounds and the approval. Only the owner merges.
-5. When the owner merges the pull request, the session moves on to the next open task in this
-   file on its own, from the updated `main`, and repeats the cycle. If a task turns out to need
+   on the pull request recording the rounds and the approval, and merges the pull request itself
+   once CI is green on its head.
+5. After the merge, the session moves on to the next open task in this file on its own, from the
+   updated `main`, and repeats the cycle. If a task turns out to need
    something from a later task, the session says so in the pull request and stops at a clean
    boundary instead of widening the scope.
 6. Design decisions that this plan and the product document do not cover go to the owner as a
@@ -78,15 +79,37 @@ engine's hints; a blocked tap costs a drop; three blocked taps show the lose ove
 reloads the same arrows; level 300 renders and stays responsive; `pnpm build` output under
 300 kB gzipped.
 
+### T2b. Designed theme and chances
+
+The play screen in the direction of [DESIGN.md](DESIGN.md), and chances instead of drops.
+
+- Theme: the tokens of DESIGN.md in `theme/default.ts` (replacing the placeholder), Instrument
+  Serif and Geist bundled as `woff2`, the arrowhead of the Board section (sharp corners, tip
+  0.42, length 0.42, width 0.34).
+- Chances replace drops everywhere: identifiers, theme tokens, strings, tests, data attributes.
+  Chance icons in the header with the breaking animation; reduced motion changes state at once
+  and holds the red.
+- Play screen layout per DESIGN.md: round back button, title left in serif, tier in small caps,
+  chances and timer on the right; bottom tool bar with Grid and Hint (with its `AD` badge; the ad
+  itself comes in T7).
+- Lose as the bottom sheet of DESIGN.md over the faded board; win keeps its content until T7 but
+  takes the new type and colours.
+- A unit test checks WCAG contrast of every text token on its background (4.5:1 for body text,
+  3:1 for large titles and icons).
+
+Acceptance: screenshots at 390 by 844 of level 1, level 300, the butterfly, a board with one
+chance lost and a lost board, attached to the pull request next to the design; every earlier test
+passes with the new names; the build stays under 300 kB gzipped with the fonts.
+
 ### T3. Persistence and the level path
 
 - `Storage` interface with a `localStorage` implementation and an in-memory one for tests;
   schema versioned from day one.
-- Progress: current level, best time per level, win streak (consecutive first-try wins), drops
+- Progress: current level, best time per level, win streak (consecutive first-try wins); chances
   are per board and not stored.
-- Level path screen: horizontal strip of upcoming levels with the tier colour, current level
-  button with tier label and the streak badge, like the reference home screen.
-- Home screen shell with the three cards (league, daily, events) as placeholders that navigate.
+- Home screen per the Home section of [DESIGN.md](DESIGN.md): the Levels card with its level
+  strip and Play, the streak chip, and the Daily, League and Event cards (placeholders that
+  navigate until T4, T5 and T6 fill them).
 
 Acceptance: finishing a level advances the path and survives a reload; streak counts only
 first-try wins; Playwright covers win, lose, reload.
@@ -94,8 +117,9 @@ first-try wins; Playwright covers win, lose, reload.
 ### T4. Daily challenge
 
 - Day key from the device's local date (`YYYY-MM-DD`), as the product document decides.
-- Calendar screen for a month: past days playable, today with a progress ring, future days
-  locked, month navigation, stars for finished days, trophy when every day of the month is done.
+- Calendar screen per the Daily challenge section of [DESIGN.md](DESIGN.md): week from Monday,
+  past days playable, today outlined, future days locked, month navigation, stars for finished
+  days, the trophies row, and "Play today" with the day's board.
 - Playing a day uses `generateDaily(dateKey)`; results stored per day key.
 
 Acceptance: the calendar reflects stored results after reload; a past day opens the same puzzle
@@ -107,8 +131,9 @@ month model.
 - `LeagueProvider` interface; `SimulatedLeagueProvider` built on the engine's `generateSeason`,
   `standings`, `resolveDay`, keyed by local day; the player's points from `scoreBoard` for every
   board finished that day.
-- League screen: table of 30 with the player highlighted, characters marked with the character
-  label and avatar, promotion and relegation zones, countdown to midnight, the league badge.
+- League screen per the Daily league section of [DESIGN.md](DESIGN.md): table of 30 with the
+  player highlighted, characters with initials avatars and the `character` tag, the labelled
+  promotion and relegation dividers, the countdown to midnight and the rules paragraph.
 - Day rollover: on first open of a new day, resolve the previous day, move leagues, show a
   summary ("while you were away" with the final rank and the outcome).
 - Rules screen text that says the opponents are characters of the game until the league has
@@ -134,8 +159,8 @@ the event boards are playable; colours match the drawing.
 - `AdProvider` interface: `showInterstitial()`, `showRewarded()` returning whether the reward was
   earned; a web no-op implementation that resolves immediately, and a debug implementation that
   shows a fake ad overlay for testing the flow.
-- Score screen after every finished board: time, drops left, points, streak, buttons for next
-  and home. The interstitial runs between the win and this screen, nowhere else.
+- Score screen after every finished board, per the Win section of [DESIGN.md](DESIGN.md): time
+  with the best time, chances lost, score, streak line, league points line, next and home. The interstitial runs between the win and this screen, nowhere else.
 - Hint always goes through `showRewarded`; no reward, no hint.
 
 Acceptance: Playwright shows the fake interstitial exactly once per finished board and the fake
@@ -156,8 +181,8 @@ the owner confirms the ads show in the test build.
 
 ### T9. Polish with the designed theme
 
-- Replace the placeholder theme with the assets from Claude Design: background, icons, drops,
-  arrowhead style, character avatars, league badges, event art.
+- Remaining assets from Claude Design: illustrated character avatars, league badges, event art,
+  app icon; the open points of [DESIGN.md](DESIGN.md).
 - Sound effects and haptics for tap, blocked, win, lose, promotion.
 - Accessibility: VoiceOver labels for the HUD, reduced motion, dynamic type for text screens.
 - Localisation: English and Portuguese from `strings.ts`.
@@ -173,7 +198,7 @@ repository.
 
 ## After v1
 
-Themes as data packs, drop currency, remove-ads purchase, real leaderboards through a small
+Themes as data packs, a currency, remove-ads purchase, real leaderboards through a small
 API within the budget in the product document, Android, iPad.
 
 ## Status
@@ -182,6 +207,7 @@ API within the budget in the product document, Android, iPad.
 | :--- | :---- | :--------------------------------------------------- |
 | T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1) |
 | T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2) |
+| T2b  | open  |                                                      |
 | T3   | open  |                                                      |
 | T4   | open  |                                                      |
 | T5   | open  |                                                      |

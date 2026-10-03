@@ -32,13 +32,13 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 - Tapping an arrow is a valid move when the straight ray from its head to the edge of the board
   is empty. The arrow then slides out: the head moves along the ray and the body follows the
   head's track. Its cells become empty.
-- Tapping a blocked arrow costs one drop. The player has 3 drops per board. At 0 drops the board
-  is lost and can be retried. The blocked arrow bumps towards what blocks it, and both flash, so
+- Tapping a blocked arrow costs one chance. The player has 3 chances per board, drawn as
+  arrowheads (see [DESIGN.md](DESIGN.md)). At 0 chances the board is lost and can be retried. The blocked arrow bumps towards what blocks it, and both flash, so
   the player sees why.
 - Tapping an empty cell or the space around the board does nothing and costs nothing.
 - The board is won when every arrow is gone.
 - A timer runs from the first tap that lands on an arrow, pauses while the app is in the
-  background, and stops when the board is won or lost. Time and drops lost feed the score.
+  background, and stops when the board is won or lost. Time and chances lost feed the score.
 - Hint: highlights one free arrow (the one with the shortest way out), and brings it into view
   when zoomed in. Always behind a rewarded ad (the ad comes with T7 in [PLAN.md](PLAN.md)).
 - Grid toggle: shows the cell grid under the paths, for players who want to read the board.
@@ -46,8 +46,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   current scale, not by distance to the stroke; big boards are unplayable otherwise. The fitted
   board sits above the grid button; zoomed in, it may pass under it. A double tap on empty space
   resets the zoom; taps on arrows always play, however fast they come.
-- No undo. A free undo would make drops meaningless, and a paid one adds nothing.
-- A lost board is retried as the same puzzle (same seed), with fresh drops and timer.
+- No undo. A free undo would make chances meaningless, and a paid one adds nothing.
+- A lost board is retried as the same puzzle (same seed), with fresh chances and timer.
 
 ## Boards
 
@@ -115,7 +115,7 @@ A league table that resets every day at midnight in the player's local time (a d
 `YYYY-MM-DD` in local time; we may move to a fixed time zone later). Promotion to the next league for the top 10 of 30,
 relegation for the bottom 10 (none from Bronze). Leagues: Bronze, Silver, Gold, Platinum,
 Diamond, Master, Legend. Points come from every board finished that day, weighted by tier, time
-and drops lost, with a bonus for event boards.
+and chances lost, with a bonus for event boards.
 
 Until there are enough real players, the other 29 entries are **characters of the game**, and
 the game says so: they have character avatars, a generated name (Wonderful Butterfly, Smart Dog)
@@ -137,12 +137,12 @@ the drawing boards and one event; the championship table reuses the league code.
 
 - Interstitial ad between finishing a board and the score screen. Nowhere else.
 - Hints always show a rewarded ad.
-- Drops are lives only in v1. A drop currency (buy a continue, buy a hint without an ad) is v2.
+- Chances are lives only in v1. A currency (buy a continue, buy a hint without an ad) is v2.
 - Remove-ads purchase is v2.
 
 ## Themes
 
-v1 ships one theme, but the UI is themeable from the start: background, board, path stroke,
+v1 ships one theme, the one in [DESIGN.md](DESIGN.md), but the UI is themeable from the start: background, board, path stroke,
 arrowhead, grid, colour palette for drawings and the UI chrome all come from one theme object.
 Themes (trains, worms, cables, noodles) are v2 and are mostly data plus an exit animation.
 
@@ -157,7 +157,7 @@ interface so the simulated and the real providers are interchangeable.
 
 ## Not in v1
 
-Themes, drop currency, remove-ads purchase, backend, iPad layout, Android, Game Center,
+Themes, a currency, remove-ads purchase, backend, iPad layout, Android, Game Center,
 localization beyond English (strings are externalized from day one so Portuguese is cheap).
 
 ## Milestones
@@ -177,6 +177,8 @@ localization beyond English (strings are externalized from day one so Portuguese
 - A lost board is retried as the same puzzle (2026-10-02).
 - The daily league runs on the player's local day, for now (2026-10-02).
 - Ray rule on drawings is `bounds` (2026-10-02).
+- Lives are chances, drawn as arrowheads, not drops; the visual direction is the one in
+  [DESIGN.md](DESIGN.md) (2026-10-03).
 
 ## Open questions
 

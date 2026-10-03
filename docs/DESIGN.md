@@ -1,0 +1,153 @@
+# Design
+
+The visual direction delivered by Claude Design, written down so every task builds to it.
+[PRODUCT.md](PRODUCT.md) says what the game does; this file says how it looks. When the design
+changes, change this file first, then the theme in `apps/game/src/theme/`.
+
+## Direction
+
+Warm paper and ink. Cream backgrounds, near-black strokes, a condensed serif for titles and a
+quiet grotesque for everything else. Colour is used sparingly: the tier as an accent, orange for
+stars and hints, red for a blocked tap, and the drawing palette on event boards.
+
+What the design deliberately does not do, to stay clear of the reference game: no water drops
+(lives are **chances**, drawn as arrowheads), no centred title over a row of lives and a timer
+pill, no mint green.
+
+## Type
+
+| Role  | Font             | Licence       | Use                                                          |
+| :---- | :--------------- | :------------ | :----------------------------------------------------------- |
+| Title | Instrument Serif | SIL Open Font | Screen titles, level names, big numbers ("Solved", scores)   |
+| UI    | Geist            | SIL Open Font | Everything else; tier labels in small caps with wide spacing |
+
+Both are free to bundle in the app. Ship them as `woff2` with the build, not from a CDN.
+
+## Tokens
+
+The theme object in `apps/game/src/theme/` carries these names and values.
+
+| Token           | Value     | Use                                                       |
+| :-------------- | :-------- | :-------------------------------------------------------- |
+| `background`    | `#F4F0E8` | Screens                                                   |
+| `surface`       | `#E9E3D6` | Quiet surfaces: round back buttons, chips, day cells      |
+| `surfaceRaised` | `#FCFAF6` | Cards, sheets, tool bar buttons, the player's league row  |
+| `shadow`        | layered   | Soft layered shadow under raised surfaces (values to set) |
+| `text`          | `#2A2723` | Body text                                                 |
+| `textMuted`     | `#6E675C` | Secondary text                                            |
+| `title`         | `#1E1B17` | Titles                                                    |
+| `divider`       | `#DDD5C6` | Hairlines, card separators                                |
+| `stroke`        | `#2B2925` | Arrow bodies on plain boards                              |
+| `head`          | `#2B2925` | Arrowheads on plain boards                                |
+| `hint`          | `#C9741F` | Hinted arrow, stars, small accents                        |
+| `grid`          | `#E8E1D3` | Cell grid under the board                                 |
+| `chance`        | `#2B2925` | Intact chance                                             |
+| `chanceLost`    | `#D6CEBF` | Lost chance; the faded board after a loss                 |
+| `blocked`       | `#B93D2A` | Blocked arrow flash, breaking chance                      |
+| `primary`       | `#2B2925` | Primary buttons                                           |
+| `onPrimary`     | `#FCFAF6` | Text on primary buttons                                   |
+| `tierEasy`      | `#3F7D4E` | Tier accents                                              |
+| `tierMedium`    | `#3C6FA0` |                                                           |
+| `tierHard`      | `#7A4FA6` |                                                           |
+| `tierSuperHard` | `#A83E34` |                                                           |
+| `drawing1`      | `#D9822B` | Event board palette: orange                               |
+| `drawing2`      | `#C9A227` | yellow                                                    |
+| `drawing3`      | `#7A4E2D` | brown                                                     |
+| `drawing4`      | `#4F8A5B` | green                                                     |
+
+Tier colour appears only as an accent: the tier label, the tier badge, the level strip. Never as
+the arrow stroke and never as a board tint, because the stroke colour already carries the drawing
+palette and the hint and blocked states.
+
+## Board
+
+Stroke `0.12` of a cell, round cap and round join, lines through cell centres. Arrowhead: a
+sharp-cornered triangle, tip `0.42` from the head cell's centre, length `0.42` (so its base sits
+on the centre), width `0.34`. The grid is a hairline in `grid`.
+
+## Chances
+
+Three chances per board, drawn as the board's own arrowhead, in a row next to the timer.
+
+| State    | Look                                                   |
+| :------- | :----------------------------------------------------- |
+| Intact   | Solid triangle in `chance`                             |
+| Breaking | The triangle split along its axis, halves in `blocked` |
+| Lost     | The two halves, twisted apart, in `chanceLost`         |
+
+A blocked tap flashes the tapped arrow in `blocked` and breaks the rightmost intact chance: the
+head splits along its axis, both halves twist apart and settle in `chanceLost`, over about
+300 ms. With reduced motion the chance changes state at once and the red is held for the same
+time. A lost chance differs from an intact one by shape as well as colour.
+
+## Screens
+
+### Board, in play
+
+- Top: a round back button on `surface`; the title left-aligned in Instrument Serif ("Level
+  42", or the drawing's name); the tier under it in small caps in the tier colour (for events:
+  "SPRING EVENT · 5 OF 12").
+- Top right: the three chances, a hairline divider, the timer (`01:12`) in Geist, tabular
+  figures, no pill.
+- The board fills the middle.
+- Bottom tool bar, two raised buttons: **Grid** (icon and label) and a wider **Hint** with an
+  `AD` badge at its end, since a hint always plays a rewarded ad. After a hint the button reads
+  "Hint shown".
+
+### Win, the score screen (after the interstitial)
+
+- Tier line in small caps: "LEVEL 42 · MEDIUM".
+- "Solved" in large Instrument Serif; one line under it, such as "First try. Win streak is now 6."
+- A raised card with three rows separated by hairlines: Time (with "best 01:31" in muted text
+  and the time on the right), Chances lost ("1 of 3"), Score (large serif figure).
+- One line with an orange dot: "+38 points in Gold league · now 8th".
+- Primary button "Next level" (or "Play again" off the level path), text button "Home".
+
+### Lose
+
+- The board stays visible, faded to `chanceLost`; the chances all lost; the timer frozen.
+- A bottom sheet on `surfaceRaised`: "Out of chances" in serif, "Retry plays the same puzzle
+  again, with three fresh chances and the timer reset.", primary "Retry", text button "Home".
+
+### Home
+
+- "Arrows" wordmark in Instrument Serif; top right a "Streak 6" chip and a menu button.
+- **Levels card**: label "Levels", the tier badge (outlined, tier colour), "Level 42" in serif, a
+  strip of seven levels around the current one (finished levels filled in their tier colour, the
+  current one as a ring in its tier colour, upcoming ones as pale rings, joined by a line), and a
+  full-width primary "Play".
+- Two half cards: **Daily** ("Sat 3 Oct", "★ 2 of 31") and **League** ("Gold · 8th", "Resets in
+  7h 48m").
+- **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
+  progress bar, "4 of 12 boards · 3 days left".
+
+### Daily challenge
+
+- Round back button, title "Daily challenge" in serif.
+- Month header with previous and next buttons (next disabled past the current month), "October
+  2026", "2 of 31 stars".
+- Week starts on Monday (M T W T F S S). Day cells are rounded squares: finished days raised with
+  an orange star, today outlined in `primary` with a dot, future days muted and not tappable.
+- **Trophies** row: one card per past month, a trophy for a complete month, a dashed card with
+  "29 of 30" for a month missed by a few days.
+- Bottom primary button "Play today", with the board under it in small text ("Weekend board ·
+  Hard · 18 × 27", from the engine).
+
+### Daily league
+
+- Round back button, title "Daily league" in serif, an info button for the rules.
+- The league name in large serif ("Gold"), "Resets in 7h 48m" on the right.
+- One paragraph of rules, always visible: "Top 10 move up to Platinum, bottom 10 move down to
+  Silver. You're playing against the game's characters until the league has players."
+- Rows: rank, a round avatar with initials on a palette colour, the name, a `character` tag, the
+  score right-aligned. The player's row is raised, with a dark avatar and "You".
+- Labelled dividers after rank 10 ("ABOVE MOVES UP") and before rank 21 ("BELOW MOVES DOWN").
+
+## Open points
+
+- `shadow`: the delivery says "layered"; the values still have to be picked.
+- Drawing palette: four colours are defined. Drawings that need more (the heart needs red) take
+  `drawing5` onwards, still to be designed; until then red maps to `tierSuperHard`.
+- Chance direction: the chances point right, like the board's heads. Pointing them up was
+  suggested, so that two intact ones next to a timer do not read as a fast-forward button.
+- Character avatars: the design uses initials on colour; illustrated avatars stay for later.
