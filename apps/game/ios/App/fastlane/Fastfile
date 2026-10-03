@@ -63,7 +63,8 @@ platform :ios do
       project: "App.xcodeproj",
       scheme: "App",
       configuration: "Release",
-      export_method: "app-store-connect",
+      # fastlane's name for an App Store export (Xcode's own, app-store-connect, fails its check).
+      export_method: "app-store",
       export_options: { provisioningProfiles: { APP_ID => lane_context[SharedValues::SIGH_NAME] } },
       xcargs: "CURRENT_PROJECT_VERSION='#{build_number}' ADMOB_APP_ID='#{admob_app_id}'",
       output_directory: "build",
