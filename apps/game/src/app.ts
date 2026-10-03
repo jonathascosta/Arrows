@@ -31,8 +31,10 @@ export interface AppOptions {
 function focusSelector(element: Element | null, root: HTMLElement): string | null {
   if (!(element instanceof HTMLElement) || !root.contains(element)) return null;
   if (element.dataset.day !== undefined) return `[data-day="${element.dataset.day}"]`;
-  if (element.classList.length === 0) return null;
-  return [...element.classList].map((name) => `.${name}`).join('');
+  // Only plain class names, so the selector can never make querySelector throw.
+  const names = [...element.classList];
+  if (names.length === 0 || !names.every((name) => /^[a-z][\w-]*$/i.test(name))) return null;
+  return names.map((name) => `.${name}`).join('');
 }
 
 /** One screen at a time; each can be torn down. */

@@ -792,6 +792,9 @@ body {
 }
 
 .trophy {
+  /* Holds its screen-reader text: an absolute span with no positioned parent
+     would sit outside the scrolling row and widen the page. */
+  position: relative;
   display: flex;
   flex: none;
   flex-direction: column;

@@ -109,3 +109,21 @@ test('winning a day earns its star, kept after a reload', async ({ page, touch }
   await expect(day(page, '2026-10-12')).toHaveAttribute('data-state', 'done');
   await expect(page.locator('.month-stars')).toHaveText('1 of 31 stars');
 });
+
+test('a long trophies row scrolls on its own, never the page', async ({ page }) => {
+  // Stars in every month from January to September: nine cards, wider than a phone.
+  const days = Array.from({ length: 9 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}-10`);
+  await page.goto('./?calendar');
+  await storeDays(page, days);
+  await page.reload();
+  await expect(page.locator('.trophy-row li')).toHaveCount(9);
+  const widths = await page.evaluate(() => ({
+    page: document.documentElement.scrollWidth,
+    view: document.documentElement.clientWidth,
+    row: document.querySelector('.trophy-row')!.scrollWidth,
+    rowBox: document.querySelector('.trophy-row')!.clientWidth,
+  }));
+  expect(widths.page).toBe(widths.view);
+  // The row itself is wider than its box on a phone: it scrolls sideways.
+  if (widths.view < 600) expect(widths.row).toBeGreaterThan(widths.rowBox);
+});

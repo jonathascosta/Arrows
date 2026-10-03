@@ -60,16 +60,16 @@ describe('DailyStore', () => {
     old.recordWin('2026-10-02', 2000, TODAY);
     expect([...current.finished()].sort()).toEqual(['2026-10-01', '2026-10-02']);
   });
-});
 
-it('leaves a newer build’s daily record alone', () => {
-  const store = new MemoryStore();
-  const newer = '{"version":2,"days":[]}';
-  store.setItem(DAILY_KEY, newer);
-  const daily = new DailyStore(store);
-  daily.recordWin('2026-10-02', 1000, TODAY);
-  expect(daily.finished()).toEqual(new Set(['2026-10-02']));
-  expect(store.getItem(DAILY_KEY)).toBe(newer);
+  it('leaves a newer build’s daily record alone', () => {
+    const store = new MemoryStore();
+    const newer = '{"version":2,"days":[]}';
+    store.setItem(DAILY_KEY, newer);
+    const daily = new DailyStore(store);
+    daily.recordWin('2026-10-02', 1000, TODAY);
+    expect(daily.finished()).toEqual(new Set(['2026-10-02']));
+    expect(store.getItem(DAILY_KEY)).toBe(newer);
+  });
 });
 
 describe('parseDailyResults', () => {
