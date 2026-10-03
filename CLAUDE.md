@@ -1,7 +1,15 @@
 # Arrows
 
 Read `docs/PRODUCT.md` (what we build), `docs/ARCHITECTURE.md` (how) and `docs/PLAN.md` (what
-is next, and what done means) before changing anything. Work on one task of the plan per session.
+is next, and what done means) before changing anything.
+
+## Workflow
+
+- One task of `docs/PLAN.md` per pull request.
+- Every pull request goes through an isolated review agent (its own worktree, no session
+  context). Fix what it finds, ask it to review again, and repeat until it approves. Then post
+  one comment on the pull request recording the rounds. Only the owner merges.
+- When the owner merges, continue with the next open task of the plan from the updated `main`.
 
 ## Commands
 
