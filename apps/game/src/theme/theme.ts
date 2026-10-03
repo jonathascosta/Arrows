@@ -61,6 +61,11 @@ export interface ThemeIcons {
   readonly grid: string;
   readonly menu: string;
   readonly streak: string;
+  /** A day won: filled, in the star colour. */
+  readonly star: string;
+  readonly trophy: string;
+  readonly previous: string;
+  readonly next: string;
 }
 
 export interface ThemeMotion {

@@ -1,11 +1,14 @@
 import { boardBounds } from '../board/geometry.ts';
+import type { DateKey } from '../daily/days.ts';
+import { monthOf } from '../daily/days.ts';
+import { monthModel } from '../daily/month.ts';
 import { BoardRenderer } from '../board/renderer.ts';
 import { createViewport, transformOf } from '../board/viewport.ts';
 import { levelStrip } from '../levelStrip.ts';
 import type { Progress } from '../persistence/progress.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
-import { puzzleHref } from '../route.ts';
+import { calendarHref, puzzleHref } from '../route.ts';
 import { formatDayShort, t } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
@@ -13,8 +16,10 @@ import { el, iconSpan } from '../ui/dom.ts';
 export interface HomeScreenOptions {
   readonly theme: Theme;
   readonly progress: Progress;
+  /** The daily challenge days won, for the Daily card's stars. */
+  readonly finishedDays: ReadonlySet<DateKey>;
   /** Today's date key in local time, for the Daily card. */
-  readonly today: string;
+  readonly today: DateKey;
   readonly pickerHref: string;
   readonly reducedMotion: () => boolean;
 }
@@ -106,19 +111,17 @@ export class HomeScreen {
       ],
     );
 
-    const daily = el(
-      doc,
-      'a',
-      {
-        class: 'card mode-card daily',
-        href: puzzleHref({ kind: 'daily', dateKey: options.today }),
-      },
-      [
-        el(doc, 'span', { class: 'card-label' }, [t('home.daily')]),
-        el(doc, 'span', { class: 'card-title small' }, [formatDayShort(options.today)]),
-        el(doc, 'span', { class: 'card-note' }, [t('home.dailyNote')]),
-      ],
-    );
+    const month = monthModel(monthOf(options.today), options.today, options.finishedDays);
+    const stars = { n: month.stars, total: month.total };
+    const daily = el(doc, 'a', { class: 'card mode-card daily', href: calendarHref() }, [
+      el(doc, 'span', { class: 'card-label' }, [t('home.daily')]),
+      el(doc, 'span', { class: 'card-title small' }, [formatDayShort(options.today)]),
+      el(doc, 'span', { class: 'card-note daily-stars' }, [
+        iconSpan(doc, theme.icons.star, 'icon star'),
+        el(doc, 'span', { class: 'sr-only' }, [t('home.dailyStarsLabel', stars)]),
+        el(doc, 'span', { 'aria-hidden': 'true' }, [t('home.dailyStars', stars)]),
+      ]),
+    ]);
     // Not a link until T5: drawn flat, unlike the cards that open something.
     const league = el(doc, 'div', { class: 'card mode-card league', 'data-soon': 'true' }, [
       el(doc, 'span', { class: 'card-label' }, [t('home.league')]),

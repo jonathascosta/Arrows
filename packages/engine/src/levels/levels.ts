@@ -45,13 +45,31 @@ export function weekdayOf(dateKey: string): number {
   return date.getUTCDay();
 }
 
-/** The daily challenge: a larger medium board on weekdays, hard on weekends. Seed `daily:YYYY-MM-DD`. */
-export function generateDaily(dateKey: string): DailyPuzzle {
+/** What a day's board will be, known without generating it. */
+export interface DailySpec {
+  readonly weekend: boolean;
+  readonly tier: Tier;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** A larger medium board on weekdays, a hard one on weekends. Throws like `weekdayOf`. */
+export function dailySpec(dateKey: string): DailySpec {
   const weekday = weekdayOf(dateKey);
   const weekend = weekday === 0 || weekday === 6;
-  const tier: Tier = weekend ? 'hard' : 'medium';
-  const mask = weekend ? rectangleMask(18, 27) : rectangleMask(16, 24);
-  return { dateKey, tier, ...generateForTier(mask, tier, `daily:${dateKey}`) };
+  return weekend
+    ? { weekend, tier: 'hard', width: 18, height: 27 }
+    : { weekend, tier: 'medium', width: 16, height: 24 };
+}
+
+/** The daily challenge of `dailySpec`. Seed `daily:YYYY-MM-DD`. */
+export function generateDaily(dateKey: string): DailyPuzzle {
+  const { tier, width, height } = dailySpec(dateKey);
+  return {
+    dateKey,
+    tier,
+    ...generateForTier(rectangleMask(width, height), tier, `daily:${dateKey}`),
+  };
 }
 
 export interface BoardOptions {

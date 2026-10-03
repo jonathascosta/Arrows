@@ -2,7 +2,6 @@ import { createGame, freeArrows, generateDaily, generateLevel } from '@arrows/en
 import {
   expect,
   expectHome,
-  play,
   press,
   PROGRESS_KEY,
   solveWithHints,
@@ -81,12 +80,11 @@ test('a lost board ends the streak, and winning that level later does not count'
   await expectHome(page, 5, 1);
 });
 
-test('the home cards open the daily and the event board', async ({ page, touch }) => {
+test('the home cards open the calendar and the event board', async ({ page, touch }) => {
   await page.goto('./');
   await press(page.locator('a.daily'), touch);
-  await expect(page).toHaveURL(/\?daily=\d{4}-\d{2}-\d{2}$/);
-  await expect(page.locator('h1')).toContainText('Daily · ');
-  await expect(play(page)).toBeVisible();
+  await expect(page).toHaveURL(/\?calendar$/);
+  await expect(page.locator('h1')).toHaveText('Daily challenge');
 
   await page.goto('./');
   await expect(page.locator('.league')).toHaveAttribute('data-soon', 'true');
@@ -97,6 +95,8 @@ test('the home cards open the daily and the event board', async ({ page, touch }
 });
 
 test('a lost daily leaves the streak alone', async ({ page, touch }) => {
+  // Days ahead cannot be opened: pin the clock after the day this test plays.
+  await page.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
   await page.goto('./');
   await storeProgress(page, { currentLevel: 3, streak: 2 });
   await page.goto('./?daily=2026-10-03');
@@ -105,6 +105,9 @@ test('a lost daily leaves the streak alone', async ({ page, touch }) => {
   const id = puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
   for (let i = 0; i < 3; i++) await tapArrow(page, touch, id);
   await expect(page.locator('.overlay[data-overlay="lost"]')).toBeVisible();
-  await press(page.locator('.overlay').getByRole('link', { name: 'Home' }), touch);
+  // A daily's sheet leads back to the calendar.
+  await press(page.locator('.overlay').getByRole('link', { name: 'Calendar' }), touch);
+  await expect(page).toHaveURL(/\?calendar=2026-10$/);
+  await page.goto('./');
   await expectHome(page, 3, 2);
 });

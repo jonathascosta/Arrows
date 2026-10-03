@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateKey, formatDayShort, formatDuration, spellOut, t, tn } from './strings.ts';
+import {
+  formatDateKey,
+  formatDayLong,
+  formatDayShort,
+  formatDuration,
+  formatMonth,
+  formatMonthShort,
+  spellOut,
+  t,
+  tn,
+  weekdayNames,
+} from './strings.ts';
 
 describe('t', () => {
   it('fills placeholders and leaves unknown ones visible', () => {
@@ -50,5 +61,24 @@ describe('formatDayShort', () => {
   it('names a day the way the home screen shows it, in any time zone', () => {
     expect(formatDayShort('2026-10-03')).toBe('Sat 3 Oct');
     expect(formatDayShort('2027-01-01')).toBe('Fri 1 Jan');
+  });
+});
+
+describe('day and month names', () => {
+  it('names days and months the same way in every engine', () => {
+    expect(formatDayShort('2026-09-05')).toBe('Sat 5 Sep');
+    expect(formatDayLong('2026-10-03')).toBe('Saturday 3 October');
+    expect(formatDayLong('2026-10-05')).toBe('Monday 5 October');
+    expect(formatDateKey('2026-09-30')).toBe('Sep 30, 2026');
+    expect(formatMonth('2026-10')).toBe('October 2026');
+    expect(formatMonth('2027-01')).toBe('January 2027');
+    expect(formatMonthShort('2026-09', 2026)).toBe('Sep');
+    expect(formatMonthShort('2025-12', 2026)).toBe('Dec 2025');
+  });
+
+  it('heads the calendar’s weeks from Monday', () => {
+    expect(weekdayNames().map((name) => name.narrow)).toEqual(['M', 'T', 'W', 'T', 'F', 'S', 'S']);
+    expect(weekdayNames()[0]!.long).toBe('Monday');
+    expect(weekdayNames()[6]!.long).toBe('Sunday');
   });
 });

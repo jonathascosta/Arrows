@@ -131,10 +131,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-Until the later tasks fill them, the cards are placeholders: Daily shows today's date and opens
-today's board (stars and the count come with T4), League shows "Bronze · Opens soon" as an
-outline on the page instead of a raised card and does nothing (T5), and the event card opens the
-butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level
+Until the later tasks fill them, two cards are placeholders: League shows "Bronze · Opens soon"
+as an outline on the page instead of a raised card and does nothing (T5), and the event card
+opens the butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level
 strip is not tappable: Play opens the current level.
 
 ### Daily challenge
@@ -148,6 +147,14 @@ strip is not tappable: Play opens the current level.
   "29 of 30" for a month missed by a few days.
 - Bottom primary button "Play today", with the board under it in small text ("Weekend board ·
   Hard · 18 × 27", from the engine).
+
+As built in T4: days not won yet sit on `surface`; days ahead are bare muted numbers; the month
+buttons are round buttons, the disabled one faded. The trophies row shows the current month once
+it is complete and each earlier month with at least one star, and scrolls sideways; before any,
+it says how to earn a trophy. "Play today" is left out while the device's clock is before the
+first daily. A daily's back button and its sheets' second link ("Calendar") lead to its month.
+The trophy is the `hint` colour, like the stars. The home screen's Daily card opens the calendar
+and shows the month's stars ("★ 10 of 31").
 
 ### Daily league
 

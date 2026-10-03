@@ -18,7 +18,8 @@ import { PlaySession } from '../game/session.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
-import { formatDuration, spellOut, t, tn } from '../strings.ts';
+import { monthOf } from '../daily/days.ts';
+import { formatDayShort, formatDuration, formatMonth, spellOut, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
@@ -42,6 +43,17 @@ export interface ResultNote {
   readonly bestMs?: number;
   /** This time beat an earlier best. */
   readonly newBest?: boolean;
+  /** A daily's first win earned its star, and maybe its month's trophy. */
+  readonly star?: 'day' | 'month';
+}
+
+/** Where leaving a puzzle goes: its back button and the sheets' second link. */
+export interface Exit {
+  readonly href: string;
+  /** The sheets' link text. */
+  readonly link: string;
+  /** The back button's label for screen readers. */
+  readonly back: string;
 }
 
 export interface PlayScreenOptions {
@@ -55,6 +67,8 @@ export interface PlayScreenOptions {
   readonly homeHref: string;
   /** Records a result the moment the board is won or lost (progress, streak). */
   readonly record?: (result: BoardResult) => ResultNote | undefined;
+  /** Where leaving a puzzle goes; the home screen when left out. */
+  readonly exitFor?: (ref: PuzzleRef) => Exit;
 }
 
 /** Marks the moment a board is on screen, for tests and profiling. */
@@ -115,6 +129,8 @@ export class PlayScreen {
     this.loaded = loadPuzzle(ref);
     this.session = new PlaySession(this.loaded.puzzle);
     this.hud.setTitle(this.loaded.title, tierLabel(this.loaded.tier), this.loaded.tier);
+    const exit = this.exit();
+    this.hud.setBack(exit.href, exit.back);
     this.element.ownerDocument.title = `${this.loaded.title} · ${t('app.name')}`;
     this.start();
     performance.mark(BOARD_READY_MARK);
@@ -196,6 +212,12 @@ export class PlayScreen {
       if (note.streak !== undefined) {
         lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
       }
+      if (note.star !== undefined && ref.kind === 'daily') {
+        lines.push(t('won.star', { day: formatDayShort(ref.dateKey) }));
+        if (note.star === 'month') {
+          lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
+        }
+      }
       if (note.newBest === true) lines.push(t('won.newBest'));
       else if (note.bestMs !== undefined) {
         lines.push(t('won.best', { time: formatDuration(note.bestMs) }));
@@ -214,8 +236,16 @@ export class PlayScreen {
     });
   }
 
+  private exit(): Exit {
+    const ref = this.loaded?.ref;
+    if (ref !== undefined && this.options.exitFor !== undefined) return this.options.exitFor(ref);
+    return { href: this.options.homeHref, link: t('nav.home'), back: t('nav.back') };
+  }
+
+  /** The sheets' second link: home, or wherever this puzzle came from. */
   private home(): { label: string; href: string } {
-    return { label: t('nav.home'), href: this.options.homeHref };
+    const exit = this.exit();
+    return { label: exit.link, href: exit.href };
   }
 
   /** Shows the end-of-board card and takes everything behind it out of reach. */

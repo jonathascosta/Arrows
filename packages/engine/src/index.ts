@@ -54,12 +54,19 @@ export {
 export type { Tier, TierParams } from './levels/tiers.ts';
 export {
   generateBoard,
+  dailySpec,
   generateDaily,
   generateForTier,
   generateLevel,
   weekdayOf,
 } from './levels/levels.ts';
-export type { BoardOptions, BoardPuzzle, DailyPuzzle, LevelPuzzle } from './levels/levels.ts';
+export type {
+  BoardOptions,
+  BoardPuzzle,
+  DailyPuzzle,
+  DailySpec,
+  LevelPuzzle,
+} from './levels/levels.ts';
 
 export { BUTTERFLY, DRAWINGS, HEART, drawingMask, findDrawing } from './drawings/drawings.ts';
 export type { Drawing } from './drawings/drawings.ts';

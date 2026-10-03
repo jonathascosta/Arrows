@@ -19,6 +19,7 @@ export class Hud {
   private readonly chances: Chances;
   private readonly time: HTMLSpanElement;
   private readonly hintLabel: HTMLSpanElement;
+  private readonly back: HTMLAnchorElement;
 
   constructor(doc: Document, theme: Theme, backHref: string, reducedMotion: () => boolean) {
     const back = el(
@@ -27,6 +28,7 @@ export class Hud {
       { class: 'round-button back', href: backHref, 'aria-label': t('nav.back') },
       [iconSpan(doc, theme.icons.back, 'icon')],
     );
+    this.back = back;
     this.title = el(doc, 'h1');
     this.tier = el(doc, 'p', { class: 'tier' });
     this.chances = new Chances(doc, theme, reducedMotion);
@@ -60,6 +62,12 @@ export class Hud {
       el(doc, 'span', { class: 'ad-badge', 'aria-hidden': 'true' }, [t('tools.ad')]),
     ]);
     this.toolbar = el(doc, 'nav', { class: 'toolbar' }, [this.gridButton, this.hintButton]);
+  }
+
+  /** Where the back button leads, and what it says to screen readers. */
+  setBack(href: string, label: string): void {
+    this.back.setAttribute('href', href);
+    this.back.setAttribute('aria-label', label);
   }
 
   setTitle(title: string, tierLabel: string, tier: Tier): void {

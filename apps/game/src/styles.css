@@ -636,6 +636,215 @@ body {
   margin: 6px 0 8px;
 }
 
+.daily-stars {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.daily-stars .star {
+  width: 15px;
+  height: 15px;
+  color: var(--color-hint);
+}
+
+/* Daily challenge calendar */
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.calendar .topbar {
+  padding: 0;
+}
+
+.round-button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.month-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.month-title {
+  text-align: center;
+}
+
+.month-title h2 {
+  margin: 0;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 1.8rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.month-stars {
+  margin: 2px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.week-heads,
+.month-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.week-heads {
+  margin-bottom: 6px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.day.blank {
+  background: none;
+}
+
+/* Won: raised, with a star under the number. */
+.day[data-state='done'] {
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.day .star {
+  width: 13px;
+  height: 13px;
+  color: var(--color-hint);
+}
+
+/* Ahead, or before the first daily: no cell, muted, not a link. */
+.day[data-state='locked'] {
+  background: none;
+  color: var(--color-text-muted);
+}
+
+/* Today: outlined, with a dot until it is won. */
+.day[data-today] {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+.day[data-today][data-state='done'] {
+  box-shadow:
+    inset 0 0 0 2px var(--color-primary),
+    var(--shadow-raised);
+}
+
+.day[data-today]:not([data-state='done'])::after {
+  position: absolute;
+  bottom: 14%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  content: '';
+}
+
+.section-title {
+  margin: 4px 0 10px;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* The row scrolls sideways; it reaches into the page's margins so that the
+   cards' shadows are not clipped by the scrolling box. */
+.trophy-row {
+  display: flex;
+  gap: 10px;
+  margin: -8px -16px -16px;
+  padding: 8px 16px 24px;
+  overflow-x: auto;
+  list-style: none;
+}
+
+.trophy {
+  /* Holds its screen-reader text: an absolute span with no positioned parent
+     would sit outside the scrolling row and widen the page. */
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 78px;
+  height: 86px;
+  border-radius: 14px;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.trophy .icon {
+  width: 30px;
+  height: 30px;
+  color: var(--color-hint);
+}
+
+/* A month missed by a few days: dashed, with its count. */
+.trophy.missed {
+  border: 1.5px dashed var(--color-divider);
+  background: none;
+  box-shadow: none;
+}
+
+.trophy-count {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.trophy-month {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.calendar-play {
+  margin-top: auto;
+}
+
+.board-note {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 /* Dev page */
 
 .dev {

@@ -46,6 +46,13 @@ const PAIRS: [string, string, string, number][] = [
   ['focus ring on raised surface', colors.focus, colors.surfaceRaised, 3],
   // Home: the streak chip, the tier badge and the level strip.
   ['chip text on surface', colors.text, colors.surface, 4.5],
+  // Calendar: day numbers on a day cell, today's outline, stars and trophies.
+  ['day number on a day cell', colors.text, colors.surface, 4.5],
+  ['day number on a won day', colors.text, colors.surfaceRaised, 4.5],
+  ['locked day number on the month card', colors.textMuted, colors.surfaceRaised, 4.5],
+  ['today outline on a day cell', colors.primary, colors.surface, 3],
+  ['star on a won day', colors.hint, colors.surfaceRaised, 3],
+  ['trophy on its card', colors.hint, colors.surfaceRaised, 3],
   ...Object.entries(tiers).flatMap(([tier, color]): [string, string, string, number][] => [
     [`${tier} tier badge on a card`, color, colors.surfaceRaised, 4.5],
     [`finished ${tier} level number`, colors.onPrimary, color, 4.5],

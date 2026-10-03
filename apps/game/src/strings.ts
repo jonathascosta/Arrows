@@ -12,6 +12,8 @@ const en = {
   'tier.superHard': 'Super Hard',
   'nav.back': 'Back to home',
   'nav.home': 'Home',
+  'nav.backCalendar': 'Back to the calendar',
+  'nav.calendar': 'Calendar',
   'home.levels': 'Levels',
   'home.play': 'Play',
   'home.streak': 'Streak {n}',
@@ -22,12 +24,31 @@ const en = {
   'home.current': 'Level {n}, next to play',
   'home.ahead': 'Level {n}, ahead',
   'home.daily': 'Daily',
-  'home.dailyNote': 'Today’s board',
+  'home.dailyStars': '{n} of {total}',
+  'home.dailyStarsLabel': '{n} of {total} stars this month',
   'home.league': 'League',
   'home.leagueTitle': 'Bronze',
   'home.leagueNote': 'Opens soon',
   'home.event': 'Event',
   'home.eventNote': 'A drawing board',
+  'calendar.title': 'Daily challenge',
+  'calendar.previous': 'Previous month',
+  'calendar.next': 'Next month',
+  'calendar.stars': '{n} of {total} stars',
+  'calendar.moved': '{month}, {n} of {total} stars',
+  'calendar.days': 'Days of {month}',
+  'calendar.today': 'today',
+  'calendar.done': 'star earned',
+  'calendar.locked': 'locked',
+  'calendar.trophies': 'Trophies',
+  'calendar.noTrophies': 'Win every day of a month to earn its trophy.',
+  'calendar.trophy': '{month}: trophy, every day won',
+  'calendar.missed': '{n} of {total}',
+  'calendar.missedLabel': '{month}: {n} of {total} days won',
+  'calendar.play': 'Play today',
+  'calendar.board': '{kind} board · {tier} · {width} × {height}',
+  'calendar.weekday': 'Weekday',
+  'calendar.weekend': 'Weekend',
   'hud.chances': '{n} of {total} chances left',
   'hud.timer': 'Time {time}',
   'tools.grid': 'Grid',
@@ -47,6 +68,8 @@ const en = {
   'won.streakOver': 'Not on the first try, so the streak starts again.',
   'won.newBest': 'New best time!',
   'won.best': 'Best {time}.',
+  'won.star': 'A star for {day}.',
+  'won.trophy': 'Every day of {month} won: a trophy!',
   'won.next': 'Next level',
   'won.again': 'Play again',
   'lost.title': 'Out of chances',
@@ -97,32 +120,88 @@ export function spellOut(n: number): string {
   return SMALL_NUMBERS[n] ?? String(n);
 }
 
-/** `2026-10-03` as `Sat 3 Oct`, the way the home screen names a day. */
-export function formatDayShort(dateKey: string): string {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
-  // Parts, not format(): engines disagree on the comma after the weekday.
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  }).formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes): string =>
-    parts.find((p) => p.type === type)?.value ?? '';
-  return `${part('weekday')} ${part('day')} ${part('month')}`;
+// Day and month names come from tables, not Intl: engines disagree on details
+// such as "Sep" or "Sept" and the comma after a weekday, and a second language
+// is a second table.
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+/** Sunday first, as `Date.getUTCDay` counts. */
+const WEEKDAYS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
+
+const short = (name: string): string => name.slice(0, 3);
+
+interface DayParts {
+  readonly year: number;
+  readonly month: string;
+  readonly day: number;
+  readonly weekday: string;
 }
 
-/** `2026-10-02` as `Oct 2, 2026`. */
+function dayParts(dateKey: string): DayParts {
+  const [year = 1970, month = 1, day = 1] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return {
+    year: date.getUTCFullYear(),
+    month: MONTHS[date.getUTCMonth()]!,
+    day: date.getUTCDate(),
+    weekday: WEEKDAYS[date.getUTCDay()]!,
+  };
+}
+
+/** `2026-10-03` as `Sat 3 Oct`, the way the home screen names a day. */
+export function formatDayShort(dateKey: string): string {
+  const { weekday, day, month } = dayParts(dateKey);
+  return `${short(weekday)} ${day} ${short(month)}`;
+}
+
+/** `2026-10-03` as `Saturday 3 October`, for screen readers on the calendar. */
+export function formatDayLong(dateKey: string): string {
+  const { weekday, day, month } = dayParts(dateKey);
+  return `${weekday} ${day} ${month}`;
+}
+
+/** `2026-10-02` as `Oct 2, 2026`, in a daily board's title. */
 export function formatDateKey(dateKey: string): string {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(date);
+  const { year, day, month } = dayParts(dateKey);
+  return `${short(month)} ${day}, ${year}`;
+}
+
+/** `2026-10` as `October 2026`. */
+export function formatMonth(month: string): string {
+  const parts = dayParts(`${month}-01`);
+  return `${parts.month} ${parts.year}`;
+}
+
+/** `2026-09` as `Sep`, or `Sep 2025` when `currentYear` is another year. */
+export function formatMonthShort(month: string, currentYear: number): string {
+  const parts = dayParts(`${month}-01`);
+  const name = short(parts.month);
+  return parts.year === currentYear ? name : `${name} ${parts.year}`;
+}
+
+/** The calendar's weekday heads from Monday: narrow (`M`) and long (`Monday`). */
+export function weekdayNames(): { narrow: string; long: string }[] {
+  return [...WEEKDAYS.slice(1), WEEKDAYS[0]].map((long) => ({ narrow: long.slice(0, 1), long }));
 }
 
 /** Milliseconds as `mm:ss`, or `h:mm:ss` from an hour on. */

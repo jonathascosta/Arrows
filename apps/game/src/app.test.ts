@@ -2,6 +2,7 @@ import { createGame, freeArrows, head } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './app.ts';
 import { cellCenter } from './board/geometry.ts';
+import { DAILY_KEY, DailyStore } from './persistence/daily.ts';
 import { PROGRESS_KEY, ProgressStore } from './persistence/progress.ts';
 import { MemoryStore } from './persistence/store.ts';
 import { loadPuzzle } from './puzzles.ts';
@@ -80,22 +81,25 @@ interface Harness {
   root: HTMLElement;
   store: MemoryStore;
   urls: string[];
+  replaced: string[];
 }
 
-function mount(store = new MemoryStore()): Harness {
+function mount(store = new MemoryStore(), today = '2026-10-03'): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
   const urls: string[] = [];
+  const replaced: string[] = [];
   const app = new App(root, {
     theme: DEFAULT_THEME,
     store,
     now: () => 0,
     reducedMotion: () => true,
-    today: () => '2026-10-03',
+    today: () => today,
     pushUrl: (url) => urls.push(url),
+    replaceUrl: (url) => replaced.push(url),
     pickerHref: 'dev.html',
   });
-  return { app, root, store, urls };
+  return { app, root, store, urls, replaced };
 }
 
 describe('App', () => {
@@ -216,11 +220,163 @@ describe('App', () => {
     app.show('?daily=2026-10-03');
     await solve(root, daily);
     expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left.',
+      '00:00 · 3 of 3 chances left. A star for Sat 3 Oct.',
     );
+    app.show('?daily=2026-10-02');
+    await loseBoard(root, { kind: 'daily', dateKey: '2026-10-02' });
     app.show('?drawing=butterfly&tier=hard');
     await loseBoard(root, { kind: 'drawing', drawingId: 'butterfly', tier: 'hard' });
     expect(root.querySelector('.overlay')?.getAttribute('data-overlay')).toBe('lost');
     expect(store.getItem(PROGRESS_KEY)).toBeNull();
+  });
+
+  it('stores a won day, not a lost one, and the calendar shows it after a reload', async () => {
+    const { app, root, store } = mount();
+    app.show('?daily=2026-10-01');
+    await loseBoard(root, { kind: 'daily', dateKey: '2026-10-01' });
+    expect(store.getItem(DAILY_KEY)).toBeNull();
+    app.show('?daily=2026-10-02');
+    await solve(root, { kind: 'daily', dateKey: '2026-10-02' });
+    expect(JSON.parse(store.getItem(DAILY_KEY)!)).toMatchObject({
+      days: { '2026-10-02': { bestMs: 0 } },
+    });
+
+    const reloaded = mount(store);
+    reloaded.app.show('?calendar');
+    const day = (n: string) => reloaded.root.querySelector(`[data-day="2026-10-${n}"]`);
+    expect(day('02')?.getAttribute('data-state')).toBe('done');
+    expect(day('01')?.getAttribute('data-state')).toBe('open');
+    expect(reloaded.root.querySelector('.month-stars')?.textContent).toBe('1 of 31 stars');
+    reloaded.app.show('');
+    expect(reloaded.root.querySelector('.daily-stars .sr-only')?.textContent).toBe(
+      '1 of 31 stars this month',
+    );
+  });
+
+  it('shows the best time when a day is won again', async () => {
+    const { app, root } = mount();
+    const ref: PuzzleRef = { kind: 'daily', dateKey: '2026-10-02' };
+    app.show('?daily=2026-10-02');
+    await solve(root, ref);
+    app.show('?daily=2026-10-02');
+    await solve(root, ref);
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
+      '00:00 · 3 of 3 chances left. Best 00:00.',
+    );
+  });
+
+  it('awards the trophy with the last day of a month', async () => {
+    const store = new MemoryStore();
+    const days: Record<string, { bestMs: number }> = {};
+    for (let day = 1; day < 30; day++) {
+      days[`2026-09-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
+    }
+    store.setItem(DAILY_KEY, JSON.stringify({ version: 1, days }));
+    const { app, root } = mount(store);
+    app.show('?daily=2026-09-30');
+    await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
+      '00:00 · 3 of 3 chances left. A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
+    );
+    app.show('?calendar');
+    expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
+      'September 2026: trophy, every day won',
+    );
+  });
+
+  it('shows the trophy of today’s month as soon as its last day is won', async () => {
+    const store = new MemoryStore();
+    const days: Record<string, { bestMs: number }> = {};
+    for (let day = 1; day < 30; day++) {
+      days[`2026-09-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
+    }
+    store.setItem(DAILY_KEY, JSON.stringify({ version: 1, days }));
+    const { app, root } = mount(store, '2026-09-30');
+    app.show('?daily=2026-09-30');
+    await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toContain(
+      'Every day of September 2026 won: a trophy!',
+    );
+    app.show('?calendar');
+    expect(root.querySelector('.month-stars')?.textContent).toBe('30 of 30 stars');
+    expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
+      'September 2026: trophy, every day won',
+    );
+  });
+
+  it('keeps focus on the same control when a refresh redraws the calendar', () => {
+    const { app, root, store } = mount();
+    app.show('?calendar');
+    root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!.focus();
+    new DailyStore(store).recordWin('2026-10-02', 1000, '2026-10-03');
+    app.refresh();
+    const day = root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!;
+    expect(day.dataset.state).toBe('done');
+    expect(document.activeElement).toBe(day);
+    root.querySelector<HTMLElement>('.month-head .previous')!.focus();
+    app.refresh();
+    expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
+  });
+
+  it('opens the calendar instead of a day ahead or before the first daily', () => {
+    const { app, root, replaced } = mount();
+    app.show('?daily=2026-10-04');
+    expect(root.querySelector('.play')).toBeNull();
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(replaced).toEqual(['?calendar=2026-10']);
+    app.show('?daily=2027-03-01');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    app.show('?daily=2025-12-31');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-01');
+    expect(replaced).toEqual(['?calendar=2026-10', '?calendar=2026-10', '?calendar=2026-01']);
+    // Today and earlier days open.
+    app.show('?daily=2026-10-03');
+    expect(root.querySelector('.play h1')?.textContent).toBe('Daily · Oct 3, 2026');
+  });
+
+  it('shows the calendar for a month, keeping it inside the calendar', () => {
+    const { app, root, replaced } = mount();
+    app.show('?calendar');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(replaced).toEqual([]);
+    app.show('?calendar=2026-07');
+    expect(root.querySelector('.month-title h2')?.textContent).toBe('July 2026');
+    app.show('?calendar=2031-01');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(replaced).toEqual(['?calendar=2026-10']);
+  });
+
+  it('moves between months in place, keeping the address and the focus in step', () => {
+    const { app, root, replaced } = mount();
+    app.show('?calendar');
+    root.querySelector<HTMLButtonElement>('.month-head .previous')!.click();
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-09');
+    expect(replaced).toEqual(['?calendar=2026-09']);
+    expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
+    root.querySelector<HTMLButtonElement>('.month-head .next')!.click();
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    // Next is disabled on today's month: focus moves to the other button.
+    expect(root.querySelector<HTMLButtonElement>('.month-head .next')!.disabled).toBe(true);
+    expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
+    // A refresh redraws the month shown, not today's.
+    root.querySelector<HTMLButtonElement>('.month-head .previous')!.click();
+    app.refresh();
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-09');
+  });
+
+  it('leads a daily back to its month in the calendar', async () => {
+    const { app, root } = mount();
+    app.show('?daily=2026-09-12');
+    const back = root.querySelector('.topbar .back')!;
+    expect(back.getAttribute('href')).toBe('./?calendar=2026-09');
+    expect(back.getAttribute('aria-label')).toBe('Back to the calendar');
+    await loseBoard(root, { kind: 'daily', dateKey: '2026-09-12' });
+    const link = root.querySelector('.overlay a')!;
+    expect(link.textContent).toBe('Calendar');
+    expect(link.getAttribute('href')).toBe('./?calendar=2026-09');
+    // A level leads home again in the same screen.
+    app.show('?level=2');
+    expect(root.querySelector('.topbar .back')?.getAttribute('href')).toBe('./');
+    expect(root.querySelector('.topbar .back')?.getAttribute('aria-label')).toBe('Back to home');
   });
 });

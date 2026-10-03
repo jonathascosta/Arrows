@@ -196,7 +196,8 @@ Lighthouse accessibility above 90 on every screen of the web build.
 App icon, launch screen, App Store screenshots from the web build at iPhone sizes, privacy
 manifest, ads consent (App Tracking Transparency prompt), credits with the licences of the
 bundled fonts (Instrument Serif and Geist, SIL Open Font License), and the store listing text in
-the repository.
+the repository. Move the first daily (`DAILY_FIRST_DAY`, 1 January 2026 until then) to the
+launch month.
 
 ## After v1
 
@@ -211,7 +212,7 @@ API within the budget in the product document, Android, iPad.
 | T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2) |
 | T2b  | done  | [#3](https://github.com/jonathascosta/Arrows/pull/3) |
 | T3   | done  | [#4](https://github.com/jonathascosta/Arrows/pull/4) |
-| T4   | open  |                                                      |
+| T4   | done  | [#5](https://github.com/jonathascosta/Arrows/pull/5) |
 | T5   | open  |                                                      |
 | T6   | open  |                                                      |
 | T7   | open  |                                                      |

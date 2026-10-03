@@ -1,19 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { localDateKey, parseRoute, puzzleHref, routeSearch } from './route.ts';
-import type { PuzzleRef } from './route.ts';
+import { calendarHref, parseRoute, puzzleHref, puzzleSearch, routeHref } from './route.ts';
+import type { PuzzleRef, Route } from './route.ts';
+
+const play = (ref: PuzzleRef): Route => ({ screen: 'play', ref });
 
 describe('parseRoute', () => {
   it('reads levels, dailies and drawings', () => {
-    expect(parseRoute('?level=300')).toEqual({ kind: 'level', level: 300 });
-    expect(parseRoute('?daily=2026-10-03')).toEqual({ kind: 'daily', dateKey: '2026-10-03' });
-    expect(parseRoute('?drawing=butterfly&tier=hard')).toEqual({
-      kind: 'drawing',
-      drawingId: 'butterfly',
-      tier: 'hard',
-    });
+    expect(parseRoute('?level=300')).toEqual(play({ kind: 'level', level: 300 }));
+    expect(parseRoute('?daily=2026-10-03')).toEqual(play({ kind: 'daily', dateKey: '2026-10-03' }));
+    expect(parseRoute('?drawing=butterfly&tier=hard')).toEqual(
+      play({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' }),
+    );
   });
 
-  it('reads no puzzle, or an invalid one, as the home screen; a bad tier as medium', () => {
+  it('reads the calendar, with or without a month', () => {
+    expect(parseRoute('?calendar')).toEqual({ screen: 'calendar', month: null });
+    expect(parseRoute('?calendar=2026-09')).toEqual({ screen: 'calendar', month: '2026-09' });
+    expect(parseRoute('?calendar=2026-13')).toEqual({ screen: 'calendar', month: null });
+  });
+
+  it('reads nothing, or an invalid puzzle, as the home screen; a bad tier as medium', () => {
     for (const search of [
       '',
       '?level=0',
@@ -23,29 +29,29 @@ describe('parseRoute', () => {
       '?daily=2026-02-30',
       '?drawing=nope',
     ]) {
-      expect(parseRoute(search)).toBeNull();
+      expect(parseRoute(search), search).toEqual({ screen: 'home' });
     }
-    expect(parseRoute('?drawing=heart&tier=impossible')).toEqual({
-      kind: 'drawing',
-      drawingId: 'heart',
-      tier: 'medium',
-    });
+    expect(parseRoute('?drawing=heart&tier=impossible')).toEqual(
+      play({ kind: 'drawing', drawingId: 'heart', tier: 'medium' }),
+    );
   });
 
-  it('round-trips through routeSearch', () => {
-    const refs: PuzzleRef[] = [
-      { kind: 'level', level: 42 },
-      { kind: 'daily', dateKey: '2026-12-31' },
-      { kind: 'drawing', drawingId: 'heart', tier: 'superHard' },
+  it('round-trips every route through its address', () => {
+    const routes: Route[] = [
+      { screen: 'home' },
+      { screen: 'calendar', month: null },
+      { screen: 'calendar', month: '2026-02' },
+      play({ kind: 'level', level: 1 }),
+      play({ kind: 'daily', dateKey: '2026-12-31' }),
+      play({ kind: 'drawing', drawingId: 'heart', tier: 'superHard' }),
     ];
-    for (const ref of refs) expect(parseRoute(routeSearch(ref))).toEqual(ref);
+    for (const route of routes) {
+      expect(parseRoute(routeHref(route).slice(2))).toEqual(route);
+    }
     expect(puzzleHref({ kind: 'level', level: 7 })).toBe('./?level=7');
-  });
-});
-
-describe('localDateKey', () => {
-  it('uses the local calendar date', () => {
-    expect(localDateKey(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
-    expect(localDateKey(new Date(2026, 9, 3, 0, 1))).toBe('2026-10-03');
+    expect(puzzleSearch({ kind: 'daily', dateKey: '2026-10-03' })).toBe('?daily=2026-10-03');
+    expect(calendarHref()).toBe('./?calendar');
+    expect(calendarHref('2026-09')).toBe('./?calendar=2026-09');
+    expect(routeHref({ screen: 'home' })).toBe('./');
   });
 });

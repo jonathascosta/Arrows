@@ -107,9 +107,12 @@ product document sets.
 ## App
 
 `apps/game` is a Vite app in vanilla TypeScript and DOM, with no UI framework. `index.html`
-plays the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`), or
-shows the home screen when the URL names none (or an invalid one); `dev.html` opens any puzzle
-by seed and shows what the solver measured, and the home screen's menu button leads to it.
+plays the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`), shows
+the daily calendar (`?calendar`, or `?calendar=YYYY-MM` for a month), or the home screen when the
+URL names nothing (or something invalid); `dev.html` opens any puzzle by seed and shows what the
+solver measured, and the home screen's menu button leads to it. Its Preview shows any day, but
+its Play link follows the game's rules: a day ahead of today, or before the first daily, opens
+the calendar.
 
 ### Module map
 
@@ -121,25 +124,33 @@ by seed and shows what the solver measured, and the home screen's menu button le
 | `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                          |
 | `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                  |
 | `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                         |
-| `app.ts`                 | The shell: shows the home screen or a puzzle for an address, records level results in the progress store, and pushes the next level onto the history                                                                                                                                                                                               |
+| `app.ts`                 | The shell: shows the screen an address names, records level and daily results in their stores, pushes the next level onto the history, and opens the calendar instead of a day that cannot be opened yet                                                                                                                                           |
 | `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                 |
+| `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                               |
+| `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                |
 | `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                                                                                                                                                                                           |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `ProgressStore`, the versioned progress record                                                                                                                                                                                                   |
+| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path) and `DailyStore` (days won) on top of it                                                                                                                               |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                         |
 | `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                      |
-| `route.ts`, `puzzles.ts` | URL to puzzle reference, reference to generated puzzle                                                                                                                                                                                                                                                                                             |
+| `route.ts`, `puzzles.ts` | URL to route (home, calendar, puzzle), reference to generated puzzle                                                                                                                                                                                                                                                                               |
 | `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                           |
 
 ### Progress and navigation
 
-Progress lives under one key, `arrows.progress`, as JSON with `version: 1`: the current level,
+Each record the app keeps lives under its own key as JSON with a `version`, behind a
+`RecordSlot`. Progress, under `arrows.progress` with `version: 1`, holds the current level,
 the best time per level won, the streak and the best streak, and the levels lost and not won
 since (so a win after leaving and coming back is not a first try). Chances belong to a board and
 are not stored. `parseProgress` reads field by field and falls back to the initial value for
 anything missing or malformed; the place for a migration is marked in it. A record with a newer
 version, written by a later build, is never overwritten: an older build plays on in memory.
 
-`ProgressStore` reads the store on every call and writes from what it just read, so a second tab,
+Daily results, under `arrows.daily` with `version: 1`, hold the best time of each day won, keyed
+by day; a lost day is not stored, and a day stored is a star. The calendar's month model reads
+the set of days won, and counts only days that can be opened, so a day stored ahead of today (a
+changed clock, a bad write) earns nothing until its day comes.
+
+A `RecordSlot` reads the store on every call and writes from what it just read, so a second tab,
 or a page the browser kept in its back-forward cache, never writes an out-of-date copy over newer
 progress. `WebStore` reads localStorage each time and keeps a write it refuses (a full quota) in
 memory for the rest of the visit; `browserStore()` falls back to memory only where touching
@@ -147,14 +158,23 @@ localStorage throws.
 
 The play screen reports a result through `record` at the tap that wins or loses, before the last
 animation, so leaving during it still counts; `firstTry` is false once a board of that puzzle was
-lost while it was open. Only `App` writes progress, and only for levels: dailies and events leave
-the path and the streak alone, and a replay of a level already won only keeps its best time.
+lost while it was open. Only `App` writes the records: levels move the path and the streak, a
+replay of a level already won only keeps its best time, a won daily earns its star, and events
+are not stored yet.
 
 Links on the home screen and the back button load the page anew, so each adds a history entry;
 "Next level" pushes the new address onto the history, and `popstate` shows what the address
-names. When the browser restores a page from its back-forward cache (`pageshow` with
-`persisted`), or another tab saves progress (`storage`), `App.refresh` draws the home screen
-again if it is showing; a board in play is left as it is.
+names. The calendar's month buttons redraw it in place and replace the address, so Back still
+leads home. A daily's back button and its sheets lead to its month in the calendar. An address
+naming a day ahead of today, or before the first daily, opens the calendar instead and replaces
+the address. When the browser restores a page from its back-forward cache (`pageshow` with
+`persisted`), or another tab saves progress (`storage`), `App.refresh` draws the home screen or
+the calendar again if one is showing, and puts focus back on the same control; a board in play is
+left as it is. The calendar says a new month through a live region, since focus stays on the
+month button.
+
+The day is the device's local date (`localDateKey`), read when a screen is drawn; date names come
+from tables in `strings.ts` rather than `Intl`, whose output differs between engines.
 
 ### Rendering and input
 
