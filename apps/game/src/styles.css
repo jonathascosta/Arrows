@@ -1057,7 +1057,10 @@ button.text-button {
   color: var(--color-hint);
 }
 
-/* One segment per board, filled when won. The text beside it says the same. */
+/*
+ * One track filled by the share of boards won, at least a dot once one is. The
+ * text beside it says the same.
+ */
 .event-progress {
   display: block;
   height: 6px;
@@ -1069,6 +1072,7 @@ button.text-button {
 
 .event-progress-fill {
   display: block;
+  min-width: 6px;
   height: 100%;
   border-radius: 3px;
   background: var(--color-hint);

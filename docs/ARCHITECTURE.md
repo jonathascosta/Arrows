@@ -229,16 +229,17 @@ provider can replace the simulated one behind `LeagueProvider` when real players
 ### Events
 
 An event (`events/catalog.ts`) runs from a first to a last local day and lists its boards in
-order, each a drawing at a tier with its own seed (`generateBoard` with the id
+order: `EVENT_BOARDS` (300) of them from `eventBoards`, its drawings in turn and board n at the
+tier of level 10 + n, each a drawing at a tier with its own seed (`generateBoard` with the id
 `event:<event>:<n>`, the `bounds` ray rule). `EventStore` keeps the board numbers won per event
 under `arrows.events`. `App` opens an event board only while the event runs, and only up to the
-next board not won: an address naming a board further on opens the next one, and one outside
-the event's days opens the home screen. A board's first win adds the line "Board 2 of 6 done."
-and, on the last, the badge; "Next board" leads on while the event runs. Event boards earn
-league points with the event bonus. A win counts for the event, and earns the bonus, only while
-the event runs at the moment of the win: a board opened on the last day and won after midnight
-is scored as a plain board. The home screen shows the running event, or the one that
-ended last: a thumbnail of the next board, a segment per board, and the days left or the end.
+next board not won: an address naming a board further on opens the next one, and one outside the
+event's days opens the home screen. A board's first win adds the line "Board 2 of 300 done." and,
+on the last, the badge; "Next board" leads on while the event runs. Event boards earn league
+points with the event bonus. A win counts for the event, and earns the bonus, only while the event
+runs at the moment of the win: a board opened on the last day and won after midnight is scored as
+a plain board. The home screen shows the running event, or the one that ended last: a thumbnail of
+the next board, a bar filled by the share of boards won, and the days left or the end.
 
 ### Ads and the score screen
 

@@ -13,7 +13,7 @@ export interface EventBoard {
 export interface GameEvent {
   readonly id: string;
   readonly name: StringKey;
-  /** A short name for the line under a board's title: "Autumn · 3 of 6". */
+  /** A short name for the line under a board's title: "Autumn · 3 of 300". */
   readonly short: StringKey;
   readonly badge: StringKey;
   /** First and last day, local dates, both included. */

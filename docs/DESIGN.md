@@ -123,9 +123,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - Primary button "Next level" (or "Play again" off the level path), text button "Home".
 - As built in T7: a full screen over the board, on `background`, in a column 480 px wide at
   most. The tier line is "{title} · {line under the title}", so a daily reads "DAILY · OCT 12,
-  2026 · MEDIUM" and an event board "MAPLE LEAF · AUTUMN · 3 OF 6". The line under "Solved" holds
+  2026 · MEDIUM" and an event board "MAPLE LEAF · AUTUMN · 3 OF 300". The line under "Solved" holds
   what the win did: the streak, a daily's star and trophy ("A star for Mon 12 Oct."), an event's
-  board and badge ("Board 3 of 6 done."); a replay has none. Next to the time, "best 01:31" on a
+  board and badge ("Board 3 of 300 done."); a replay has none. Next to the time, "best 01:31" on a
   replay or "new best". The league line reads "Already counted in today’s league." when the
   board earned its points earlier that day. The primary button reads "Next board" on an event
   while boards are left; a daily's text button is "Calendar". Below 640 px tall the spacing

@@ -284,6 +284,21 @@ describe('HomeScreen', () => {
     expect(mount({}, null).root.querySelector('.event-card')).toBeNull();
   });
 
+  it('fills the event bar by the share of boards won, from none to almost all', () => {
+    const at = (won: number): HTMLElement | null => {
+      const list = Array.from({ length: won }, (_, i) => i + 1);
+      const progress = { won: list, total: 300, next: won + 1, complete: false };
+      return mount({}, { ...AUTUMN, progress }).root.querySelector<HTMLElement>(
+        '.event-progress-fill',
+      );
+    };
+    // None won: an empty track; one won: a sliver the CSS keeps at least a dot wide.
+    expect(at(0)).toBeNull();
+    expect(at(1)?.style.width).toBe('0.3%');
+    // Never full before the last board.
+    expect(at(299)?.style.width).toBe('99.7%');
+  });
+
   it('leaves the page on destroy', () => {
     const { root, screen } = mount();
     screen.destroy();
