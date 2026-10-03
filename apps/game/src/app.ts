@@ -1,3 +1,5 @@
+import { scoreBoard } from '@arrows/engine';
+import type { AdProvider } from './ads/ads.ts';
 import type { DateKey, MonthKey } from './daily/days.ts';
 import { isPlayableDay, localDateKey, monthOf } from './daily/days.ts';
 import { clampMonth } from './daily/month.ts';
@@ -38,6 +40,8 @@ export interface AppOptions {
   /** Replaces the current address (no reload, no new history entry). */
   readonly replaceUrl: (url: string) => void;
   readonly pickerHref: string;
+  /** The interstitial and the rewarded ad (docs/PRODUCT.md, Monetization); none when left out. */
+  readonly ads?: AdProvider;
 }
 
 /** A selector that finds a control again after its screen is drawn anew, or null. */
@@ -260,6 +264,7 @@ export class App {
             record: (result) => this.record(result),
             exitFor: (puzzle) => this.exitFor(puzzle),
             next: (puzzle) => this.nextFor(puzzle),
+            ...(this.options.ads !== undefined ? { ads: this.options.ads } : {}),
           }),
       );
       this.play = play;
@@ -306,20 +311,26 @@ export class App {
     const note = this.recordPuzzle(result);
     if (result.outcome !== 'won') return note;
     const { ref } = result;
+    const board = {
+      key: puzzleKey(ref),
+      tier: result.tier,
+      cellCount: result.cellCount,
+      timeSeconds: result.elapsedMs / 1000,
+      chancesLost: result.chancesLost,
+      event: ref.kind === 'event' && this.eventRuns(ref.eventId),
+    };
+    // The score screen shows the board's points even when they already counted today.
+    const score = scoreBoard({
+      tier: board.tier,
+      cellCount: board.cellCount,
+      timeSeconds: board.timeSeconds,
+      mistakes: board.chancesLost,
+      event: board.event,
+    });
     // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
-    const award = this.league.record(
-      {
-        key: puzzleKey(ref),
-        tier: result.tier,
-        cellCount: result.cellCount,
-        timeSeconds: result.elapsedMs / 1000,
-        chancesLost: result.chancesLost,
-        event: ref.kind === 'event' && this.eventRuns(ref.eventId),
-      },
-      this.options.clock(),
-    );
-    if (award === null) return note;
-    return { ...note, league: award };
+    const award = this.league.record(board, this.options.clock());
+    if (award === null) return { ...note, score };
+    return { ...note, score, league: award };
   }
 
   private eventRuns(eventId: string): boolean {

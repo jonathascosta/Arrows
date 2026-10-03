@@ -11,9 +11,12 @@ test('level 1 is won by following the hints, then opens level 2', async ({ page,
 
   await solveWithHints(page, touch, puzzle);
 
-  const overlay = page.locator('.overlay[data-overlay="won"]');
+  const overlay = page.locator('.score-screen');
   await expect(overlay).toBeVisible();
-  await expect(overlay).toContainText('3 of 3 chances left');
+  await expect(overlay.locator('h2')).toHaveText('Solved');
+  await expect(overlay.locator('.score-heading')).toHaveText('Level 1 · Easy');
+  await expect(overlay.locator('.score-row', { hasText: 'Chances lost' })).toContainText('0 of 3');
+  await expect(overlay.locator('.score-total')).toHaveText(/^\d+$/);
   await expect(page.locator('.chances')).toHaveAttribute('data-chances', '3');
   await press(overlay.getByRole('button', { name: 'Next level' }), touch);
   await expect(page).toHaveURL(/\?level=2$/);

@@ -1,5 +1,6 @@
-import { createGame, freeArrows, head, scoreBoard } from '@arrows/engine';
+import { createGame, freeArrows, head, scoreBoard, tap } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AdProvider } from './ads/ads.ts';
 import { App } from './app.ts';
 import { cellCenter } from './board/geometry.ts';
 import { DAILY_KEY, DailyStore } from './persistence/daily.ts';
@@ -53,17 +54,33 @@ function tapCell(root: HTMLElement, x: number, y: number): void {
   stage.dispatchEvent(new PointerEvent('pointerup', init));
 }
 
-/** Wins the open board by following the hints. */
+/** Lets promises settle: the ads (none here) answer through them. */
+async function settle(): Promise<void> {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+}
+
+/** Wins the open board by tapping free arrows, and waits for the score screen. */
 async function solve(root: HTMLElement, ref: PuzzleRef): Promise<void> {
   const { puzzle } = loadPuzzle(ref);
-  for (const _ of puzzle.arrows) {
-    root.querySelector<HTMLButtonElement>('.hint')!.click();
-    const id = Number(root.querySelector('.hinted')!.getAttribute('data-arrow'));
+  let game = createGame(puzzle);
+  while (game.status === 'playing') {
+    const id = freeArrows(game)[0]!;
     const { x, y } = head(puzzle.arrows[id]!);
     tapCell(root, x, y);
+    game = tap(game, id).state;
   }
   await vi.advanceTimersByTimeAsync(1000);
+  await settle();
 }
+
+/** A part of the score screen (`lines`, `best`, `total`, `league`), or null when it is hidden. */
+function scorePart(root: HTMLElement, part: string): string | null {
+  const element = root.querySelector<HTMLElement>(`.score-screen .score-${part}`);
+  if (element?.closest('[hidden]') !== null) return null;
+  return element.textContent;
+}
+
+const LEAGUE_LINE = /^\+\d+ points in Bronze league · now \d+(st|nd|rd|th)\.$/;
 
 /** Taps an arrow that is blocked at the start until the board is lost. */
 async function loseBoard(root: HTMLElement, ref: PuzzleRef): Promise<void> {
@@ -94,7 +111,11 @@ function noon(day: string): Date {
 }
 
 /** The wall clock is local noon on `today`, or `today` itself when it is a clock. */
-function mount(store = new MemoryStore(), today: string | (() => Date) = '2026-10-03'): Harness {
+function mount(
+  store = new MemoryStore(),
+  today: string | (() => Date) = '2026-10-03',
+  ads?: AdProvider,
+): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
   const urls: string[] = [];
@@ -108,6 +129,7 @@ function mount(store = new MemoryStore(), today: string | (() => Date) = '2026-1
     pushUrl: (url) => urls.push(url),
     replaceUrl: (url) => replaced.push(url),
     pickerHref: 'dev.html',
+    ...(ads !== undefined ? { ads } : {}),
   });
   return { app, root, store, urls, replaced };
 }
@@ -149,12 +171,21 @@ describe('App', () => {
     const { app, root, store, urls } = mount();
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
-    const sheet = root.querySelector('.overlay[data-overlay="won"] p')!;
+    expect(scorePart(root, 'lines')).toBe('First try. Win streak is now 1.');
     // A first win: no earlier best time to show.
-    // The streak, then the league's points for the board.
-    expect(sheet.textContent).toMatch(
-      /^00:00 · 3 of 3 chances left\. First try\. Win streak is now 1\. \+\d+ points in Bronze league · now \d+(st|nd|rd|th)\.$/,
-    );
+    expect(scorePart(root, 'best')).toBeNull();
+    expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
+    // The score is what the league gave the board.
+    const { analysis } = loadPuzzle({ kind: 'level', level: 1 });
+    const points = scoreBoard({
+      tier: 'easy',
+      cellCount: analysis.cellCount,
+      timeSeconds: 0,
+      mistakes: 0,
+      event: false,
+    });
+    expect(scorePart(root, 'total')).toBe(String(points));
+    expect(scorePart(root, 'league')).toContain(`+${points} points`);
 
     // A reload: a new app on the same storage.
     const reloaded = mount(store);
@@ -162,9 +193,9 @@ describe('App', () => {
     expect(reloaded.root.querySelector('.levels-card h2')?.textContent).toBe('Level 2');
     expect(reloaded.root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 1');
 
-    // Next level, from the first app's sheet.
+    // Next level, from the first app's score screen.
     document.body.replaceChildren(root);
-    root.querySelector<HTMLButtonElement>('.overlay button')!.click();
+    root.querySelector<HTMLButtonElement>('.score-screen button')!.click();
     expect(urls).toEqual(['?level=2']);
     expect(root.querySelector('.play h1')?.textContent).toBe('Level 2');
   });
@@ -175,9 +206,8 @@ describe('App', () => {
     await solve(root, { kind: 'level', level: 1 });
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left. Best 00:00.',
-    );
+    expect(scorePart(root, 'lines')).toBeNull();
+    expect(scorePart(root, 'best')).toBe('best 00:00');
     app.show('');
     expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 1');
   });
@@ -207,9 +237,7 @@ describe('App', () => {
     expect(JSON.parse(store.getItem(PROGRESS_KEY)!)).toMatchObject({ streak: 0, lostLevels: [2] });
     root.querySelector<HTMLButtonElement>('.overlay button')!.click();
     await solve(root, { kind: 'level', level: 2 });
-    expect(root.querySelector('.overlay')?.textContent).toContain(
-      'Not on the first try, so the streak starts again.',
-    );
+    expect(scorePart(root, 'lines')).toBe('Not on the first try, so the streak starts again.');
     app.show('');
     expect(root.querySelector('.levels-card h2')?.textContent).toBe('Level 3');
     expect(root.querySelector('.streak .sr-only')?.textContent).toBe('Win streak: 0');
@@ -222,9 +250,7 @@ describe('App', () => {
     const { app, root } = mount(first.store);
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
-    expect(root.querySelector('.overlay')?.textContent).toContain(
-      'Not on the first try, so the streak starts again.',
-    );
+    expect(scorePart(root, 'lines')).toBe('Not on the first try, so the streak starts again.');
   });
 
   it('leaves the path and the streak alone on dailies and events, won or lost', async () => {
@@ -232,9 +258,10 @@ describe('App', () => {
     const daily: PuzzleRef = { kind: 'daily', dateKey: '2026-10-03' };
     app.show('?daily=2026-10-03');
     await solve(root, daily);
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toMatch(
-      /^00:00 · 3 of 3 chances left\. A star for Sat 3 Oct\. \+\d+ points in Bronze league/,
-    );
+    expect(scorePart(root, 'lines')).toBe('A star for Sat 3 Oct.');
+    expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
+    // A daily's score screen leads back to its month.
+    expect(root.querySelector('.score-screen a')?.getAttribute('href')).toBe('./?calendar=2026-10');
     app.show('?daily=2026-10-02');
     await loseBoard(root, { kind: 'daily', dateKey: '2026-10-02' });
     app.show('?drawing=butterfly&tier=hard');
@@ -273,9 +300,8 @@ describe('App', () => {
     await solve(root, ref);
     app.show('?daily=2026-10-02');
     await solve(root, ref);
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left. Best 00:00.',
-    );
+    expect(scorePart(root, 'lines')).toBeNull();
+    expect(scorePart(root, 'best')).toBe('best 00:00');
   });
 
   it('awards the trophy with the last day of a month', async () => {
@@ -288,7 +314,7 @@ describe('App', () => {
     const { app, root } = mount(store);
     app.show('?daily=2026-09-30');
     await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toContain(
+    expect(scorePart(root, 'lines')).toBe(
       'A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
     );
     app.show('?calendar');
@@ -307,9 +333,7 @@ describe('App', () => {
     const { app, root } = mount(store, '2026-09-30');
     app.show('?daily=2026-09-30');
     await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toContain(
-      'Every day of September 2026 won: a trophy!',
-    );
+    expect(scorePart(root, 'lines')).toContain('Every day of September 2026 won: a trophy!');
     app.show('?calendar');
     expect(root.querySelector('.month-stars')?.textContent).toBe('30 of 30 stars');
     expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
@@ -393,6 +417,33 @@ describe('App', () => {
     expect(root.querySelector('.topbar .back')?.getAttribute('aria-label')).toBe('Back to home');
   });
 
+  it('plays the ads it is given: one interstitial per board won, a rewarded ad per hint', async () => {
+    const shown = { interstitial: 0, rewarded: 0 };
+    const ads: AdProvider = {
+      showInterstitial: () => {
+        shown.interstitial++;
+        return Promise.resolve();
+      },
+      showRewarded: () => {
+        shown.rewarded++;
+        return Promise.resolve(true);
+      },
+    };
+    const { app, root } = mount(new MemoryStore(), '2026-10-03', ads);
+    app.show('?level=1');
+    root.querySelector<HTMLButtonElement>('.hint')!.click();
+    await settle();
+    expect(root.querySelectorAll('.hinted')).toHaveLength(1);
+    expect(shown).toEqual({ interstitial: 0, rewarded: 1 });
+    await solve(root, { kind: 'level', level: 1 });
+    expect(shown).toEqual({ interstitial: 1, rewarded: 1 });
+    expect(root.querySelector<HTMLElement>('.score-screen')!.hidden).toBe(false);
+    // Next level, lost: no ad.
+    root.querySelector<HTMLButtonElement>('.score-screen button')!.click();
+    await lose(root, 2);
+    expect(shown).toEqual({ interstitial: 1, rewarded: 1 });
+  });
+
   it('shows the league, and counts a board once a day', async () => {
     const { app, root } = mount();
     app.show('?league');
@@ -402,11 +453,13 @@ describe('App', () => {
 
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
-    expect(root.querySelector('.overlay p')?.textContent).toMatch(/points in Bronze league/);
-    // The same board again the same day: no league line.
+    expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
+    const score = scorePart(root, 'total');
+    // The same board again the same day: the same score, no new points.
     app.show('?level=1');
     await solve(root, { kind: 'level', level: 1 });
-    expect(root.querySelector('.overlay p')?.textContent).not.toMatch(/league/);
+    expect(scorePart(root, 'league')).toBe('Already counted in today’s league.');
+    expect(scorePart(root, 'total')).toBe(score);
 
     app.show('?league');
     expect(root.querySelector<HTMLElement>('.league-join')?.hidden).toBe(true);
@@ -502,10 +555,10 @@ describe('App', () => {
     const ref: PuzzleRef = { kind: 'event', eventId: 'autumn-2026', board: 1 };
     app.show('?event=autumn-2026&board=1');
     await solve(root, ref);
-    const sheet = root.querySelector('.overlay[data-overlay="won"]')!;
-    expect(sheet.querySelector('p')?.textContent).toMatch(
-      /^00:00 · 3 of 3 chances left\. Board 1 of 6 done\. \+\d+ points in Bronze league/,
-    );
+    const sheet = root.querySelector('.score-screen')!;
+    expect(scorePart(root, 'lines')).toBe('Board 1 of 6 done.');
+    expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
+    expect(sheet.querySelector('.score-heading')?.textContent).toBe('Maple leaf · Autumn · 1 of 6');
     expect(JSON.parse(store.getItem(EVENTS_KEY)!)).toEqual({
       version: 1,
       events: { 'autumn-2026': [1] },
@@ -546,10 +599,9 @@ describe('App', () => {
     expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 5 of 6');
     clock = new Date(2026, 11, 1, 0, 1);
     await solve(root, ref);
-    const sheet = root.querySelector('.overlay[data-overlay="won"]')!;
-    expect(sheet.querySelector('p')?.textContent).toMatch(
-      /^00:00 · 3 of 3 chances left\. \+\d+ points in Bronze league/,
-    );
+    const sheet = root.querySelector('.score-screen')!;
+    expect(scorePart(root, 'lines')).toBeNull();
+    expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
     expect(sheet.querySelector('button')?.textContent).toBe('Play again');
     expect(JSON.parse(store.getItem(EVENTS_KEY)!)).toEqual({
       version: 1,
@@ -582,8 +634,8 @@ describe('App', () => {
     const { app, root } = mount(store);
     app.show('?event=autumn-2026&board=6');
     await solve(root, { kind: 'event', eventId: 'autumn-2026', board: 6 });
-    const sheet = root.querySelector('.overlay[data-overlay="won"]')!;
-    expect(sheet.querySelector('p')?.textContent).toContain(
+    const sheet = root.querySelector('.score-screen')!;
+    expect(scorePart(root, 'lines')).toBe(
       'Board 6 of 6 done. Every board won: the Autumn 2026 badge is yours!',
     );
     expect(sheet.querySelector('button')?.textContent).toBe('Play again');

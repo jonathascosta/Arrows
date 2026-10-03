@@ -18,7 +18,7 @@ How the repository is put together and why. [PRODUCT.md](PRODUCT.md) says what w
 | Package           | Role                                                                        | May import     |
 | :---------------- | :-------------------------------------------------------------------------- | :------------- |
 | `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim        | Nothing        |
-| `apps/game`       | The Vite app: rendering, input, screens, persistence (ads, Capacitor later) | engine         |
+| `apps/game`       | The Vite app: rendering, input, screens, persistence, ads (Capacitor later) | engine         |
 | `tools`           | Build-time tools: drawings from PNG art (`pngjs`), never shipped            | engine (types) |
 
 Workspace packages export their TypeScript sources (`"exports": "./src/index.ts"`), so Vite,
@@ -146,10 +146,11 @@ daily, opens the calendar.
 | `events/`                | The event catalog (`AUTUMN_2026`: dates, boards in order, the badge), `eventState`, `eventOn`, `daysLeft`                                                                                                                                                                                                                                                          |
 | `league/`                | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                          |
 | `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
-| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                                                                                                                                                                                                           |
+| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD, the lost sheet and the score screen; plays the rewarded ad before a hint and the interstitial before the score                                                                                                                                                                       |
+| `ads/`                   | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card) and `adsFor`, which picks one from the `arrows.ads` setting                                                                                                                                                                                                    |
 | `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day) and `EventStore` (boards won per event) on top of it                                                             |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
-| `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                                      |
+| `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), DOM helpers                                                                                                                                                                                                 |
 | `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
 | `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                                           |
 
@@ -236,6 +237,31 @@ league points with the event bonus. A win counts for the event, and earns the bo
 the event runs at the moment of the win: a board opened on the last day and won after midnight
 is scored as a plain board. The home screen shows the running event, or the one that
 ended last: a thumbnail of the next board, a segment per board, and the days left or the end.
+
+### Ads and the score screen
+
+Ads sit behind `AdProvider` (`ads/ads.ts`): `showInterstitial()` resolves when the ad has
+closed, `showRewarded()` with whether the reward was earned. `App` takes one and hands it to the
+play screen; `main.ts` picks it with `adsFor`. The web build gets `NO_ADS`, which resolves at
+once and grants every reward, so nothing changes for a web player. The `arrows.ads` setting,
+which the puzzle picker turns on, swaps in `DebugAds`: a full-screen card appended to the body,
+with the rest of the page `inert` until it closes, counting what it showed in
+`data-interstitials` and `data-rewarded` for the end-to-end tests. The iOS build (T8) adds a
+provider for the ad network behind the same interface.
+
+The play screen calls the provider in two places only. A hint asks for the rewarded ad first,
+unless a hinted arrow is still on the board, which is brought into view again for free; no
+reward, no hint. A won board, once its last arrow has left, asks for the interstitial, and the
+score screen follows when it closes. A lost board shows its sheet at once. While an ad plays the
+board takes no input and the timer is held, with the page being hidden as the other reason to
+hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
+rejects) counts as no reward, or as an interstitial already over. The board's result is
+recorded at the winning tap, before any ad, so leaving during the interstitial loses nothing.
+
+`ScoreScreen` (`ui/score.ts`) covers the play screen until the player moves on. `App.record`
+gives it the board's score: `scoreBoard` on the same figures the league records (tier, cells,
+time, chances lost, the event bonus while an event runs), shown even when the board already
+counted today, when the league line says so instead of giving points.
 
 ### Rendering and input
 

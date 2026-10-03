@@ -460,9 +460,222 @@ body {
     animation: none;
   }
 
-  .sheet {
+  .sheet,
+  .score-screen {
     animation: none;
   }
+}
+
+/* Score screen (docs/DESIGN.md, Win): over the board, after the interstitial. */
+
+.score-screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--color-background);
+  animation: score-in 220ms ease-out;
+}
+
+.score-screen[hidden] {
+  display: none;
+}
+
+.score-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100%;
+  margin-inline: auto;
+  padding: calc(32px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+    calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+}
+
+.score-heading {
+  margin: 0;
+  color: var(--tier);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.score-column h2 {
+  margin: 8px 0 10px;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 3.6rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.score-lines {
+  margin: 0 0 24px;
+  color: var(--color-text-muted);
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.score-card {
+  margin: 0 0 20px;
+  padding: 2px 20px;
+  border-radius: 22px;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.score-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.score-row + .score-row {
+  border-top: 1px solid var(--color-divider);
+}
+
+.score-row dt {
+  color: var(--color-text-muted);
+}
+
+.score-row dd {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.score-time-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px 10px;
+}
+
+.score-best {
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  font-weight: 400;
+}
+
+.score-row.score dd {
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.6rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.score-league {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 24px;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+.score-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-hint);
+  transform: translateY(-1px);
+}
+
+.score-lines[hidden],
+.score-row[hidden],
+.score-best[hidden],
+.score-league[hidden] {
+  display: none;
+}
+
+/* Short phones (an iPhone SE is 568 px tall): the whole screen fits without scrolling. */
+@media (max-height: 640px) {
+  .score-column {
+    padding-top: calc(16px + env(safe-area-inset-top));
+  }
+
+  .score-column h2 {
+    font-size: 3rem;
+  }
+
+  .score-lines,
+  .score-league {
+    margin-bottom: 16px;
+  }
+
+  .score-row {
+    padding: 12px 0;
+  }
+}
+
+@keyframes score-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Test ads (dev.html turns them on): a card where an ad would show. */
+
+.test-ad {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.test-ad[hidden] {
+  display: none;
+}
+
+.test-ad-card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.test-ad .ad-badge {
+  border-color: currentColor;
+  color: var(--color-on-primary);
+}
+
+.test-ad h2 {
+  margin: 18px 0 8px;
+  font-family: var(--font-title);
+  font-size: 2.6rem;
+  font-weight: 400;
+}
+
+.test-ad p {
+  margin: 0 0 28px;
+  line-height: 1.45;
+}
+
+.test-ad .button {
+  background: var(--color-on-primary);
+  color: var(--color-primary);
+}
+
+.test-ad .text-button {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--color-on-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Home */
@@ -1103,6 +1316,18 @@ body {
   gap: 4px;
   margin-bottom: 8px;
   font-weight: 600;
+}
+
+.dev .dev-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.dev .dev-check input {
+  width: 20px;
+  height: 20px;
+  padding: 0;
 }
 
 .dev input,

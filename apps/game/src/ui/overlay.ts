@@ -1,8 +1,8 @@
 import { el } from './dom.ts';
 
 export interface OverlayContent {
-  /** The board's end, or a league sheet: the day's summary or the rules. */
-  readonly kind: 'won' | 'lost' | 'summary' | 'rules';
+  /** A lost board, or a league sheet: the day's summary or the rules. A won board has its own screen. */
+  readonly kind: 'lost' | 'summary' | 'rules';
   readonly title: string;
   readonly body: string;
   readonly action: string;
@@ -12,8 +12,8 @@ export interface OverlayContent {
 }
 
 /**
- * The end-of-board sheet over the board (docs/DESIGN.md, Lose): a serif title,
- * one line, a primary button and an optional text link.
+ * A bottom sheet (docs/DESIGN.md, Lose): a serif title, one line, a primary
+ * button and an optional text link. The lost board and the league use it.
  */
 export class Overlay {
   readonly element: HTMLDivElement;

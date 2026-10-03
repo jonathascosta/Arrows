@@ -40,7 +40,10 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 - A timer runs from the first tap that lands on an arrow, pauses while the app is in the
   background, and stops when the board is won or lost. Time and chances lost feed the score.
 - Hint: highlights one free arrow (the one with the shortest way out), and brings it into view
-  when zoomed in. The button reads "Hint shown" until that arrow is gone. Always behind a rewarded ad (the ad comes with T7 in [PLAN.md](PLAN.md)).
+  when zoomed in. The button reads "Hint shown" until that arrow is gone. Every hint is behind a
+  rewarded ad: watched to the end, the hint shows; closed early, there is no hint. While a hint
+  is on the board, pressing Hint again brings that arrow back into view without another ad. The
+  timer stops while the ad plays.
 - Grid toggle: shows the cell grid under the paths, for players who want to read the board.
 - Pinch zoom and pan on the board (wheel and drag on desktop). Hit testing is by cell at the
   current scale, not by distance to the stroke; big boards are unplayable otherwise. The board
@@ -48,6 +51,11 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   arrows always play, however fast they come.
 - No undo. A free undo would make chances meaningless, and a paid one adds nothing.
 - A lost board is retried as the same puzzle (same seed), with fresh chances and timer.
+- A won board ends on the score screen, after the interstitial ad: the time (with the best time
+  on a replay), the chances lost, the board's score (the points the league gives it, see Daily
+  league), what the win did (the streak, a daily's star, an event's board or badge) and the
+  league points it earned. Then the next level or event board, or the same board again, and the
+  way home (a daily's leads to the calendar).
 
 ## Boards
 
@@ -161,7 +169,8 @@ with a different label, and the promise made on the rules screen is kept.
 - The first time the game opens on a new day, the last day played is settled with its final table:
   the top 10 move up (not from Legend), the bottom 10 move down (not from Bronze). A summary shows
   the final rank and the move, once. Days missed in between change nothing.
-- The win sheet says what a board earned ("+38 points in Gold league · now 8th").
+- The score screen says what a board earned ("+38 points in Gold league · now 8th"), or that it
+  already counted today.
 - Every new player starts in Bronze.
 
 ### Events and championships
@@ -186,8 +195,12 @@ the drawing boards and one event; the championship table reuses the league code.
 
 ## Monetization
 
-- Interstitial ad between finishing a board and the score screen. Nowhere else.
-- Hints always show a rewarded ad.
+- Interstitial ad between winning a board and its score screen, once per board won. Nowhere
+  else: a lost board shows no ad, and its sheet offers Retry at once.
+- Hints always show a rewarded ad; no reward, no hint.
+- The web build shows no ads: there is no interstitial, and the rewarded ad grants its reward at
+  once. The puzzle picker can turn on test ads, which show a card in place of an ad so the flow
+  can be tried; the iOS build (T8) plugs in the ad network.
 - Chances are lives only in v1. A currency (buy a continue, buy a hint without an ad) is v2.
 - Remove-ads purchase is v2.
 
@@ -244,6 +257,9 @@ localization beyond English (strings are externalized from day one so Portuguese
   acorn are placeholder art drawn in the session (17 and 14 pixels wide, narrower than the
   drawings described in Boards), to be replaced by Claude Design's before players see them
   (replacing a drawing changes its boards).
+- Ads (session decisions in T7, open to the owner) (2026-10-03): a lost board shows no
+  interstitial, so a retry is never behind an ad; a hint already on the board can be shown again
+  without another ad; the timer stops while a rewarded ad plays, so the ad never costs time.
 
 ## Open questions
 

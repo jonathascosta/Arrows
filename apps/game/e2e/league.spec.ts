@@ -64,7 +64,7 @@ test('the table lists 30 with the player, the characters and where moves happen'
 test('a won board earns points and a place in the table', async ({ page, touch }) => {
   await page.goto('./?level=1');
   await solveWithHints(page, touch, generateLevel(1).puzzle);
-  await expect(page.locator('.overlay[data-overlay="won"]')).toContainText(
+  await expect(page.locator('.score-screen')).toContainText(
     /\+\d+ points in Bronze league · now \d+(st|nd|rd|th)\./,
   );
   await page.goto('./?league');
