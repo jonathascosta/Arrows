@@ -14,6 +14,8 @@ describe('webPlatform', () => {
     expect(localStorage.getItem('arrows.test')).toBe('kept');
     expect(platform.ads).toBe(NO_ADS);
     expect(platform.haptics).toBeNull();
+    // No ad network on the web: no choices about ads to offer.
+    expect(platform.privacy).toBeNull();
   });
 
   it('shows the test ads when the puzzle picker turned them on', () => {

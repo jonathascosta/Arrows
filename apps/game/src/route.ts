@@ -17,6 +17,7 @@ export type Route =
   | { readonly screen: 'home' }
   | { readonly screen: 'calendar'; readonly month: MonthKey | null }
   | { readonly screen: 'league' }
+  | { readonly screen: 'credits' }
   | { readonly screen: 'play'; readonly ref: PuzzleRef };
 
 /** The home screen: the page with nothing else in its address. */
@@ -28,7 +29,7 @@ function isTier(value: string | null): value is Tier {
 
 /**
  * Reads `?level=N`, `?daily=YYYY-MM-DD`, `?event=id&board=N`,
- * `?drawing=id&tier=hard`, `?calendar[=YYYY-MM]` or `?league`. Nothing, or anything invalid, is the home screen, so
+ * `?drawing=id&tier=hard`, `?calendar[=YYYY-MM]`, `?league` or `?credits`. Nothing, or anything invalid, is the home screen, so
  * a bad link never shows an error page. Whether a day can be opened yet is
  * the app's to decide.
  */
@@ -62,6 +63,7 @@ export function parseRoute(search: string): Route {
     return { screen: 'play', ref: { kind: 'level', level } };
   }
   if (params.has('league')) return { screen: 'league' };
+  if (params.has('credits')) return { screen: 'credits' };
   const calendar = params.get('calendar');
   if (calendar !== null) {
     return { screen: 'calendar', month: isMonthKey(calendar) ? calendar : null };
@@ -78,6 +80,8 @@ export function routeSearch(route: Route): string {
       return route.month === null ? '?calendar' : `?calendar=${route.month}`;
     case 'league':
       return '?league';
+    case 'credits':
+      return '?credits';
     case 'play':
       return puzzleSearch(route.ref);
   }
@@ -110,6 +114,13 @@ export function calendarHref(month: MonthKey | null = null): string {
 }
 
 export const LEAGUE_HREF = './?league';
+export const CREDITS_HREF = './?credits';
+
+/**
+ * The privacy policy, a page of its own next to the game (docs/STORE.md); from
+ * the game, so the page offers the way back to it.
+ */
+export const PRIVACY_HREF = 'privacy.html?from=game';
 
 /**
  * The same board, the same key: `level:12`, `daily:2026-10-03`,

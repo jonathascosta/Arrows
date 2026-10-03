@@ -7,14 +7,19 @@ export interface SettingsSheetOptions {
   /** Only the iOS app has haptics: the web shows no switch for them. */
   readonly hapticsAvailable: boolean;
   readonly pickerHref: string;
+  readonly creditsHref: string;
+  readonly privacyHref: string;
+  /** Opens the choices about ads, where the law asks for a way back to them; else null. */
+  readonly privacyChoices: (() => void) | null;
   readonly onChange: (change: Partial<CueSettings>) => void;
   readonly onClose: () => void;
 }
 
 /**
  * The home menu's Settings (docs/PRODUCT.md, Sound, haptics and settings): a
- * sheet like the others, with a switch per setting, Done, and the puzzle
- * picker. Escape closes it too.
+ * sheet like the others, with a switch per setting, Done, and links to the
+ * privacy choices (where required), the privacy policy, the credits and the
+ * puzzle picker. Escape closes it too.
  */
 export class SettingsSheet {
   readonly element: HTMLDivElement;
@@ -70,7 +75,18 @@ export class SettingsSheet {
           el(doc, 'h2', { id: 'settings-title' }, [t('settings.title')]),
           el(doc, 'div', { class: 'settings-list' }, switches),
           done,
-          el(doc, 'a', { class: 'text-button', href: options.pickerHref }, [t('settings.picker')]),
+          el(doc, 'nav', { class: 'settings-links', 'aria-label': t('settings.title') }, [
+            ...(options.privacyChoices === null ? [] : [this.privacyButton(doc, options)]),
+            el(doc, 'a', { class: 'text-button', href: options.privacyHref }, [
+              t('settings.privacyPolicy'),
+            ]),
+            el(doc, 'a', { class: 'text-button', href: options.creditsHref }, [
+              t('settings.credits'),
+            ]),
+            el(doc, 'a', { class: 'text-button', href: options.pickerHref }, [
+              t('settings.picker'),
+            ]),
+          ]),
         ]),
       ],
     );
@@ -79,6 +95,14 @@ export class SettingsSheet {
       if (event.key === 'Escape') options.onClose();
     };
     doc.addEventListener('keydown', this.onKey);
+  }
+
+  private privacyButton(doc: Document, options: SettingsSheetOptions): HTMLButtonElement {
+    const button = el(doc, 'button', { class: 'text-button privacy-choices', type: 'button' }, [
+      t('settings.privacyChoices'),
+    ]);
+    button.addEventListener('click', () => options.privacyChoices?.());
+    return button;
   }
 
   /** Takes the sheet away and stops listening for Escape. */

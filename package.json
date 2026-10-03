@@ -25,7 +25,8 @@
     "drawings": "pnpm --filter @arrows/tools drawings",
     "drawings:check": "pnpm --filter @arrows/tools drawings:check",
     "ios:sync": "pnpm --filter @arrows/game build && pnpm --filter @arrows/game exec cap sync ios",
-    "prepare": "husky"
+    "prepare": "husky",
+    "store:screenshots": "pnpm --filter @arrows/game store:screenshots"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

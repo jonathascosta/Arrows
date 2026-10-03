@@ -187,6 +187,26 @@ const SCREENS: readonly Screen[] = [
     },
   },
   {
+    name: 'credits',
+    open: async (page) => {
+      await page.goto('./?credits');
+      await page
+        .locator('.credit-text')
+        .first()
+        .evaluate((details) => {
+          details.setAttribute('open', '');
+        });
+      await expect(page.locator('.credit pre').first()).toBeVisible();
+    },
+  },
+  {
+    name: 'privacy policy',
+    open: async (page) => {
+      await page.goto('./privacy.html');
+      await expect(page.locator('h1').first()).toBeVisible();
+    },
+  },
+  {
     name: 'puzzle picker',
     englishOnly: true,
     open: async (page) => {

@@ -12,7 +12,8 @@ import type { EventProgress } from '../persistence/events.ts';
 import type { PuzzleRef } from '../route.ts';
 import type { LeagueView } from '../league/provider.ts';
 import type { CueSettings } from '../platform/cues.ts';
-import { calendarHref, LEAGUE_HREF, puzzleHref } from '../route.ts';
+import type { PrivacyChoices } from '../platform/platform.ts';
+import { calendarHref, CREDITS_HREF, LEAGUE_HREF, PRIVACY_HREF, puzzleHref } from '../route.ts';
 import {
   capitalize,
   formatCountdown,
@@ -46,6 +47,8 @@ export interface HomeScreenOptions {
     readonly read: () => CueSettings;
     readonly change: (change: Partial<CueSettings>) => void;
     readonly hapticsAvailable: boolean;
+    /** The choices about ads, offered where the law asks; null on the web. */
+    readonly privacy: PrivacyChoices | null;
   };
 }
 
@@ -250,12 +253,17 @@ export class HomeScreen {
       },
       [iconSpan(doc, options.theme.icons.menu, 'icon')],
     );
+    const { privacy } = options.settings;
     button.addEventListener('click', () => {
       const page = [...this.element.children];
       const sheet = new SettingsSheet(doc, {
         settings: options.settings.read(),
         hapticsAvailable: options.settings.hapticsAvailable,
         pickerHref: options.pickerHref,
+        creditsHref: CREDITS_HREF,
+        privacyHref: PRIVACY_HREF,
+        // Known once the app has asked for consent, so read as the sheet opens.
+        privacyChoices: privacy?.required() === true ? () => void privacy.show() : null,
         onChange: options.settings.change,
         onClose: () => {
           sheet.remove();

@@ -39,8 +39,17 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   Each is loaded ahead so it shows at once; one that is not ready within a few seconds is gone
   without (no interstitial, and no hint). While a hint's ad loads, the board waits and the Hint
   button reads "Loading ad…". Until the owner's AdMob units are set, the build shows Google's
-  test ads. There is no consent prompt before T10, so in the EEA and the UK AdMob may serve
-  limited ads or none.
+  test ads.
+- Before any ad is requested, the app asks for the player's choices about ads: Google's consent
+  message where the law requires one (the EEA, the UK, Switzerland, some US states), then
+  Apple's tracking prompt ("Your data will be used to show you ads that suit you better. The
+  game is the same either way."). The game does not wait for either; ads load once they are
+  answered, and none load if the choices allow none. If the check cannot be made (no network), no ad
+  is requested: it is made again the next time an ad is needed. An ad loaded more than 55 minutes
+  earlier is loaded again before it shows, since ads expire after an hour.
+- The privacy policy is in the app (Settings) and at the address the store listing gives; the
+  app's privacy manifest declares what the app itself does (nothing is collected or tracked by
+  the game's own code; Google's SDKs declare theirs).
 - The app icon is the favicon's arrow on paper until Claude Design delivers one; the launch
   screen is plain paper.
 
@@ -152,8 +161,9 @@ with every star earns a trophy. The daily board is a larger medium or hard recta
 weekends.
 
 - The day is the device's local date (`YYYY-MM-DD`), like the league's.
-- The calendar starts on 1 January 2026, the first daily; earlier days and months do not exist.
-  The date moves to the launch month before release (T10).
+- The calendar starts on 1 October 2026, the first daily: the first day of the earliest month
+  the game can launch in, so today's daily is never locked. Earlier days and months do not
+  exist.
 - A day earns its star when its board is won, on that day or any day after. A lost board earns
   nothing and is not stored. Days can be replayed; a replay keeps the best time.
 - A month's trophy needs every day of the month. The trophies row shows the current month once
@@ -222,6 +232,8 @@ the drawing boards and one event; the championship table reuses the league code.
   which are names ("Wonderful Butterfly"), the "AD" mark on the Hint button, which the word
   "Anúncio" would not fit (VoiceOver says "mostra um anúncio"), and the puzzle picker, a tool for
   testing that Settings links to.
+- The privacy policy is a page written in both languages, the player's first. The licences in
+  Credits stay as their authors wrote them, in English.
 
 ## Sound, haptics and settings
 
@@ -229,7 +241,11 @@ the drawing boards and one event; the championship table reuses the league code.
   board lost, and a promotion in the league, which also has its haptic. The sounds are made by
   the game (no recordings), quiet, and follow the phone's silent switch in the app.
 - The home screen's menu opens Settings: Sound and Haptics switches (Haptics only in the app),
-  both on at first, and the puzzle picker. The choices stay on the device.
+  both on at first, then Privacy choices (in the app, where the law asks for a way back to the
+  choices about ads), the privacy policy, Credits and the puzzle picker. The choices stay on the
+  device.
+- Credits name the fonts and the software the game is made with, each with its licence in full
+  (the fonts' licence asks for it), and say where the ads come from.
 
 ## Accessibility
 
@@ -247,6 +263,8 @@ the drawing boards and one event; the championship table reuses the league code.
 - Interstitial ad between winning a board and its score screen, once per board won. Nowhere
   else: a lost board shows no ad, and its sheet offers Retry at once.
 - Hints always show a rewarded ad; no reward, no hint. An ad that fails to show earns no reward.
+- Ads in the iOS app follow the player's choices about them (see The iOS app): consent where the
+  law requires it, Apple's tracking prompt, and Privacy choices in Settings.
 - The web build shows no ads: there is no interstitial, and the rewarded ad grants its reward at
   once. The puzzle picker can turn on test ads, which show a card in place of an ad so the flow
   can be tried; the iOS build (T8) plugs in the ad network.
@@ -294,9 +312,9 @@ beyond English and Portuguese.
   [DESIGN.md](DESIGN.md) (2026-10-03).
 - Replays of a level already won do not touch the win streak; only new levels count (session
   decision in T3, open to the owner) (2026-10-03).
-- Daily challenge (session decisions in T4, open to the owner) (2026-10-03): the calendar starts
-  on 1 January 2026 until the launch month is known; a day won late still earns its star; a
-  daily's sheets lead back to the calendar instead of home.
+- Daily challenge (session decisions in T4, open to the owner) (2026-10-03): the calendar started
+  on 1 January 2026 until the launch month was known (T10 moved it); a day won late still earns
+  its star; a daily's sheets lead back to the calendar instead of home.
 - Daily league (session decisions in T5, open to the owner) (2026-10-03): each board earns points
   once a day, so replaying one board cannot win a league; a day without a board won does not
   relegate, so time away costs nothing; several missed days settle only the last day played.
@@ -323,6 +341,14 @@ beyond English and Portuguese.
   characters' names stay in English, since they are names; sounds are synthesised by the game
   until a designer makes real ones; the home menu becomes Settings (Sound, Haptics, the puzzle
   picker); text screens follow the phone's text size up to 1.5 times.
+- Store readiness (session decisions in T10, open to the owner) (2026-10-03): the first daily is
+  1 October 2026, the earliest possible launch month; the store listing is in English and
+  Brazilian Portuguese, named Arrows (if the name is taken on the App Store, the owner picks
+  another) under Games, Puzzle and Board; the privacy policy is published on the repository's
+  GitHub Pages and support goes to the repository's issues, until the owner has a site; the
+  consent order is Google's message, then Apple's prompt; the screenshots are the web build's
+  screens without captions; Google's list of SKAdNetwork ids for its partners is the owner's to
+  paste in (it could not be fetched from the session); the copyright holder is Jonathas Costa.
 
 ## Open questions
 

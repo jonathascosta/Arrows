@@ -164,7 +164,15 @@ As built in T9, the menu button opens **Settings**, a bottom sheet like the othe
 in serif, a list on `background` with a row per switch (Sound; Haptics in the iOS app only),
 each a label and a pill switch (off: outlined in `textMuted` with a `textMuted` knob; on:
 `primary` with a `surfaceRaised` knob, every part at 3:1 against the list), then "Done" as the
-primary button and "Puzzle picker" as the text button.
+primary button and the text buttons under it: "Privacy choices" (in the app, where the law asks
+for it), "Privacy policy", "Credits" and "Puzzle picker".
+
+As built in T10, **Credits** is a text screen like the league's: the round back button, "Credits"
+in serif, a short thank-you, then "Fonts" and "Software" as section titles over a card per
+font or library (its name in serif, "Licence: …" muted, and "Licence text" opening the licence
+in small type), and a line on the ads. The privacy policy is a plain document page on paper:
+serif headings, body text at reading width, English and Portuguese one after the other, the
+player's language first, with the round back button when it was opened from the game.
 
 ### Daily challenge
 
@@ -232,7 +240,8 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
   suggested, so that two intact ones next to a timer do not read as a fast-forward button. It is
   one theme value (`chanceDirection: 'up'`) if the owner prefers it.
 - Character avatars: the design uses initials on colour; illustrated avatars, league badges, the
-  event art and the app icon are T9's assets still to come from Claude Design.
+  event art and the app icon are T9's assets still to come from Claude Design. Until then the
+  app icon is the favicon's arrow on paper, and the launch screen is the plain paper colour.
 - Settings: designed in the session from the sheet's parts (T9); the puzzle picker stays in it,
   also in release builds, and hiding it there is one line if the owner prefers.
 - Portuguese and large text: the layouts hold the Portuguese strings, which run up to a third

@@ -131,29 +131,30 @@ daily, opens the calendar.
 
 ### Module map
 
-| Module                   | Contents                                                                                                                                                                                                                                                                                                                                                           |
-| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `theme/`                 | `Theme` (colours, tier colours, drawing palette, avatar colours, shadows, board geometry, chance direction, icons, fonts, motion) and `applyTheme`, which writes CSS custom properties; `default.ts` is the Paper theme of [DESIGN.md](DESIGN.md); `contrast.test.ts` holds every pairing the screens use to WCAG AA, with the drawing palette's known gaps listed |
-| `board/geometry.ts`      | Pure: arrow body and head shapes, exit track, grid lines, board bounds, in cell units                                                                                                                                                                                                                                                                              |
-| `board/viewport.ts`      | Pure: zoom and pan as data (fit, clamp, `zoomAt`, `pinchView`, `panBy`, `cellAt`, `ensureVisible`)                                                                                                                                                                                                                                                                 |
-| `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                                          |
-| `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                                  |
-| `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                                         |
-| `app.ts`                 | The shell: shows the screen an address names, records level, daily and league results in their stores, pushes the next level onto the history, opens the calendar instead of a day that cannot be opened yet, and shows the league's summary of the last day played once                                                                                           |
-| `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                                 |
-| `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                                               |
-| `screens/league.ts`      | The daily league: the league's name and countdown, the rules, the table of 30 with avatars, tags and the dividers where moves happen; the rules and the day's summary in sheets; a 30 s clock that moves the table and settles the day at midnight                                                                                                                 |
-| `events/`                | The event catalog (`AUTUMN_2026`: dates, boards in order, the badge), `eventState`, `eventOn`, `daysLeft`                                                                                                                                                                                                                                                          |
-| `league/`                | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                          |
-| `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
-| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD, the lost sheet and the score screen; plays the rewarded ad before a hint and the interstitial before the score                                                                                                                                                                       |
-| `ads/`                   | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card), `AdMobAds` (iOS) and `adsFor`, which gives the test card when the `arrows.ads` setting asks for it                                                                                                                                                            |
-| `platform/`              | `Platform` (the store, the ads, the haptics): `webPlatform`, and `native.ts`, loaded only in the iOS app, with Capacitor's plugins; `cues.ts` (the five cues, `CuePlayer`, `cuePlayer`, which plays sounds and haptics as the settings allow), `sounds.ts` (`WebAudioSounds`, the cues synthesised with Web Audio), `textSize.ts` (the phone's text size)          |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore`, `browserStore()` and `PreferencesStore` (iOS); `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day), `EventStore` (boards won per event) and `SettingsStore` (sound, haptics) on top of it |
-| `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
-| `ui/`                    | HUD (top bar and tool bar, stacked when a title does not fit), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), `SettingsSheet`, DOM helpers                                                                                                                                             |
-| `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
-| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`, in English and Brazilian Portuguese; the locale (`localeFor`, `setLocale`), plurals (`tn`), league and drawing names, numbers, number words, ordinals and dates in the player's language                                                                                                                 |
+| Module                           | Contents                                                                                                                                                                                                                                                                                                                                                                       |
+| :------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theme/`                         | `Theme` (colours, tier colours, drawing palette, avatar colours, shadows, board geometry, chance direction, icons, fonts, motion) and `applyTheme`, which writes CSS custom properties; `default.ts` is the Paper theme of [DESIGN.md](DESIGN.md); `contrast.test.ts` holds every pairing the screens use to WCAG AA, with the drawing palette's known gaps listed             |
+| `board/geometry.ts`              | Pure: arrow body and head shapes, exit track, grid lines, board bounds, in cell units                                                                                                                                                                                                                                                                                          |
+| `board/viewport.ts`              | Pure: zoom and pan as data (fit, clamp, `zoomAt`, `pinchView`, `panBy`, `cellAt`, `ensureVisible`)                                                                                                                                                                                                                                                                             |
+| `board/gestures.ts`              | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                                                      |
+| `board/renderer.ts`              | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                                              |
+| `game/`                          | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                                                     |
+| `app.ts`                         | The shell: shows the screen an address names, records level, daily and league results in their stores, pushes the next level onto the history, opens the calendar instead of a day that cannot be opened yet, and shows the league's summary of the last day played once                                                                                                       |
+| `screens/home.ts`                | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                                             |
+| `screens/calendar.ts`            | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                                                           |
+| `screens/league.ts`              | The daily league: the league's name and countdown, the rules, the table of 30 with avatars, tags and the dividers where moves happen; the rules and the day's summary in sheets; a 30 s clock that moves the table and settles the day at midnight                                                                                                                             |
+| `screens/credits.ts`, `credits/` | The Credits screen; `licences.ts`, the fonts and libraries with their licence files, imported from the packages at build time                                                                                                                                                                                                                                                  |
+| `events/`                        | The event catalog (`AUTUMN_2026`: dates, boards in order, the badge), `eventState`, `eventOn`, `daysLeft`                                                                                                                                                                                                                                                                      |
+| `league/`                        | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                                      |
+| `daily/`                         | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                            |
+| `screens/play.ts`                | The play screen: wires input to the session and results to the renderer, HUD, the lost sheet and the score screen; plays the rewarded ad before a hint and the interstitial before the score                                                                                                                                                                                   |
+| `ads/`                           | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card), `AdMobAds` (iOS: loads ahead, reloads an ad older than 55 minutes) and `adsFor`, which gives the test card when the `arrows.ads` setting asks for it; `AdConsent` (consent.ts), the player's choices about ads before the SDK starts                                      |
+| `platform/`                      | `Platform` (the store, the ads, the haptics, the privacy choices): `webPlatform`, and `native.ts`, loaded only in the iOS app, with Capacitor's plugins; `cues.ts` (the five cues, `CuePlayer`, `cuePlayer`, which plays sounds and haptics as the settings allow), `sounds.ts` (`WebAudioSounds`, the cues synthesised with Web Audio), `textSize.ts` (the phone's text size) |
+| `persistence/`                   | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore`, `browserStore()` and `PreferencesStore` (iOS); `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day), `EventStore` (boards won per event) and `SettingsStore` (sound, haptics) on top of it             |
+| `levelStrip.ts`                  | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                                     |
+| `ui/`                            | HUD (top bar and tool bar, stacked when a title does not fit), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), `SettingsSheet`, DOM helpers                                                                                                                                                         |
+| `route.ts`, `puzzles.ts`         | URL to route (home, calendar, league, credits, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                                  |
+| `strings.ts`                     | Every player-facing string, keyed, with `{placeholders}`, in English and Brazilian Portuguese; the locale (`localeFor`, `setLocale`), plurals (`tn`), league and drawing names, numbers, number words, ordinals and dates in the player's language                                                                                                                             |
 
 ### Progress and navigation
 
@@ -256,8 +257,9 @@ reward, no hint. A won board, once its last arrow has left, asks for the interst
 score screen follows when it closes. A lost board shows its sheet at once. While an ad loads or
 plays the board and its bars are `inert` (Back cannot leave the ad to show over another screen),
 the Hint button reads "Loading ad…" for a hint's ad, and the timer is held, with the page being
-hidden as the other reason to hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
-rejects) counts as no reward, or as an interstitial already over. The board's result is
+hidden as the other reason to hold it, so a hidden page during an ad does not restart the
+clock. An ad that fails (the promise rejects) counts as no reward, or as an interstitial
+already over. The board's result is
 recorded at the winning tap, before any ad, so leaving during the interstitial loses nothing.
 
 `ScoreScreen` (`ui/score.ts`) covers the play screen until the player moves on. `App.record`
@@ -304,11 +306,20 @@ synthesises each cue from a few oscillator tones and lets go of their nodes when
 opens its `AudioContext` on the first cue. A browser lets the audio start only after a tap, so
 a cue waiting for the audio is dropped once a newer cue comes, or after a second: a promotion as
 the page opens is silent in a browser rather than sounding with the next tap, and plays in the
-app, whose web view needs no tap. Where Web Audio is missing or fails, cues are silent. The play screen
-plays the board's cues, and `App` the promotion, when the league's summary of a promoted day
-shows (on the home screen or the league screen). The Settings sheet (`ui/settings.ts`) opens
-from the home screen's menu button: a switch per setting (haptics only in the app), Done and the
-puzzle picker.
+app, whose web view needs no tap. Where Web Audio is missing or fails, cues are silent. The
+play screen plays the board's cues, and `App` the promotion, when the league's summary of a
+promoted day shows (on the home screen or the league screen). The Settings sheet
+(`ui/settings.ts`) opens from the home screen's menu button: a switch per setting (haptics only
+in the app), Done, and links to the privacy choices (in the app, where `Platform.privacy` says
+the law asks for them, read as the sheet opens), the privacy policy, the credits and the puzzle
+picker. Escape closes it from anywhere while it is open.
+
+The Credits screen (`?credits`, `screens/credits.ts`) shows each bundled font and library with
+its licence in full, behind a disclosure. `credits/licences.ts` imports the licence files from
+the packages themselves (`node_modules/…/LICENSE?raw`), so the screen always shows what the
+build bundles. The privacy policy is a page of its own, `privacy.html` (built by Vite like
+`dev.html`), written in both languages; `src/privacy.ts` themes it and puts the player's
+language first.
 
 ### Accessibility
 
@@ -335,9 +346,11 @@ level strip's numbers and the league's tags, whose meaning the screen reader tex
 league, the sheets and the score) and the Hint button in each of its states to the width of a
 320, 375 and 390 px phone at 1, 1.25 and 1.5 times, in both languages: no sideways scroll, and
 no text spilling out of its box. With large text on a narrow phone the home screen's Daily and
-League cards stack (a container query in `rem`). When the board's title or its line would be cut, the HUD moves the chances and the timer
-to a row of their own (`Hud.fitTitle`). Reduced motion skips the board's animations, as before;
-the hinted arrow and blocked taps are marked by a wider stroke as well as by colour.
+League cards stack (a container query in `rem`; iOS 15, which has none, breaks a long title
+inside its card instead). When the board's title or its line would be cut, the HUD moves the
+chances and the timer to a row of their own (`Hud.fitTitle`). Reduced motion skips the board's
+animations, as before; the hinted arrow and blocked taps are marked by a wider stroke as well
+as by colour.
 
 ### iOS
 
@@ -347,18 +360,38 @@ The iOS app is the web build in Capacitor 8 (`apps/game/capacitor.config.ts`,
 `ios/App/CapApp-SPM/Package.swift` from the plugins installed (both are Capacitor's to write;
 the copied web build and `capacitor.config.json` are not committed). The project is iPhone
 only and portrait; Info.plist names AdMob's app id through the `ADMOB_APP_ID` build setting
-(Google's test app unless the build passes another) and declares no encryption beyond the
-system's.
+(Google's test app unless the build passes another), declares no encryption beyond the
+system's, and gives Apple's tracking prompt its text (`NSUserTrackingUsageDescription`, in
+`en.lproj` and `pt.lproj/InfoPlist.strings` too). `PrivacyInfo.xcprivacy` is the app's privacy
+manifest: no tracking and no data collected by the game's own code, and the one required-reason
+API it uses, UserDefaults (Capacitor's Preferences), for the app's own data (`CA92.1`). Both are
+in the Xcode project's resources.
 
 `main.ts` asks Capacitor whether it runs in the app. In a browser it uses `webPlatform`; in the
 app it imports `platform/native.ts`, a chunk of its own, so the web never loads the plugins.
 `nativePlatform` reads every saved key from `Preferences` into a `PreferencesStore` before the
 app starts (the game reads its records synchronously; writes go to memory at once and are
-saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads
-(each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine
+saved in order behind it), sets the status bar's dark text, asks for the player's choices
+about ads and starts AdMob after them (`AdConsent`), preloads both ads (each load waits for the
+SDK to have started), and maps the haptic cues to the Taptic Engine
 (`impact` light, `notification` warning, success, error, and a heavy impact then success for a
 promotion). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
+
+`AdConsent` (`ads/consent.ts`) asks for the player's choices while the game is already
+playable: Google's User Messaging Platform first (`requestConsentInfo`, then `showConsentForm`
+when a consent message is required and available), Apple's tracking prompt next if it has not
+been answered (the consent message's IDFA explainer may already have shown it), and
+`initialize` last. `AdMobAds` calls its `ready()` before every load, so no ad is requested
+before it resolves. It rejects when the player's choices allow none (`canRequestAds` false) or
+when the consent check fails (no network); the next load, when an ad is next needed, runs the
+flow again (a consent message then shows at that moment: an ad still loading when the form is
+answered is kept for the next one). Where the message says the player needs a way back to the
+choices (`privacyOptionsRequirementStatus`), Settings shows Privacy choices, which opens Google's
+privacy options form. The plugin as published wires its consent forms only in `initialize`,
+which Google's order puts last: `patches/@capacitor-community__admob@8.1.0.patch` (pnpm's
+`patchedDependencies`) wires them when the plugin loads, and a unit test reads the installed
+source to check the patch is there.
 
 `AdMobAds` loads each kind of ad ahead and shows it when its moment comes. The plugin's show
 calls do not say when an ad has gone, so it waits for the `Dismissed` or `FailedToShow` event,
@@ -366,7 +399,9 @@ and counts the reward from the `Rewarded` event (or the rewarded show call answe
 does only on a reward). An ad not loaded within four seconds is skipped: the interstitial
 resolves at once, the rewarded ad rejects, so the hint says no ad could be shown. A load that
 failed (no fill, no network) is tried once more within those four seconds; one still loading
-when they end is kept for next time, and the next ad loads as soon as one closes. The ad units
+when they end is kept for next time, and the next ad loads as soon as one closes. A loaded ad
+expires an hour after it loaded, so one loaded more than 55 minutes earlier is loaded again
+before it shows, within the same four seconds. The ad units
 are Google's iOS sample units unless the web build was made with `VITE_ADMOB_INTERSTITIAL_ID`
 and `VITE_ADMOB_REWARDED_ID`; they are requested as they are, never with the plugin's
 `isTesting`, which swaps in the plugin's own sample units (its interstitial one is Android's).
@@ -398,6 +433,24 @@ Two workflows build it on GitHub's macOS runners with the latest stable Xcode:
 Before the first run the owner registers the app id `com.jonathascosta.arrows` under
 Certificates, Identifiers & Profiles and creates the app in App Store Connect with it; the lane
 creates the App Store provisioning profile itself.
+
+### Store
+
+[STORE.md](STORE.md) lists what the App Store needs and the owner's steps. The listing's text,
+in English and Portuguese, is in `apps/game/ios/App/fastlane/metadata`, and its screenshots in
+`fastlane/screenshots`. `pnpm store:screenshots` makes them: Playwright drives the production
+build at 430 by 932 points at 3× (1290 by 2796 pixels) through six screens of a player a few
+weeks in (`apps/game/store/screenshots.spec.ts`, `playwright.store.config.ts`). The page's
+clock is paused at a fixed date and moves only when the script runs it (ahead after a board's
+first tap, so its timer shows a time, and a second before each picture), so every run takes
+the same pictures, byte for byte. Two more workflows run by hand:
+
+- `app-store-listing.yml` uploads the text and the screenshots with fastlane (`deliver`, lane
+  `listing`), with the App Store Connect API key of the TestFlight workflow. It uploads no build
+  and submits nothing.
+- `pages.yml` builds the web app for GitHub Pages and publishes the privacy policy page, the
+  icon and the build's `assets` folder, at the address the listing gives. The folder holds the
+  game's scripts too, but none of the game's pages is published.
 
 ## Enforced rules
 

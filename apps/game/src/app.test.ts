@@ -312,47 +312,47 @@ describe('App', () => {
   it('awards the trophy with the last day of a month', async () => {
     const store = new MemoryStore();
     const days: Record<string, { bestMs: number }> = {};
-    for (let day = 1; day < 30; day++) {
-      days[`2026-09-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
+    for (let day = 1; day < 31; day++) {
+      days[`2026-10-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
     }
     store.setItem(DAILY_KEY, JSON.stringify({ version: 1, days }));
-    const { app, root } = mount(store);
-    app.show('?daily=2026-09-30');
-    await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
+    const { app, root } = mount(store, '2026-11-03');
+    app.show('?daily=2026-10-31');
+    await solve(root, { kind: 'daily', dateKey: '2026-10-31' });
     expect(scorePart(root, 'lines')).toBe(
-      'A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
+      'A star for Sat 31 Oct. Every day of October 2026 won: a trophy!',
     );
     app.show('?calendar');
     expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
-      'September 2026: trophy, every day won',
+      'October 2026: trophy, every day won',
     );
   });
 
   it('shows the trophy of today’s month as soon as its last day is won', async () => {
     const store = new MemoryStore();
     const days: Record<string, { bestMs: number }> = {};
-    for (let day = 1; day < 30; day++) {
-      days[`2026-09-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
+    for (let day = 1; day < 31; day++) {
+      days[`2026-10-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
     }
     store.setItem(DAILY_KEY, JSON.stringify({ version: 1, days }));
-    const { app, root } = mount(store, '2026-09-30');
-    app.show('?daily=2026-09-30');
-    await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
-    expect(scorePart(root, 'lines')).toContain('Every day of September 2026 won: a trophy!');
+    const { app, root } = mount(store, '2026-10-31');
+    app.show('?daily=2026-10-31');
+    await solve(root, { kind: 'daily', dateKey: '2026-10-31' });
+    expect(scorePart(root, 'lines')).toContain('Every day of October 2026 won: a trophy!');
     app.show('?calendar');
-    expect(root.querySelector('.month-stars')?.textContent).toBe('30 of 30 stars');
+    expect(root.querySelector('.month-stars')?.textContent).toBe('31 of 31 stars');
     expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
-      'September 2026: trophy, every day won',
+      'October 2026: trophy, every day won',
     );
   });
 
   it('keeps focus on the same control when a refresh redraws the calendar', () => {
-    const { app, root, store } = mount();
+    const { app, root, store } = mount(new MemoryStore(), '2026-11-03');
     app.show('?calendar');
-    root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!.focus();
-    new DailyStore(store).recordWin('2026-10-02', 1000, '2026-10-03');
+    root.querySelector<HTMLElement>('[data-day="2026-11-02"]')!.focus();
+    new DailyStore(store).recordWin('2026-11-02', 1000, '2026-11-03');
     app.refresh();
-    const day = root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!;
+    const day = root.querySelector<HTMLElement>('[data-day="2026-11-02"]')!;
     expect(day.dataset.state).toBe('done');
     expect(document.activeElement).toBe(day);
     root.querySelector<HTMLElement>('.month-head .previous')!.focus();
@@ -368,54 +368,58 @@ describe('App', () => {
     expect(replaced).toEqual(['?calendar=2026-10']);
     app.show('?daily=2027-03-01');
     expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
-    app.show('?daily=2025-12-31');
-    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-01');
-    expect(replaced).toEqual(['?calendar=2026-10', '?calendar=2026-10', '?calendar=2026-01']);
+    // The day before the first daily leads to the first daily's month.
+    app.show('?daily=2026-09-30');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(replaced).toEqual(['?calendar=2026-10', '?calendar=2026-10', '?calendar=2026-10']);
     // Today and earlier days open.
     app.show('?daily=2026-10-03');
     expect(root.querySelector('.play h1')?.textContent).toBe('Daily · Oct 3, 2026');
   });
 
   it('shows the calendar for a month, keeping it inside the calendar', () => {
-    const { app, root, replaced } = mount();
+    const { app, root, replaced } = mount(new MemoryStore(), '2026-12-03');
     app.show('?calendar');
-    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-12');
     expect(replaced).toEqual([]);
+    app.show('?calendar=2026-11');
+    expect(root.querySelector('.month-title h2')?.textContent).toBe('November 2026');
+    // Before the first daily's month, and after today's.
     app.show('?calendar=2026-07');
-    expect(root.querySelector('.month-title h2')?.textContent).toBe('July 2026');
-    app.show('?calendar=2031-01');
     expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
-    expect(replaced).toEqual(['?calendar=2026-10']);
+    app.show('?calendar=2031-01');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-12');
+    expect(replaced).toEqual(['?calendar=2026-10', '?calendar=2026-12']);
   });
 
   it('moves between months in place, keeping the address and the focus in step', () => {
-    const { app, root, replaced } = mount();
+    const { app, root, replaced } = mount(new MemoryStore(), '2026-12-03');
     app.show('?calendar');
     root.querySelector<HTMLButtonElement>('.month-head .previous')!.click();
-    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-09');
-    expect(replaced).toEqual(['?calendar=2026-09']);
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-11');
+    expect(replaced).toEqual(['?calendar=2026-11']);
     expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
     root.querySelector<HTMLButtonElement>('.month-head .next')!.click();
-    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-10');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-12');
     // Next is disabled on today's month: focus moves to the other button.
     expect(root.querySelector<HTMLButtonElement>('.month-head .next')!.disabled).toBe(true);
     expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
     // A refresh redraws the month shown, not today's.
     root.querySelector<HTMLButtonElement>('.month-head .previous')!.click();
     app.refresh();
-    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-09');
+    expect(root.querySelector('.calendar')?.getAttribute('data-month')).toBe('2026-11');
   });
 
   it('leads a daily back to its month in the calendar', async () => {
-    const { app, root } = mount();
-    app.show('?daily=2026-09-12');
+    const { app, root } = mount(new MemoryStore(), '2026-11-03');
+    app.show('?daily=2026-10-12');
     const back = root.querySelector('.topbar .back')!;
-    expect(back.getAttribute('href')).toBe('./?calendar=2026-09');
+    expect(back.getAttribute('href')).toBe('./?calendar=2026-10');
     expect(back.getAttribute('aria-label')).toBe('Back to the calendar');
-    await loseBoard(root, { kind: 'daily', dateKey: '2026-09-12' });
+    await loseBoard(root, { kind: 'daily', dateKey: '2026-10-12' });
     const link = root.querySelector('.overlay a')!;
     expect(link.textContent).toBe('Calendar');
-    expect(link.getAttribute('href')).toBe('./?calendar=2026-09');
+    expect(link.getAttribute('href')).toBe('./?calendar=2026-10');
     // A level leads home again in the same screen.
     app.show('?level=2');
     expect(root.querySelector('.topbar .back')?.getAttribute('href')).toBe('./');

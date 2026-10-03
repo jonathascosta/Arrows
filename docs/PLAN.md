@@ -218,7 +218,7 @@ API within the budget in the product document, Android, iPad.
 | T7   | done  | [#8](https://github.com/jonathascosta/Arrows/pull/8)   |
 | T8   | owner | [#9](https://github.com/jonathascosta/Arrows/pull/9)   |
 | T9   | owner | [#10](https://github.com/jonathascosta/Arrows/pull/10) |
-| T10  | open  |                                                        |
+| T10  | owner | [#11](https://github.com/jonathascosta/Arrows/pull/11) |
 
 T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an
 iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts (the secrets
@@ -230,3 +230,12 @@ accessibility of 93 or more on every screen in both languages (`pnpm test:a11y`)
 assets still to come from Claude Design (character avatars, league badges, event art, the app
 icon) wait on the owner; the screens keep the initials, plain badges and the board thumbnail
 until then.
+
+T10 is built: the consent message and the tracking prompt before any ad, Privacy choices in
+Settings, the privacy manifest, the privacy policy (in the app and for GitHub Pages), Credits
+with the fonts' and libraries' licences, the store listing in English and Portuguese, the
+screenshots (`pnpm store:screenshots`), ads reloaded before they expire, and the first daily on
+1 October 2026. What only the owner can do is in [STORE.md](STORE.md): App Store Connect, the
+AdMob messages and units, GitHub Pages, Google's SKAdNetwork list, the App Privacy and age
+rating answers, and the review. The app icon still waits on Claude Design; the launch screen is
+the plain paper colour.

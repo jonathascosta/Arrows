@@ -17,6 +17,9 @@ describe('nativePlatform', () => {
     const platform = await nativePlatform(document);
     expect(platform.store).toBeInstanceOf(PreferencesStore);
     expect(platform.ads).toBeInstanceOf(AdMobAds);
+    // The choices about ads: offered once the consent check says the law asks for them.
+    expect(platform.privacy).not.toBeNull();
+    expect(platform.privacy?.required()).toBe(false);
   });
 
   it('shows the test ads when the puzzle picker turned them on, as on the web', async () => {

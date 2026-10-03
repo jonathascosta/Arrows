@@ -73,4 +73,29 @@ platform :ios do
     upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
     UI.success("Uploaded build #{build_number} to TestFlight")
   end
+
+  # Run by the App Store listing workflow (.github/workflows/app-store-listing.yml)
+  # from apps/game/ios/App: the text in fastlane/metadata and the screenshots in
+  # fastlane/screenshots (`pnpm store:screenshots`), in English and Portuguese.
+  desc "Upload the store listing, its text and screenshots, without a build or a submission"
+  lane :listing do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_API_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_API_ISSUER_ID"),
+      key_content: ENV.fetch("APP_STORE_CONNECT_API_KEY_P8"),
+      is_key_content_base64: true
+    )
+    deliver(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      overwrite_screenshots: true,
+      skip_binary_upload: true,
+      # Nobody is there to confirm the HTML preview, and nothing goes to review from here.
+      force: true,
+      submit_for_review: false,
+      run_precheck_before_submit: false
+    )
+  end
 end

@@ -97,10 +97,19 @@ for (const { locale, settings, hint, watch } of LANGUAGES) {
       await expectFits(page, 'home in Diamond');
     });
 
-    test('the calendar fits', async ({ page }) => {
-      await page.goto('./?calendar=2026-09');
+    test('the calendar and the credits fit', async ({ page }) => {
+      // November: "Novembro de 2026" is among the longest month titles.
+      await page.goto('./?calendar');
       await expect(page.locator('#month-title')).toBeVisible();
       await expectFits(page, 'calendar');
+      // Every licence open, with its long lines and links.
+      await page.goto('./?credits');
+      await page.locator('.credit-text').evaluateAll((details) => {
+        for (const element of details) element.setAttribute('open', '');
+      });
+      await expectFits(page, 'credits');
+      await page.goto('./privacy.html');
+      await expectFits(page, 'the privacy policy');
     });
 
     test('every league fits', async ({ page, touch }) => {

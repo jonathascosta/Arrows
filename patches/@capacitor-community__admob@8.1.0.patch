@@ -1,0 +1,20 @@
+diff --git a/ios/Sources/AdMobPlugin/AdMobPlugin.swift b/ios/Sources/AdMobPlugin/AdMobPlugin.swift
+index 2e450d3750cfa892dfdbfc69d091559d087ad2ab..9509dcf3273766b8f4bea102bd1fb11bff0379f3 100644
+--- a/ios/Sources/AdMobPlugin/AdMobPlugin.swift
++++ b/ios/Sources/AdMobPlugin/AdMobPlugin.swift
+@@ -65,6 +65,15 @@ public class AdMobPlugin: CAPPlugin, CAPBridgedPlugin {
+     private let adRewardInterstitialExecutor = AdRewardInterstitialExecutor()
+     private let consentExecutor = ConsentExecutor()
+ 
++    /**
++     * Arrows (its patches/ folder): the consent forms
++     * need the plugin before the SDK starts, so that consent can come first,
++     * as Google asks, and `initialize` only after it.
++     */
++    override public func load() {
++        self.consentExecutor.plugin = self
++    }
++
+     /**
+      * Enable SKAdNetwork to track conversions
+      * https://developers.google.com/admob/ios/ios14

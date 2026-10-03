@@ -1,0 +1,14 @@
+Arrows é um quebra-cabeça calmo e inteligente. O tabuleiro está cheio de caminhos em forma de flecha. Toque numa flecha com a saída livre e ela desliza para fora do tabuleiro. Toque numa que está bloqueada e você perde uma chance. Limpe o tabuleiro para vencer.
+
+• Níveis sem fim, do fácil ao muito difícil, com tabuleiros maiores à medida que você avança
+• Um desafio diário novo todo dia, igual para todos: uma estrela por dia vencido, um troféu por mês completo
+• Uma liga diária contra os personagens do jogo: termine entre os dez primeiros para subir, do Bronze à Lenda
+• Eventos sazonais com tabuleiros desenhados como figuras, e uma medalha para quem termina
+• Três chances por tabuleiro, um cronômetro e uma dica quando você travar
+• Use dois dedos para dar zoom nos tabuleiros maiores
+• Sem conta: seu progresso fica no seu telefone, e o jogo funciona sem internet
+• Em português e inglês, com som, vibração e texto grande
+
+Cada tabuleiro é criado no seu telefone a partir de uma semente, então sempre há outro, e todos têm solução.
+
+O jogo é gratuito e mostra anúncios: um depois de cada tabuleiro vencido e um antes de cada dica.

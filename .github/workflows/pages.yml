@@ -1,0 +1,56 @@
+name: Privacy policy
+
+# Publishes the privacy policy (apps/game/privacy.html, built with the game's theme)
+# to GitHub Pages, at https://jonathascosta.github.io/Arrows/privacy.html, the address
+# the App Store listing gives (docs/STORE.md). Only the policy's page is published, with
+# the build's assets folder (the game's scripts are in it too, but none of its pages).
+# Run by hand from the Actions tab once the owner has set Settings > Pages > Source to
+# "GitHub Actions", and again whenever the policy changes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the policy page
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @arrows/game build
+        env:
+          BASE_PATH: /Arrows/
+      # The page, the assets folder it loads from and the icon; not the game's own pages.
+      - name: Keep only the policy
+        run: |
+          mkdir site
+          cp apps/game/dist/privacy.html apps/game/dist/favicon.svg site/
+          cp -r apps/game/dist/assets site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    name: Publish to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}privacy.html
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

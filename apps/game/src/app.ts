@@ -2,6 +2,7 @@ import { scoreBoard } from '@arrows/engine';
 import type { AdProvider } from './ads/ads.ts';
 import { cuePlayer, SILENT } from './platform/cues.ts';
 import type { CuePlayer } from './platform/cues.ts';
+import type { PrivacyChoices } from './platform/platform.ts';
 import { SettingsStore } from './persistence/settings.ts';
 import type { DaySummary } from './league/provider.ts';
 import type { DateKey, MonthKey } from './daily/days.ts';
@@ -19,7 +20,9 @@ import {
   puzzleKey,
   routeSearch,
 } from './route.ts';
+import { FONTS, SOFTWARE } from './credits/licences.ts';
 import { CalendarScreen } from './screens/calendar.ts';
+import { CreditsScreen } from './screens/credits.ts';
 import { HomeScreen } from './screens/home.ts';
 import type { HomeEvent } from './screens/home.ts';
 import { daysLeft, eventOn, eventState, findEvent } from './events/catalog.ts';
@@ -50,6 +53,8 @@ export interface AppOptions {
   readonly haptics?: CuePlayer | null;
   /** The game's sounds; none when left out. */
   readonly sounds?: CuePlayer;
+  /** The player's choices about ads, in the iOS app; none when left out or null (the web). */
+  readonly privacy?: PrivacyChoices | null;
 }
 
 /** A selector that finds a control again after its screen is drawn anew, or null. */
@@ -118,6 +123,9 @@ export class App {
       case 'league':
         this.showLeague();
         return;
+      case 'credits':
+        this.showCredits();
+        return;
       case 'play':
         this.showPuzzle(route.ref);
         return;
@@ -130,7 +138,8 @@ export class App {
    * or when another tab has saved progress. A board in play is left as it is.
    */
   refresh(): void {
-    if (this.route.screen === 'play') return;
+    // The credits never change.
+    if (this.route.screen === 'play' || this.route.screen === 'credits') return;
     // The screen is drawn anew: keep focus on the same control, as far as it still exists.
     const focused = focusSelector(this.root.ownerDocument.activeElement, this.root);
     if (this.route.screen === 'home') this.showHome();
@@ -165,6 +174,7 @@ export class App {
             read: () => this.settings.settings,
             change: (change) => this.settings.set(change),
             hapticsAvailable: this.options.haptics !== undefined && this.options.haptics !== null,
+            privacy: this.options.privacy ?? null,
           },
           reducedMotion: this.options.reducedMotion,
         }),
@@ -196,6 +206,19 @@ export class App {
           onSummary: (summary) => this.heard(summary),
           clock: this.options.clock,
           homeHref: HOME_HREF,
+        }),
+    );
+  }
+
+  private showCredits(): void {
+    this.route = { screen: 'credits' };
+    this.swap(
+      () =>
+        new CreditsScreen(this.root, {
+          theme: this.options.theme,
+          homeHref: HOME_HREF,
+          fonts: FONTS,
+          software: SOFTWARE,
         }),
     );
   }

@@ -28,6 +28,9 @@ is next, and what done means) before changing anything.
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 - `pnpm test:a11y` — Lighthouse accessibility (above 90) on every screen of the production build,
   with the same Chromium. Run after changing a screen.
+- `pnpm store:screenshots` — the App Store screenshots from the production build, into
+  `apps/game/ios/App/fastlane/screenshots`. Run after changing a screen they show, and commit them.
+  What the owner does for the App Store is in `docs/STORE.md`.
 
 ## Rules
 
@@ -43,3 +46,5 @@ is next, and what done means) before changing anything.
   exempt and keep the theme's colours by hand; a test fails when the art's palette and the
   theme's drawing palette differ.
 - Code, comments and documents are in English; player-facing text goes through `strings.ts`.
+- The AdMob plugin carries a patch (`patches/`, see `docs/ARCHITECTURE.md`, iOS): an upgrade of
+  `@capacitor-community/admob` must carry it over, and a unit test fails without it.
