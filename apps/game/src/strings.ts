@@ -101,6 +101,7 @@ const en = {
   'status.hint': 'Try the highlighted arrow.',
   'status.noHint': 'No free arrow right now.',
   'status.noReward': 'No hint: the ad was closed before the end.',
+  'status.noAd': 'No hint: no ad could be shown.',
   'won.title': 'Solved',
   'won.heading': '{title} · {subtitle}',
   'won.time': 'Time',

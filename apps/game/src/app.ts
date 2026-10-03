@@ -319,7 +319,10 @@ export class App {
       chancesLost: result.chancesLost,
       event: ref.kind === 'event' && this.eventRuns(ref.eventId),
     };
-    // The score screen shows the board's points even when they already counted today.
+    // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
+    const award = this.league.record(board, this.options.clock());
+    if (award !== null) return { ...note, score: award.points, league: award };
+    // Already counted today: the score screen still shows what the board is worth.
     const score = scoreBoard({
       tier: board.tier,
       cellCount: board.cellCount,
@@ -327,10 +330,7 @@ export class App {
       mistakes: board.chancesLost,
       event: board.event,
     });
-    // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
-    const award = this.league.record(board, this.options.clock());
-    if (award === null) return { ...note, score };
-    return { ...note, score, league: award };
+    return { ...note, score };
   }
 
   private eventRuns(eventId: string): boolean {

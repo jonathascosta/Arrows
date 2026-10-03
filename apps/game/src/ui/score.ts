@@ -58,7 +58,7 @@ export class ScoreScreen {
     this.score = el(doc, 'span', { class: 'score-total' });
     this.scoreRow = row(t('won.score'), this.score, 'score-row score');
     this.leagueText = el(doc, 'span');
-    this.league = el(doc, 'p', { class: 'score-league' }, [
+    this.league = el(doc, 'p', { class: 'score-league', id: 'score-league' }, [
       el(doc, 'span', { class: 'score-dot', 'aria-hidden': 'true' }),
       this.leagueText,
     ]);
@@ -74,14 +74,15 @@ export class ScoreScreen {
         role: 'dialog',
         'aria-modal': 'true',
         'aria-labelledby': 'score-title',
-        'aria-describedby': 'score-lines',
+        // What the win did, the card's figures and the league line: what a glance takes in.
+        'aria-describedby': 'score-lines score-card score-league',
       },
       [
         el(doc, 'div', { class: 'score-column' }, [
           this.heading,
           el(doc, 'h2', { id: 'score-title' }, [t('won.title')]),
           this.lines,
-          el(doc, 'dl', { class: 'score-card' }, [
+          el(doc, 'dl', { class: 'score-card', id: 'score-card' }, [
             row(t('won.time'), timeValue),
             row(t('won.chancesLost'), this.chancesLost),
             this.scoreRow,

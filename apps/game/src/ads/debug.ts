@@ -70,12 +70,13 @@ export class DebugAds implements AdProvider {
       kind === 'interstitial' ? 'ads.test.interstitial' : 'ads.test.rewarded',
     );
     if (!this.element.isConnected) this.doc.body.append(this.element);
+    // Where focus goes back to, taken before the page behind goes out of reach.
+    const focused = this.doc.activeElement;
     // Everything else is out of reach while the ad shows, as under a real one.
     const behind = [...this.doc.body.children].filter(
       (child): child is HTMLElement => child !== this.element && !child.hasAttribute('inert'),
     );
     for (const element of behind) element.toggleAttribute('inert', true);
-    const focused = this.doc.activeElement;
 
     return new Promise((resolve) => {
       const close = (reward: boolean): void => {

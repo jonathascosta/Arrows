@@ -590,11 +590,12 @@ export class PlayScreen {
       this.reveal(session, shown);
       return;
     }
-    const earned = await this.showAd(() => this.ads.showRewarded(), false);
+    // Null when the ad could not show: no reward either, but nothing was closed early.
+    const earned = await this.showAd<boolean | null>(() => this.ads.showRewarded(), null);
     // The player may have left while the ad played; the board itself took no input.
     if (this.session !== session) return;
-    if (!earned) {
-      this.announce(t('status.noReward'));
+    if (earned !== true) {
+      this.announce(t(earned === null ? 'status.noAd' : 'status.noReward'));
       return;
     }
     const id = session.hint();

@@ -109,6 +109,7 @@ test.describe('with test ads on', () => {
     await press(page.locator('.toolbar .hint'), touch);
     await press(ad.getByRole('button', { name: 'Watch to the end' }), touch);
     await expect(page.locator('.arrow.hinted')).toHaveCount(1);
+    await expect(page.locator('.toolbar .hint .ad-badge')).toBeHidden();
     await press(page.locator('.toolbar .hint'), touch);
     await expect(ad).toBeHidden();
     await expect(ad).toHaveAttribute('data-rewarded', '2');

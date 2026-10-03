@@ -474,14 +474,21 @@ describe('PlayScreen', () => {
     const { root } = mount();
     const { puzzle } = generateLevel(1);
     const hint = root.querySelector<HTMLButtonElement>('.hint')!;
+    const marks = [...hint.querySelectorAll<HTMLElement>('.sr-only, .ad-badge')];
     expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint');
-    expect(hint.textContent).toContain('AD');
+    expect(marks.map((mark) => [mark.textContent, mark.hidden])).toEqual([
+      ['(plays an ad)', false],
+      ['AD', false],
+    ]);
     await pressHint(root);
     expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint shown');
+    // Showing the same hint again plays no ad, so the button no longer says it does.
+    expect(marks.every((mark) => mark.hidden)).toBe(true);
     const id = Number(root.querySelector('.hinted')!.getAttribute('data-arrow'));
     const { x, y } = head(puzzle.arrows[id]!);
     tapCell(root, x, y);
     expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint');
+    expect(marks.some((mark) => mark.hidden)).toBe(false);
   });
 
   it('zooms with the wheel and keyboard, and toggles the grid', () => {
@@ -642,6 +649,49 @@ describe('PlayScreen', () => {
     expect(root.querySelectorAll('.hinted')).toHaveLength(1);
   });
 
+  it('keeps the timer held while the page is hidden during an ad, until both are over', async () => {
+    const ads = new FakeAds();
+    const { root, clock } = mount({ kind: 'level', level: 1 }, undefined, ads);
+    const { puzzle } = generateLevel(1);
+    const first = freeArrows(createGame(puzzle))[0]!;
+    tapCell(root, head(puzzle.arrows[first]!).x, head(puzzle.arrows[first]!).y);
+    clock.now = 2000;
+    await pressHint(root);
+    // Hidden and shown again while the ad still plays: the clock stays stopped.
+    const visibility = vi.spyOn(document, 'visibilityState', 'get');
+    visibility.mockReturnValue('hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+    clock.now = 30_000;
+    visibility.mockReturnValue('visible');
+    document.dispatchEvent(new Event('visibilitychange'));
+    clock.now = 60_000;
+    await vi.advanceTimersByTimeAsync(300);
+    expect(root.querySelector('.time')?.textContent).toBe('00:02');
+    await ads.close();
+    clock.now = 63_000;
+    await vi.advanceTimersByTimeAsync(300);
+    expect(root.querySelector('.time')?.textContent).toBe('00:05');
+  });
+
+  it('gives no hint to another board opened while an ad played', async () => {
+    const ads = new FakeAds();
+    const { screen, root } = mount({ kind: 'level', level: 1 }, undefined, ads);
+    await pressHint(root);
+    screen.open({ kind: 'level', level: 2 });
+    const { puzzle } = generateLevel(2);
+    const play = root.querySelector<HTMLElement>('.play')!;
+    // The ad is still on screen: the new board takes no input under it.
+    const id = freeArrows(createGame(puzzle))[0]!;
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length));
+    await ads.close(true);
+    expect(root.querySelectorAll('.hinted')).toHaveLength(0);
+    expect(root.querySelector('.hint .tool-label')?.textContent).toBe('Hint');
+    // Once it has closed, the new board plays.
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 1));
+  });
+
   it('takes an ad that fails as no reward, and goes on to the score screen', async () => {
     const failing: AdProvider = {
       showInterstitial: () => Promise.reject(new Error('no ad to show')),
@@ -650,9 +700,7 @@ describe('PlayScreen', () => {
     const { root } = mount({ kind: 'level', level: 1 }, undefined, failing);
     await pressHint(root);
     expect(root.querySelectorAll('.hinted')).toHaveLength(0);
-    expect(root.querySelector('[aria-live]')?.textContent).toBe(
-      'No hint: the ad was closed before the end.',
-    );
+    expect(root.querySelector('[aria-live]')?.textContent).toBe('No hint: no ad could be shown.');
     await solveByTaps(root, generateLevel(1).puzzle);
     await vi.advanceTimersByTimeAsync(1000);
     expect(root.querySelector<HTMLElement>('.score-screen')!.hidden).toBe(false);

@@ -564,16 +564,19 @@ describe('App', () => {
       events: { 'autumn-2026': [1] },
     });
     const { analysis } = loadPuzzle(ref);
+    const points = scoreBoard({
+      tier: 'medium',
+      cellCount: analysis.cellCount,
+      timeSeconds: 0,
+      mistakes: 0,
+      event: true,
+    });
     expect(JSON.parse(store.getItem(LEAGUE_KEY)!)).toMatchObject({
-      points: scoreBoard({
-        tier: 'medium',
-        cellCount: analysis.cellCount,
-        timeSeconds: 0,
-        mistakes: 0,
-        event: true,
-      }),
+      points,
       boards: ['event:autumn-2026:1'],
     });
+    // The score screen shows the same figure, with the event bonus.
+    expect(scorePart(root, 'total')).toBe(String(points));
     const next = sheet.querySelector('button')!;
     expect(next.textContent).toBe('Next board');
     next.click();
@@ -608,17 +611,20 @@ describe('App', () => {
       events: { 'autumn-2026': [1, 2, 3, 4] },
     });
     const { tier, analysis } = loadPuzzle(ref);
+    const points = scoreBoard({
+      tier,
+      cellCount: analysis.cellCount,
+      timeSeconds: 0,
+      mistakes: 0,
+      event: false,
+    });
     expect(JSON.parse(store.getItem(LEAGUE_KEY)!)).toMatchObject({
       day: '2026-12-01',
-      points: scoreBoard({
-        tier,
-        cellCount: analysis.cellCount,
-        timeSeconds: 0,
-        mistakes: 0,
-        event: false,
-      }),
+      points,
       boards: ['event:autumn-2026:5'],
     });
+    // No bonus on the score screen either, once the event is over.
+    expect(scorePart(root, 'total')).toBe(String(points));
     app.show('');
     expect(root.querySelector('.event-card .card-note')?.textContent).toBe(
       '4 of 6 boards · Ended Mon 30 Nov',
