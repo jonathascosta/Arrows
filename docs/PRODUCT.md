@@ -61,7 +61,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   one-cell arrow points wherever the generator decided).
 - An arrow's tip and the end of its tail sit on the edges of its end cells, its corners on cell
   centres (see the grid, below). No point serves two arrows: an arrow never points straight into
-  the end of another's tail, and two tails never meet back to back.
+  the end of another's tail, and two tails never meet back to back (on a drawing, where two
+  colours cannot be joined, this rests on retries and could very rarely fail).
 - Tapping an arrow is a valid move when the straight ray from its head to the edge of the board
   is empty. The arrow then slides out: the head moves along the ray and the body follows the
   head's track. Its cells become empty.

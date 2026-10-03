@@ -121,7 +121,7 @@ What the measurements say (T14, a player taking any free arrow): Easy and Medium
 arrows at a time on any board, so their playable share falls with size, the main knob there. The
 scored peel brings Hard to about 3 free arrows (arrows of about 6 cells) and Super Hard to about
 2.5 (about 8 cells, 3 or fewer free on four steps in five), with about a third of newly freed
-arrows pointing the way of the one just removed, down from about 43%. Generation stays under 60 ms
+arrows pointing the way of the one just removed, down from about 43%. Generation stays under about 70 ms
 for any board in Node; the calibration suite allows a second. Picking the hardest of several
 candidates trims easy outliers. The bands overlap on purpose, as in the reference game, where the
 label is relative to the position on the level path.

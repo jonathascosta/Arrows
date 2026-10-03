@@ -122,7 +122,7 @@ describe('separateEnds', () => {
     expect(result.left).toBe(1);
   });
 
-  it('property: no two ends share a node, on thousands of boards of every tier', () => {
+  it('property: no two ends share a node, on over a thousand boards of every tier', () => {
     let fixes = 0;
     for (const tier of TIER_ORDER) {
       const { partition, peel } = TIERS[tier];
@@ -151,6 +151,29 @@ describe('separateEnds', () => {
     }
     // The fix runs for real in this sweep.
     expect(fixes).toBeGreaterThan(100);
+  });
+
+  it('leaves few single candidates with ends of two colours facing, on every drawing', () => {
+    // Two colours cannot be joined, so band selection retries a candidate that keeps such ends.
+    // A drawing where many candidates do would make a conflict on a shipped board likely.
+    for (const drawing of DRAWINGS) {
+      let conflicted = 0;
+      let total = 0;
+      for (const tier of TIER_ORDER) {
+        const { partition, peel } = TIERS[tier];
+        for (let i = 0; i < 10; i++) {
+          const { endConflicts: left } = generatePuzzle({
+            mask: drawingMask(drawing),
+            seed: `ends:candidate:${drawing.id}:${tier}:${i}`,
+            partition,
+            peel,
+          });
+          total++;
+          if (left > 0) conflicted++;
+        }
+      }
+      expect(conflicted / total, drawing.id).toBeLessThan(0.3);
+    }
   });
 
   it('property: no two ends share a node on the drawings, at every tier, in both ray modes', () => {
