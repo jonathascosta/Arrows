@@ -139,13 +139,14 @@ test('the losing tap flashes red, and the board fades only under the sheet', asy
   // is frozen, so the 280 ms flash cannot run out while the test reads it,
   // however slow the machine; time moves only when the test says so.
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.clock.install();
+  // Both ends pinned: the test does not depend on today's date.
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   const { puzzle } = generateLevel(1);
   const free = new Set(freeArrows(createGame(puzzle)));
   const id = puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
   await page.goto('./?level=1');
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
-  await page.clock.pauseAt(new Date('2030-01-01T00:00:00Z'));
+  await page.clock.pauseAt(new Date('2026-01-01T00:01:00Z'));
   const colorOf = (selector: string) =>
     page.locator(selector).evaluate((element) => getComputedStyle(element).color);
   const tokens = await page.evaluate(() => {
