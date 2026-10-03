@@ -142,16 +142,25 @@ describe('exitTrack', () => {
 });
 
 describe('gridData and bounds', () => {
-  it('draws each edge of a rectangle once', () => {
-    // 2x1: 3 vertical edges and 4 horizontal ones.
-    const d = gridData(rectangleMask(2, 1));
-    expect(d.match(/v1/g)).toHaveLength(3);
-    expect(d.match(/h1/g)).toHaveLength(4);
+  it('runs through the cell centres, one line per row and per column of a rectangle', () => {
+    // 2x1: one row, two columns, each across the board from edge to edge.
+    expect(gridData(rectangleMask(2, 1))).toBe('M0 0.5H2M0.5 0V1M1.5 0V1');
+  });
+
+  it('runs where the arrows run', () => {
+    // A horizontal arrow's body and ray lie on its row's line, through the centres.
+    const d = gridData(rectangleMask(3, 2));
+    expect(d).toContain('M0 0.5H3');
+    expect(d).toContain('M0 1.5H3');
+    expect(d).toContain('M2.5 0V2');
   });
 
   it('skips inactive cells of a drawing', () => {
-    const d = gridData(maskFromAscii(['A.', '..']));
-    expect(d).toBe('M0 0h1M0 0v1M1 0v1M0 1h1');
+    expect(gridData(maskFromAscii(['A.', '..']))).toBe('M0 0.5H1M0.5 0V1');
+  });
+
+  it('breaks a line where a drawing has a gap', () => {
+    expect(gridData(maskFromAscii(['A.A']))).toBe('M0 0.5H1M2 0.5H3M0.5 0V1M2.5 0V1');
   });
 
   it('adds the margin around the board', () => {

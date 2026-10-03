@@ -74,7 +74,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   rewarded ad: watched to the end, the hint shows; closed early, or when no ad can be shown,
   there is no hint. While a hint is on the board, pressing Hint again brings that arrow back into
   view without another ad, and the button shows no ad badge. The timer stops while the ad plays.
-- Grid toggle: shows the cell grid under the paths, for players who want to read the board.
+- Grid toggle: shows the lines the arrows run on, through the cells' centres, under the paths.
+  An arrow's ray runs along one of them, so a player can follow it to the first arrow in its way.
 - Pinch zoom and pan on the board (wheel and drag on desktop). Hit testing is by cell at the
   current scale, not by distance to the stroke; big boards are unplayable otherwise. The board
   sits between the top bar and the tool bar. A double tap on empty space resets the zoom; taps on

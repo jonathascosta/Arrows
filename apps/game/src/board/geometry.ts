@@ -119,17 +119,30 @@ export function exitDuration(travel: number, motion: ThemeMotion): number {
   return Math.min(motion.exitMaxMs, Math.max(motion.exitMinMs, ms));
 }
 
-/** Cell grid lines for the active cells, each edge drawn once. */
+/**
+ * The grid: the lines the arrows run on, through the cells' centres, one per
+ * row and per column across each run of active cells, from edge to edge. An
+ * arrow's ray runs along one of them, so a player can follow it to the first
+ * arrow in its way.
+ */
 export function gridData(mask: Mask): string {
   const active = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.active[y * mask.width + x] === 1;
   const parts: string[] = [];
   for (let y = 0; y < mask.height; y++) {
     for (let x = 0; x < mask.width; x++) {
-      if (!active(x, y)) continue;
-      parts.push(`M${x} ${y}h1`, `M${x} ${y}v1`);
-      if (!active(x + 1, y)) parts.push(`M${x + 1} ${y}v1`);
-      if (!active(x, y + 1)) parts.push(`M${x} ${y + 1}h1`);
+      if (!active(x, y) || active(x - 1, y)) continue;
+      let end = x + 1;
+      while (active(end, y)) end++;
+      parts.push(`M${x} ${y + 0.5}H${end}`);
+    }
+  }
+  for (let x = 0; x < mask.width; x++) {
+    for (let y = 0; y < mask.height; y++) {
+      if (!active(x, y) || active(x, y - 1)) continue;
+      let end = y + 1;
+      while (active(x, end)) end++;
+      parts.push(`M${x + 0.5} ${y}V${end}`);
     }
   }
   return parts.join('');

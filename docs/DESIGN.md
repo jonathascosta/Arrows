@@ -42,7 +42,7 @@ The theme object in `apps/game/src/theme/` carries these names and values.
 | `stroke`        | `#2B2925`                                                             | Arrow bodies on plain boards                                                                                           |
 | `head`          | `#2B2925`                                                             | Arrowheads on plain boards                                                                                             |
 | `hint`          | `#C9741F`                                                             | Hinted arrow, stars, small accents                                                                                     |
-| `grid`          | `#E8E1D3`                                                             | Cell grid under the board                                                                                              |
+| `grid`          | `#E8E1D3`                                                             | Grid lines under the board, through the cell centres                                                                   |
 | `chance`        | `#2B2925`                                                             | Intact chance                                                                                                          |
 | `chanceLost`    | `#D6CEBF`                                                             | Lost chance; the faded board after a loss                                                                              |
 | `blocked`       | `#B93D2A`                                                             | Blocked arrow flash, breaking chance                                                                                   |
@@ -74,7 +74,8 @@ palette and the hint and blocked states.
 
 Stroke `0.12` of a cell, round cap and round join, lines through cell centres. Arrowhead: a
 sharp-cornered triangle, tip `0.42` from the head cell's centre, length `0.42` (so its base sits
-on the centre), width `0.34`. The grid is a hairline in `grid`.
+on the centre), width `0.34`. The grid is a hairline in `grid` through the cell centres, the
+lines the arrows and their rays run on, across each run of active cells from edge to edge.
 
 ## Chances
 
