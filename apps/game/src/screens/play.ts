@@ -2,6 +2,7 @@ import { head } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
 import { NO_ADS } from '../ads/ads.ts';
 import type { AdProvider } from '../ads/ads.ts';
+import type { Haptics } from '../platform/haptics.ts';
 import { cellCenter, boardBounds } from '../board/geometry.ts';
 import type { GestureAction } from '../board/gestures.ts';
 import { GestureTracker } from '../board/gestures.ts';
@@ -104,6 +105,8 @@ export interface PlayScreenOptions {
   readonly next?: (ref: PuzzleRef) => NextBoard | null;
   /** The interstitial before the score screen and the rewarded ad before a hint; none when left out. */
   readonly ads?: AdProvider;
+  /** What a tap did, felt on the phone; nothing when left out. */
+  readonly haptics?: Haptics;
 }
 
 /** Why the timer is held: the page is hidden, or an ad is playing. */
@@ -328,8 +331,12 @@ export class PlayScreen {
    * answer; an ad that fails gives `failed` (no reward, or straight on).
    */
   private async showAd<T>(show: () => Promise<T>, failed: T): Promise<T> {
+    const focused = this.element.ownerDocument.activeElement;
     this.adShowing = true;
     this.hold('ad');
+    // Out of reach while the ad loads too (up to a few seconds), so Back cannot
+    // leave the ad to show over another screen.
+    this.coverBoard();
     try {
       return await show();
     } catch {
@@ -337,6 +344,10 @@ export class PlayScreen {
     } finally {
       this.adShowing = false;
       this.release('ad');
+      if (!this.overlay.visible && !this.score.visible) {
+        for (const element of this.background()) element.toggleAttribute('inert', false);
+        if (focused instanceof HTMLElement && focused.isConnected) focused.focus();
+      }
     }
   }
 
@@ -556,8 +567,11 @@ export class PlayScreen {
         void this.renderer.remove(result.arrowId, result.rayLength);
         this.refresh();
         if (session.state.status === 'won') {
+          this.options.haptics?.play('win');
           this.report('won');
           void this.finish('won');
+        } else {
+          this.options.haptics?.play('remove');
         }
         return;
       case 'blocked':
@@ -567,8 +581,11 @@ export class PlayScreen {
         this.refresh();
         this.announce(tn('status.blocked', session.state.lives));
         if (session.state.status === 'lost') {
+          this.options.haptics?.play('lose');
           this.report('lost');
           void this.finish('lost');
+        } else {
+          this.options.haptics?.play('block');
         }
         return;
     }
@@ -590,8 +607,11 @@ export class PlayScreen {
       this.reveal(session, shown);
       return;
     }
+    // "Loading ad…" until it shows; a network ad can take a few seconds.
+    this.hud.setHintLoading(true);
     // Null when the ad could not show: no reward either, but nothing was closed early.
     const earned = await this.showAd<boolean | null>(() => this.ads.showRewarded(), null);
+    this.hud.setHintLoading(false);
     // The player may have left while the ad played; the board itself took no input.
     if (this.session !== session) return;
     if (earned !== true) {

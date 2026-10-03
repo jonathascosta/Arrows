@@ -1,0 +1,25 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { ADS_KEY, NO_ADS } from '../ads/ads.ts';
+import { DebugAds } from '../ads/debug.ts';
+import { NO_HAPTICS } from './haptics.ts';
+import { webPlatform } from './platform.ts';
+
+describe('webPlatform', () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('keeps records in localStorage, shows no ads and plays no haptics', () => {
+    const platform = webPlatform(document);
+    platform.store.setItem('arrows.test', 'kept');
+    expect(localStorage.getItem('arrows.test')).toBe('kept');
+    expect(platform.ads).toBe(NO_ADS);
+    expect(platform.haptics).toBe(NO_HAPTICS);
+    expect(() => platform.haptics.play('win')).not.toThrow();
+  });
+
+  it('shows the test ads when the puzzle picker turned them on', () => {
+    localStorage.setItem(ADS_KEY, 'test');
+    expect(webPlatform(document).ads).toBeInstanceOf(DebugAds);
+  });
+});

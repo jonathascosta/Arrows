@@ -22,6 +22,8 @@ is next, and what done means) before changing anything.
 - `pnpm dev` — the app at http://localhost:5173 (`/dev.html` opens any puzzle by seed).
 - `pnpm drawings` — converts the PNG art in `art/drawings/` to `packages/engine/src/drawings/art.ts`;
   never edit that file by hand. `pnpm drawings:check` (CI) fails when the two differ.
+- `pnpm ios:sync` — builds the app and copies it into the Xcode project (`apps/game/ios`). The
+  iOS build itself runs only on macOS (the `iOS` workflow); TestFlight uploads run by hand.
 - `pnpm test:e2e` — Playwright on the production build, phone and desktop profiles. In cloud
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 

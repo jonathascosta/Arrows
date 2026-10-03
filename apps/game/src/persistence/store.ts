@@ -1,8 +1,8 @@
 /**
- * Where the app keeps what it remembers between visits. The browser's
- * localStorage in the app, memory in tests; later the iOS Preferences plugin
- * (T8). Writes never throw: a full or blocked storage loses the write, not
- * the game.
+ * Where the app keeps what it remembers between visits: the browser's
+ * localStorage on the web, Capacitor's Preferences in the iOS app
+ * (`PreferencesStore`), memory in tests. Writes never throw: a full or blocked
+ * storage loses the write, not the game.
  */
 export interface KeyValueStore {
   getItem(key: string): string | null;

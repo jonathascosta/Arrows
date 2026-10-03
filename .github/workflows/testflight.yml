@@ -1,0 +1,87 @@
+name: TestFlight
+
+# Signs the iOS app for the App Store and uploads it to TestFlight, by hand from the
+# Actions tab. It needs the repository secrets listed in docs/ARCHITECTURE.md (iOS):
+#
+#   APPLE_TEAM_ID                         the team that owns the app
+#   APP_STORE_CONNECT_API_KEY_ID          an App Store Connect API key (App Manager role)
+#   APP_STORE_CONNECT_API_ISSUER_ID
+#   APP_STORE_CONNECT_API_KEY_P8          the key's .p8 file, base64
+#   IOS_DISTRIBUTION_CERTIFICATE_P12      an Apple Distribution certificate with its key, base64
+#   IOS_DISTRIBUTION_CERTIFICATE_PASSWORD the .p12's password
+#
+# and, once AdMob is set up, ADMOB_APP_ID, ADMOB_INTERSTITIAL_ID and ADMOB_REWARDED_ID,
+# all three or none: without them the build shows Google's test ads. It uploads only
+# what is on main.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: Build, sign and upload to TestFlight
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+      IOS_DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+      VITE_ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+      VITE_ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
+    steps:
+      - name: Check the secrets
+        run: |
+          missing=()
+          for name in APPLE_TEAM_ID APP_STORE_CONNECT_API_KEY_ID APP_STORE_CONNECT_API_ISSUER_ID \
+            APP_STORE_CONNECT_API_KEY_P8 IOS_DISTRIBUTION_CERTIFICATE_P12 \
+            IOS_DISTRIBUTION_CERTIFICATE_PASSWORD; do
+            if [ -z "${!name}" ]; then missing+=("$name"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository secrets: ${missing[*]} (see docs/ARCHITECTURE.md, iOS)"
+            exit 1
+          fi
+          # Real ad units only serve under their own AdMob app: all three, or none.
+          admob=0
+          for value in "$ADMOB_APP_ID" "$VITE_ADMOB_INTERSTITIAL_ID" "$VITE_ADMOB_REWARDED_ID"; do
+            if [ -n "$value" ]; then admob=$((admob + 1)); fi
+          done
+          if [ "$admob" -ne 0 ] && [ "$admob" -ne 3 ]; then
+            echo "::error::Set ADMOB_APP_ID, ADMOB_INTERSTITIAL_ID and ADMOB_REWARDED_ID together, or none"
+            exit 1
+          fi
+      # Every upload needs a higher build number than the last, a re-run included.
+      - name: Number the build
+        run: echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v7
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The owner's ad units, when set, go into the web build (VITE_ADMOB_*).
+      - run: pnpm --filter @arrows/game build
+      - run: pnpm --filter @arrows/game exec cap sync ios
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install fastlane
+        run: gem install fastlane --no-document --version '~> 2.228'
+      - name: Sign and upload
+        working-directory: apps/game/ios/App
+        run: fastlane beta

@@ -15,11 +15,11 @@ How the repository is put together and why. [PRODUCT.md](PRODUCT.md) says what w
 
 ## Packages
 
-| Package           | Role                                                                        | May import     |
-| :---------------- | :-------------------------------------------------------------------------- | :------------- |
-| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim        | Nothing        |
-| `apps/game`       | The Vite app: rendering, input, screens, persistence, ads (Capacitor later) | engine         |
-| `tools`           | Build-time tools: drawings from PNG art (`pngjs`), never shipped            | engine (types) |
+| Package           | Role                                                                       | May import     |
+| :---------------- | :------------------------------------------------------------------------- | :------------- |
+| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim       | Nothing        |
+| `apps/game`       | The Vite app: rendering, input, screens, persistence, ads; the iOS wrapper | engine         |
+| `tools`           | Build-time tools: drawings from PNG art (`pngjs`), never shipped           | engine (types) |
 
 Workspace packages export their TypeScript sources (`"exports": "./src/index.ts"`), so Vite,
 Vitest and `tsc` consume the source directly. The engine also has a real build (`tsc -p
@@ -147,8 +147,9 @@ daily, opens the calendar.
 | `league/`                | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                          |
 | `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
 | `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD, the lost sheet and the score screen; plays the rewarded ad before a hint and the interstitial before the score                                                                                                                                                                       |
-| `ads/`                   | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card) and `adsFor`, which picks one from the `arrows.ads` setting                                                                                                                                                                                                    |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day) and `EventStore` (boards won per event) on top of it                                                             |
+| `ads/`                   | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card), `AdMobAds` (iOS) and `adsFor`, which gives the test card when the `arrows.ads` setting asks for it                                                                                                                                                            |
+| `platform/`              | `Platform` (the store, the ads, the haptics): `webPlatform`, and `native.ts`, loaded only in the iOS app, with Capacitor's plugins; `Haptics` and its cues                                                                                                                                                                                                         |
+| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore`, `browserStore()` and `PreferencesStore` (iOS); `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day) and `EventStore` (boards won per event) on top of it                                   |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
 | `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), DOM helpers                                                                                                                                                                                                 |
 | `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
@@ -242,19 +243,20 @@ ended last: a thumbnail of the next board, a segment per board, and the days lef
 
 Ads sit behind `AdProvider` (`ads/ads.ts`): `showInterstitial()` resolves when the ad has
 closed, `showRewarded()` with whether the reward was earned. `App` takes one and hands it to the
-play screen; `main.ts` picks it with `adsFor`. The web build gets `NO_ADS`, which resolves at
-once and grants every reward, so nothing changes for a web player. The `arrows.ads` setting,
-which the puzzle picker turns on, swaps in `DebugAds`: a full-screen card appended to the body,
-with the rest of the page `inert` until it closes, counting what it showed in
-`data-interstitials` and `data-rewarded` for the end-to-end tests. The iOS build (T8) adds a
-provider for the ad network behind the same interface.
+play screen; the platform chooses it (`platform/`, see iOS). The web gets `NO_ADS`, which
+resolves at once and grants every reward, so nothing changes for a web player; the iOS app gets
+`AdMobAds`. On both, the `arrows.ads` setting, which the puzzle picker keeps in the web view's
+storage, swaps in `DebugAds` (`adsFor`): a full-screen card appended to the body, with the rest
+of the page `inert` until it closes, counting what it showed in `data-interstitials` and
+`data-rewarded` for the end-to-end tests.
 
 The play screen calls the provider in two places only. A hint asks for the rewarded ad first,
 unless a hinted arrow is still on the board, which is brought into view again for free; no
 reward, no hint. A won board, once its last arrow has left, asks for the interstitial, and the
-score screen follows when it closes. A lost board shows its sheet at once. While an ad plays the
-board takes no input and the timer is held, with the page being hidden as the other reason to
-hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
+score screen follows when it closes. A lost board shows its sheet at once. While an ad loads or
+plays the board and its bars are `inert` (Back cannot leave the ad to show over another screen),
+the Hint button reads "Loading ad…" for a hint's ad, and the timer is held, with the page being
+hidden as the other reason to hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
 rejects) counts as no reward, or as an interstitial already over. The board's result is
 recorded at the winning tap, before any ad, so leaving during the interstitial loses nothing.
 
@@ -282,6 +284,65 @@ was under the fingers goes under their midpoint, at the starting scale times the
 and the result is clamped once. Computing it step by step instead lets edge clamping move the
 board away from the fingers.
 
+### iOS
+
+The iOS app is the web build in Capacitor 8 (`apps/game/capacitor.config.ts`,
+`apps/game/ios/`). The Xcode project uses Swift Package Manager, so there is no CocoaPods:
+`cap sync ios` copies `dist/` into `ios/App/App/public` and writes
+`ios/App/CapApp-SPM/Package.swift` from the plugins installed (both are Capacitor's to write;
+the copied web build and `capacitor.config.json` are not committed). The project is iPhone
+only and portrait; Info.plist names AdMob's app id through the `ADMOB_APP_ID` build setting
+(Google's test app unless the build passes another) and declares no encryption beyond the
+system's.
+
+`main.ts` asks Capacitor whether it runs in the app. In a browser it uses `webPlatform`; in the
+app it imports `platform/native.ts`, a chunk of its own, so the web never loads the plugins.
+`nativePlatform` reads every saved key from `Preferences` into a `PreferencesStore` before the
+app starts (the game reads its records synchronously; writes go to memory at once and are
+saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads
+(each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine
+(`impact` light, `notification` warning, success, error). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
+`viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
+
+`AdMobAds` loads each kind of ad ahead and shows it when its moment comes. The plugin's show
+calls do not say when an ad has gone, so it waits for the `Dismissed` or `FailedToShow` event,
+and counts the reward from the `Rewarded` event (or the rewarded show call answering, which it
+does only on a reward). An ad not loaded within four seconds is skipped: the interstitial
+resolves at once, the rewarded ad rejects, so the hint says no ad could be shown. A load that
+failed (no fill, no network) is tried once more within those four seconds; one still loading
+when they end is kept for next time, and the next ad loads as soon as one closes. The ad units
+are Google's iOS sample units unless the web build was made with `VITE_ADMOB_INTERSTITIAL_ID`
+and `VITE_ADMOB_REWARDED_ID`; they are requested as they are, never with the plugin's
+`isTesting`, which swaps in the plugin's own sample units (its interstitial one is Android's).
+Before switching to real units, the owner registers the test iPhone as an AdMob test device, so
+tapping its own ads breaks no policy.
+
+Two workflows build it on GitHub's macOS runners with the latest stable Xcode:
+
+- `ios.yml` builds the app for the simulator without signing, on every push to `main` and on
+  pull requests that touch the app, the engine or the lockfile.
+- `testflight.yml`, run by hand on `main`, signs the app for the App Store and uploads it to
+  TestFlight with fastlane (`apps/game/ios/App/fastlane/Fastfile`, lane `beta`). The build number
+  is the run number times 100 plus the attempt, so a re-run still counts up. It needs these
+  repository secrets, and stops at once, naming the missing ones, without them; the three AdMob
+  ones go together or not at all, since real units serve only under their own AdMob app:
+
+| Secret                                  | What it is                                                             |
+| :-------------------------------------- | :--------------------------------------------------------------------- |
+| `APPLE_TEAM_ID`                         | The Apple Developer team that owns the app                             |
+| `APP_STORE_CONNECT_API_KEY_ID`          | An App Store Connect API key with the App Manager role: its key id     |
+| `APP_STORE_CONNECT_API_ISSUER_ID`       | The key's issuer id                                                    |
+| `APP_STORE_CONNECT_API_KEY_P8`          | The key's `.p8` file, base64                                           |
+| `IOS_DISTRIBUTION_CERTIFICATE_P12`      | An Apple Distribution certificate with its private key, `.p12`, base64 |
+| `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` | The `.p12`'s password                                                  |
+| `ADMOB_APP_ID` (optional)               | The AdMob app id (`ca-app-pub-…~…`); Google's test app without it      |
+| `ADMOB_INTERSTITIAL_ID` (optional)      | The AdMob interstitial unit; Google's test unit without it             |
+| `ADMOB_REWARDED_ID` (optional)          | The AdMob rewarded unit; Google's test unit without it                 |
+
+Before the first run the owner registers the app id `com.jonathascosta.arrows` under
+Certificates, Identifiers & Profiles and creates the app in App Store Connect with it; the lane
+creates the App Store provisioning profile itself.
+
 ## Enforced rules
 
 | Rule                                 | Enforced by                                                                        |
@@ -295,6 +356,7 @@ board away from the fingers.
 | Level content does not drift         | Fingerprint pins in `levels.test.ts`                                               |
 | Drawings are what the art makes      | `pnpm drawings:check` in CI; `tools/drawings.test.ts` round-trips every PNG        |
 | Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
+| Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`  |
 | Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
 
 ## Testing

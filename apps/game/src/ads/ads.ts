@@ -19,10 +19,13 @@ export const NO_ADS: AdProvider = {
   showRewarded: () => Promise.resolve(true),
 };
 
-/** The setting that turns the test ads on (the puzzle picker sets it). */
+/**
+ * The setting that turns the test ads on. The puzzle picker keeps it in the web
+ * view's storage (`browserStore`), in the browser and in the iOS app alike.
+ */
 export const ADS_KEY = 'arrows.ads';
 
-/** The test ads when the setting asks for them, no ads otherwise. */
-export function adsFor(store: KeyValueStore, doc: Document): AdProvider {
-  return store.getItem(ADS_KEY) === 'test' ? new DebugAds(doc) : NO_ADS;
+/** The test ads when the setting asks for them; otherwise the platform's ads, none on the web. */
+export function adsFor(store: KeyValueStore, doc: Document, ads: AdProvider = NO_ADS): AdProvider {
+  return store.getItem(ADS_KEY) === 'test' ? new DebugAds(doc) : ads;
 }

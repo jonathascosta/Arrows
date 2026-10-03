@@ -2,6 +2,7 @@ import { createGame, freeArrows, generateLevel, head, tap } from '@arrows/engine
 import type { Puzzle } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdProvider } from '../ads/ads.ts';
+import type { HapticCue } from '../platform/haptics.ts';
 import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
@@ -690,6 +691,89 @@ describe('PlayScreen', () => {
     // Once it has closed, the new board plays.
     tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
     expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 1));
+  });
+
+  it('plays a haptic cue for what each tap did', async () => {
+    const cues: HapticCue[] = [];
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const screen = new PlayScreen(root, {
+      theme: DEFAULT_THEME,
+      now: () => 0,
+      reducedMotion: () => true,
+      navigate: () => undefined,
+      homeHref: './',
+      haptics: { play: (cue) => cues.push(cue) },
+    });
+    screen.open({ kind: 'level', level: 1 });
+    const { puzzle } = generateLevel(1);
+    // A tap on empty space is nothing.
+    const stage = root.querySelector<HTMLElement>('.stage')!;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 3, clientX: 1, clientY: 1 }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 3, clientX: 1, clientY: 1 }));
+    expect(cues).toEqual([]);
+    await solveByTaps(root, puzzle);
+    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): HapticCue => 'remove');
+    expect(cues).toEqual([...removes, 'win']);
+    cues.length = 0;
+    screen.open({ kind: 'level', level: 1 });
+    loseLevelOne(root);
+    expect(cues).toEqual(['block', 'block', 'lose']);
+    screen.destroy();
+  });
+
+  it('covers the board while an ad loads or plays, and gives it back after', async () => {
+    const ads = new FakeAds();
+    const { root } = mount({ kind: 'level', level: 1 }, undefined, ads);
+    const hint = root.querySelector<HTMLButtonElement>('.hint')!;
+    const label = hint.querySelector('.tool-label')!;
+    hint.focus();
+    await pressHint(root);
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
+    }
+    expect(label.textContent).toBe('Loading ad…');
+    await ads.close(false);
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
+    }
+    expect(label.textContent).toBe('Hint');
+    expect(document.activeElement).toBe(hint);
+    await pressHint(root);
+    await ads.close(true);
+    expect(label.textContent).toBe('Hint shown');
+  });
+
+  it('plays no haptic cue for a tap the board does not take', async () => {
+    const cues: HapticCue[] = [];
+    const ads = new FakeAds();
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const screen = new PlayScreen(root, {
+      theme: DEFAULT_THEME,
+      now: () => 0,
+      reducedMotion: () => true,
+      navigate: () => undefined,
+      homeHref: './',
+      ads,
+      haptics: { play: (cue) => cues.push(cue) },
+    });
+    screen.open({ kind: 'level', level: 1 });
+    const { puzzle } = generateLevel(1);
+    const id = freeArrows(createGame(puzzle))[0]!;
+    // Under the rewarded ad.
+    await pressHint(root);
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    await ads.close(false);
+    expect(cues).toEqual([]);
+    // Under the score screen.
+    await solveByTaps(root, puzzle);
+    await vi.advanceTimersByTimeAsync(1000);
+    await ads.close();
+    cues.length = 0;
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    expect(cues).toEqual([]);
+    screen.destroy();
   });
 
   it('takes an ad that fails as no reward, and goes on to the score screen', async () => {

@@ -3,3 +3,5 @@ pnpm-lock.yaml
 **/coverage/
 **/test-results/
 **/playwright-report/
+# The iOS project is Xcode's and Capacitor's: they write its files.
+apps/game/ios/

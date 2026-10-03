@@ -104,8 +104,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
   figures, no pill.
 - The board fills the middle.
 - Bottom tool bar, two raised buttons: **Grid** (icon and label) and a wider **Hint** with an
-  `AD` badge at its end, since a new hint always plays a rewarded ad. After a hint the button
-  reads "Hint shown" and loses the badge: pressing it again shows the same arrow, with no ad.
+  `AD` badge at its end, since a new hint always plays a rewarded ad. While the ad loads it reads
+  "Loading ad…". After a hint it reads "Hint shown" and loses the badge: pressing it again shows
+  the same arrow, with no ad.
 
 ### Win, the score screen (after the interstitial)
 

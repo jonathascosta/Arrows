@@ -100,6 +100,33 @@ export default defineConfig([
   },
 
   {
+    // The web build never loads the native plugins: only the iOS platform module
+    // (loaded on demand, in the app) and tests may import them.
+    name: 'repo/native-plugins',
+    files: ['apps/game/src/**/*.ts'],
+    ignores: ['apps/game/src/platform/native.ts', 'apps/game/src/**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@capacitor/*', '!@capacitor/core', '@capacitor-community/*'],
+              message: 'Capacitor plugins load only in the app: import them in platform/native.ts.',
+            },
+            {
+              // A static import would pull every plugin into the web build; main.ts
+              // loads it with a dynamic import(), which this rule does not see.
+              regex: '(^|/)native(\\.ts)?$',
+              message: 'Load platform/native.ts only with a dynamic import(), in the app.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
     // Colours come from the theme object, so a theme is data (docs/PLAN.md).
     // styles.css is held to the same rule by src/styles.test.ts.
     name: 'repo/theme-colours',
