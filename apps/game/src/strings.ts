@@ -152,6 +152,18 @@ const en = {
   'settings.haptics': 'Haptics',
   'settings.picker': 'Puzzle picker',
   'settings.done': 'Done',
+  'settings.privacyChoices': 'Privacy choices',
+  'settings.privacyPolicy': 'Privacy policy',
+  'settings.credits': 'Credits',
+  'credits.title': 'Credits',
+  'credits.intro': 'Arrows is made with these fonts and this software. Thank you to their authors.',
+  'credits.fonts': 'Fonts',
+  'credits.software': 'Software',
+  'credits.ads': 'Ads',
+  'credits.adsBody':
+    'In the iPhone app, ads come from Google AdMob (the Google Mobile Ads SDK and the User Messaging Platform), under Google’s terms.',
+  'credits.licence': 'Licence: {licence}',
+  'credits.text': 'Licence text',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -310,6 +322,18 @@ const pt: Readonly<Record<StringKey, string>> = {
   'settings.haptics': 'Vibração',
   'settings.picker': 'Escolher quebra-cabeça',
   'settings.done': 'Pronto',
+  'settings.privacyChoices': 'Opções de privacidade',
+  'settings.privacyPolicy': 'Política de privacidade',
+  'settings.credits': 'Créditos',
+  'credits.title': 'Créditos',
+  'credits.intro': 'Arrows é feito com estas fontes e este software. Obrigado aos seus autores.',
+  'credits.fonts': 'Fontes',
+  'credits.software': 'Software',
+  'credits.ads': 'Anúncios',
+  'credits.adsBody':
+    'No app para iPhone, os anúncios vêm do Google AdMob (o Google Mobile Ads SDK e a User Messaging Platform), sob os termos do Google.',
+  'credits.licence': 'Licença: {licence}',
+  'credits.text': 'Texto da licença',
 };
 
 /** The languages the game speaks (docs/PRODUCT.md, Languages). */

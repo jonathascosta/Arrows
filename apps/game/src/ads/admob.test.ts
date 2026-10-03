@@ -1,6 +1,6 @@
 import { InterstitialAdPluginEvents, RewardAdPluginEvents } from '@capacitor-community/admob';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ADMOB_EVENTS, AdMobAds, TEST_AD_UNITS } from './admob.ts';
+import { ADMOB_EVENTS, AdMobAds, MAX_AD_AGE_MS, TEST_AD_UNITS } from './admob.ts';
 import type { AdMobApi, ListenerHandle } from './admob.ts';
 
 /** Promises the test settles by hand. */
@@ -154,6 +154,41 @@ describe('AdMobAds', () => {
       'rewarded',
       'interstitial',
     ]);
+  });
+
+  it('loads again an ad that waited longer than an ad lasts, before showing it', async () => {
+    const api = new FakeAdMob();
+    let now = 0;
+    const ads = new AdMobAds(api, { units: TEST_AD_UNITS, now: () => now });
+    ads.preload();
+    await settle();
+    api.loadAll();
+    await settle();
+    // Within the hour, the ad loaded ahead shows.
+    now = MAX_AD_AGE_MS - 1;
+    const first = ads.showInterstitial();
+    await settle();
+    expect(api.shows).toEqual(['interstitial']);
+    api.emit(ADMOB_EVENTS.interstitialDismissed);
+    await first;
+    api.loadAll();
+    await settle();
+    // An hour later the next one has expired: it loads again, then shows.
+    now += MAX_AD_AGE_MS + 1;
+    const second = ads.showInterstitial();
+    await settle();
+    expect(api.prepared.map((load) => load.kind)).toEqual([
+      'interstitial',
+      'rewarded',
+      'interstitial',
+      'interstitial',
+    ]);
+    expect(api.shows).toEqual(['interstitial']);
+    api.loadAll();
+    await settle();
+    expect(api.shows).toEqual(['interstitial', 'interstitial']);
+    api.emit(ADMOB_EVENTS.interstitialDismissed);
+    await second;
   });
 
   it('goes without the interstitial when it is not loaded in time, and keeps loading it', async () => {

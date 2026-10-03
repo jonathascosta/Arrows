@@ -8,6 +8,8 @@
     "src",
     "e2e",
     "a11y",
+    "store",
+    "playwright.store.config.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",

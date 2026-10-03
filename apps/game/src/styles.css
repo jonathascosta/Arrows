@@ -436,6 +436,9 @@ body {
 
 .sheet {
   width: 100%;
+  /* A sheet taller than the screen (large text on a small phone) scrolls. */
+  max-height: 100%;
+  overflow-y: auto;
   padding: 28px 24px calc(20px + env(safe-area-inset-bottom));
   border-radius: 28px 28px 0 0;
   background: var(--color-surface-raised);
@@ -519,6 +522,26 @@ body {
 }
 
 /* Settings (the home menu): a sheet with a switch per setting. */
+
+/* The links under Done: privacy choices (where required), policy, credits, picker. */
+.settings-links {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-links .text-button {
+  margin-top: 0;
+  padding: 12px 14px;
+}
+
+button.text-button {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 .settings-list {
   margin: 4px 0 22px;
@@ -988,6 +1011,12 @@ body {
   }
 }
 
+/* iOS 15 has no container queries: there, a title too long for its card breaks
+   inside a word rather than spill out of it. Elsewhere the cards stack first. */
+.mode-card .card-title {
+  overflow-wrap: anywhere;
+}
+
 .event-card {
   display: flex;
   align-items: center;
@@ -1077,7 +1106,8 @@ body {
 
 /* On the text screens a long title wraps, at any text size; the board's title is one line. */
 .calendar .title h1,
-.league-screen .title h1 {
+.league-screen .title h1,
+.credits-screen .title h1 {
   overflow: visible;
   line-height: 1.05;
   white-space: normal;
@@ -1264,6 +1294,126 @@ body {
 }
 
 /* Daily league */
+
+/* Documents: the privacy policy (privacy.html), in both languages, one after the other. */
+.doc {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+    calc(32px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+  color: var(--color-text);
+  line-height: 1.55;
+}
+
+.doc .back[hidden] {
+  display: none;
+}
+
+.doc article + article {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.doc h1 {
+  margin: 12px 0 4px;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.4rem;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.doc h2 {
+  margin: 28px 0 6px;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.doc-date {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.doc a:not(.round-button) {
+  color: var(--color-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.doc ul {
+  padding-left: 1.2em;
+}
+
+/* Credits (screens/credits.ts): the fonts and the software, each licence behind a disclosure. */
+.credits-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.credits-screen .topbar {
+  padding: 0;
+}
+
+.credits-intro,
+.credits-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.credits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.credit-name {
+  margin: 0;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 1.45rem;
+  font-weight: 400;
+}
+
+.credit-licence {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.credit-text summary {
+  margin-top: 8px;
+  padding: 6px 0;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Licence texts keep their lines, but long ones (and their links) wrap on a phone. */
+.credit-text pre {
+  margin: 6px 0 0;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 
 .league-screen {
   display: flex;

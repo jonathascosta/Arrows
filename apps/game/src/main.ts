@@ -52,6 +52,7 @@ const app = new App(root, {
   // No ads on the web; the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
   ads: platform.ads,
   haptics: platform.haptics,
+  privacy: platform.privacy,
   sounds: new WebAudioSounds(),
 });
 

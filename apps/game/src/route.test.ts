@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CREDITS_HREF,
   calendarHref,
   parseRoute,
   puzzleHref,
@@ -58,6 +59,7 @@ describe('parseRoute', () => {
       { screen: 'calendar', month: null },
       { screen: 'calendar', month: '2026-02' },
       { screen: 'league' },
+      { screen: 'credits' },
       play({ kind: 'level', level: 1 }),
       play({ kind: 'daily', dateKey: '2026-12-31' }),
       play({ kind: 'drawing', drawingId: 'heart', tier: 'superHard' }),
@@ -71,6 +73,7 @@ describe('parseRoute', () => {
     expect(calendarHref()).toBe('./?calendar');
     expect(calendarHref('2026-09')).toBe('./?calendar=2026-09');
     expect(routeHref({ screen: 'home' })).toBe('./');
+    expect(routeHref({ screen: 'credits' })).toBe(CREDITS_HREF);
   });
 });
 

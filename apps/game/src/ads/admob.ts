@@ -49,11 +49,19 @@ export interface AdMobOptions {
   /** How long a hint or a score waits for an ad still loading before going without. */
   readonly waitMs?: number;
   readonly onError?: (error: unknown) => void;
+  /** The clock, in milliseconds, for the age of a loaded ad. */
+  readonly now?: () => number;
 }
 
 type Kind = 'interstitial' | 'rewarded';
 
 const WAIT_MS = 4000;
+
+/**
+ * A loaded ad expires an hour after it loaded and can no longer show; one
+ * older than this is loaded again before it is needed.
+ */
+export const MAX_AD_AGE_MS = 55 * 60_000;
 
 /**
  * Ads from AdMob (docs/ARCHITECTURE.md, iOS). Each kind of ad is loaded ahead,
@@ -67,7 +75,13 @@ export class AdMobAds implements AdProvider {
   private readonly waitMs: number;
   private readonly onError: (error: unknown) => void;
   private readonly started: Promise<unknown>;
+  private readonly now: () => number;
   private readonly loads: Record<Kind, Promise<boolean> | null> = {
+    interstitial: null,
+    rewarded: null,
+  };
+  /** When each kind's ad finished loading, while it waits to be shown. */
+  private readonly loadedAt: Record<Kind, number | null> = {
     interstitial: null,
     rewarded: null,
   };
@@ -78,6 +92,7 @@ export class AdMobAds implements AdProvider {
     this.waitMs = options.waitMs ?? WAIT_MS;
     this.onError = options.onError ?? (() => undefined);
     this.started = options.started ?? Promise.resolve();
+    this.now = options.now ?? (() => Date.now());
   }
 
   /** Starts loading both ads, so the first hint and the first score need not wait. */
@@ -99,26 +114,39 @@ export class AdMobAds implements AdProvider {
 
   private load(kind: Kind): void {
     const options = { adId: this.units[kind] };
+    this.loadedAt[kind] = null;
     // The SDK must have started first: before, the plugin's show calls would never answer.
-    this.loads[kind] = this.started
+    const attempt = this.started
       .then(() =>
         kind === 'interstitial'
           ? this.api.prepareInterstitial(options)
           : this.api.prepareRewardVideoAd(options),
       )
       .then(
-        () => true,
+        () => {
+          // Unless another load has taken this one's place meanwhile.
+          if (this.loads[kind] === attempt) this.loadedAt[kind] = this.now();
+          return true;
+        },
         (error: unknown) => {
           this.onError(error);
           return false;
         },
       );
+    this.loads[kind] = attempt;
+  }
+
+  /** Whether the ad waiting to be shown has been loaded for too long to show. */
+  private stale(kind: Kind): boolean {
+    const at = this.loadedAt[kind];
+    return at !== null && this.now() - at > MAX_AD_AGE_MS;
   }
 
   /**
    * Whether an ad of this kind is loaded, waiting up to `waitMs` for it. A load
-   * that failed (no fill, no network) is tried once more within that wait; one
-   * still loading when the wait ends is kept for the next time.
+   * that failed (no fill, no network) is tried once more within that wait, and
+   * an ad loaded too long ago (`MAX_AD_AGE_MS`) is loaded again; one still
+   * loading when the wait ends is kept for the next time.
    */
   private async ready(kind: Kind): Promise<boolean> {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -127,7 +155,7 @@ export class AdMobAds implements AdProvider {
     });
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
-        if (this.loads[kind] === null) this.load(kind);
+        if (this.loads[kind] === null || this.stale(kind)) this.load(kind);
         const loaded = await Promise.race([this.loads[kind]!, late]);
         if (loaded !== false) return loaded === true;
         this.loads[kind] = null;
@@ -145,6 +173,7 @@ export class AdMobAds implements AdProvider {
    */
   private async present(kind: Kind): Promise<boolean> {
     this.loads[kind] = null;
+    this.loadedAt[kind] = null;
     const [dismissed, failedToShow] =
       kind === 'interstitial'
         ? [ADMOB_EVENTS.interstitialDismissed, ADMOB_EVENTS.interstitialFailedToShow]

@@ -7,6 +7,7 @@ import type { Progress } from '../persistence/progress.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
 import { AUTUMN_2026 } from '../events/catalog.ts';
 import type { CueSettings } from '../platform/cues.ts';
+import type { PrivacyChoices } from '../platform/platform.ts';
 import { HomeScreen } from './home.ts';
 import type { HomeEvent, HomeScreenOptions } from './home.ts';
 
@@ -19,7 +20,10 @@ const AUTUMN: HomeEvent = {
 };
 
 /** Settings kept in a plain object, with every change recorded. */
-function settingsControl(hapticsAvailable = false): {
+function settingsControl(
+  hapticsAvailable = false,
+  privacy: PrivacyChoices | null = null,
+): {
   control: HomeScreenOptions['settings'];
   changes: Partial<CueSettings>[];
 } {
@@ -34,6 +38,7 @@ function settingsControl(hapticsAvailable = false): {
         Object.assign(values, change);
       },
       hapticsAvailable,
+      privacy,
     },
   };
 }
@@ -101,8 +106,13 @@ describe('HomeScreen', () => {
     expect(switches[0]!.getAttribute('aria-checked')).toBe('false');
     switches[1]!.click();
     expect(settings.changes).toEqual([{ sound: false }, { haptics: false }]);
-    expect(sheet.querySelector('a')?.getAttribute('href')).toBe('dev.html');
-    expect(sheet.querySelector('a')?.textContent).toBe('Puzzle picker');
+    // Where no ad network runs (the web), no privacy choices: the policy, the credits, the picker.
+    const links = [...sheet.querySelectorAll('.settings-links > *')];
+    expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+      ['Privacy policy', 'privacy.html?from=game'],
+      ['Credits', './?credits'],
+      ['Puzzle picker', 'dev.html'],
+    ]);
     sheet.querySelector<HTMLButtonElement>('.button.primary')!.click();
     expect(root.querySelector('[data-overlay="settings"]')).toBeNull();
     expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(false);
@@ -126,6 +136,31 @@ describe('HomeScreen', () => {
     screen.destroy();
     expect(remove).toHaveBeenCalledWith('keydown', expect.any(Function));
     remove.mockRestore();
+  });
+
+  it('offers the privacy choices where the law asks for a way back to them', () => {
+    let required = false;
+    const shown: string[] = [];
+    const privacy: PrivacyChoices = {
+      required: () => required,
+      show: () => {
+        shown.push('form');
+        return Promise.resolve();
+      },
+    };
+    const { root } = mount({}, AUTUMN, settingsControl(true, privacy));
+    const menu = root.querySelector<HTMLButtonElement>('button.menu')!;
+    const choices = (): HTMLButtonElement | null =>
+      root.querySelector<HTMLButtonElement>('[data-overlay="settings"] .privacy-choices');
+    menu.click();
+    expect(choices()).toBeNull();
+    root.querySelector<HTMLButtonElement>('[data-overlay="settings"] .button.primary')!.click();
+    // Asked for consent meanwhile: the sheet reads it each time it opens.
+    required = true;
+    menu.click();
+    expect(choices()?.textContent).toBe('Privacy choices');
+    choices()!.click();
+    expect(shown).toEqual(['form']);
   });
 
   it('shows no haptics switch where there are no haptics (the web)', () => {

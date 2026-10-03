@@ -28,6 +28,9 @@ is next, and what done means) before changing anything.
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 - `pnpm test:a11y` — Lighthouse accessibility (above 90) on every screen of the production build,
   with the same Chromium. Run after changing a screen.
+- `pnpm store:screenshots` — the App Store screenshots from the production build, into
+  `apps/game/ios/App/fastlane/screenshots`. Run after changing a screen they show, and commit them.
+  What the owner does for the App Store is in `docs/STORE.md`.
 
 ## Rules
 

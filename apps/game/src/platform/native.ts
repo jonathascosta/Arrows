@@ -4,6 +4,7 @@ import { Preferences } from '@capacitor/preferences';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { AdMobAds, TEST_AD_UNITS } from '../ads/admob.ts';
 import { adsFor } from '../ads/ads.ts';
+import { AdConsent } from '../ads/consent.ts';
 import { PreferencesStore } from '../persistence/preferences.ts';
 import { browserStore } from '../persistence/store.ts';
 import type { Cue, CuePlayer } from './cues.ts';
@@ -53,12 +54,18 @@ export async function nativePlatform(doc: Document): Promise<Platform> {
   const store = await PreferencesStore.load(Preferences, report);
   // Dark text on the paper colour; the page itself keeps clear of the bar (safe-area insets).
   StatusBar.setStyle({ style: Style.Light }).catch(report);
-  // The ads load once the SDK has started; the game does not wait for it.
-  const started = AdMob.initialize();
+  // The player's choices about ads first, then the SDK; the ads load once it has
+  // started, and the game does not wait for any of it.
+  const consent = new AdConsent(AdMob, report);
+  const started = consent.start();
   started.catch(report);
   const admob = new AdMobAds(AdMob, { units: UNITS, started, onError: report });
   admob.preload();
+  const privacy = {
+    required: () => consent.privacyOptionsRequired,
+    show: () => consent.showPrivacyOptions(),
+  };
   // The test-ads switch is a setting of the puzzle picker, which keeps it in the web
   // view's storage (dev.ts), not with the player's records.
-  return { store, ads: adsFor(browserStore(), doc, admob), haptics };
+  return { store, ads: adsFor(browserStore(), doc, admob), haptics, privacy };
 }

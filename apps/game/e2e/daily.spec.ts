@@ -5,7 +5,8 @@ import type { Page } from '@playwright/test';
 // The calendar depends on today: pin the clock and the time zone. Only Date is
 // fixed; timers and animations run as usual.
 test.use({ timezoneId: 'Europe/Lisbon' });
-const TODAY = new Date('2026-10-14T10:00:00+01:00');
+// A Wednesday in November, the month after the first daily's (October 2026).
+const TODAY = new Date('2026-11-11T10:00:00Z');
 
 async function storeDays(page: Page, days: readonly string[]): Promise<void> {
   const value = JSON.stringify({
@@ -23,58 +24,59 @@ test.beforeEach(async ({ page }) => {
 
 test('the calendar shows the stored results, after a reload too', async ({ page }) => {
   await page.goto('./?calendar');
-  await expect(page.locator('.month-title h2')).toHaveText('October 2026');
-  await expect(page.locator('.month-stars')).toHaveText('0 of 31 stars');
-  await storeDays(page, ['2026-10-02', '2026-10-05', '2026-09-30']);
+  await expect(page.locator('.month-title h2')).toHaveText('November 2026');
+  await expect(page.locator('.month-stars')).toHaveText('0 of 30 stars');
+  await storeDays(page, ['2026-11-02', '2026-11-05', '2026-10-30']);
   await page.reload();
-  await expect(page.locator('.month-stars')).toHaveText('2 of 31 stars');
-  await expect(day(page, '2026-10-02')).toHaveAttribute('data-state', 'done');
-  await expect(day(page, '2026-10-05')).toHaveAttribute('data-state', 'done');
-  await expect(day(page, '2026-10-06')).toHaveAttribute('data-state', 'open');
-  await expect(day(page, '2026-10-14')).toHaveAttribute('aria-current', 'date');
+  await expect(page.locator('.month-stars')).toHaveText('2 of 30 stars');
+  await expect(day(page, '2026-11-02')).toHaveAttribute('data-state', 'done');
+  await expect(day(page, '2026-11-05')).toHaveAttribute('data-state', 'done');
+  await expect(day(page, '2026-11-06')).toHaveAttribute('data-state', 'open');
+  await expect(day(page, '2026-11-11')).toHaveAttribute('aria-current', 'date');
   await expect(page.locator('.trophy.missed .sr-only')).toHaveText(
-    'September 2026: 1 of 30 days won',
+    'October 2026: 1 of 31 days won',
   );
   await page.goto('./');
-  await expect(page.locator('a.daily .sr-only')).toHaveText('2 of 31 stars this month');
+  await expect(page.locator('a.daily .sr-only')).toHaveText('2 of 30 stars this month');
 });
 
 test('a past day opens the same puzzle as on its own day', async ({ page, touch }) => {
-  const { puzzle } = generateDaily('2026-10-02');
+  const { puzzle } = generateDaily('2026-11-02');
   // On the day itself.
-  await page.clock.setFixedTime(new Date('2026-10-02T09:00:00+01:00'));
-  await page.goto('./?daily=2026-10-02');
+  await page.clock.setFixedTime(new Date('2026-11-02T09:00:00Z'));
+  await page.goto('./?daily=2026-11-02');
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   const onTheDay = await bodies(page);
 
-  // Twelve days later, from the calendar.
+  // Nine days later, from the calendar.
   await page.clock.setFixedTime(TODAY);
   await page.goto('./?calendar');
-  await press(day(page, '2026-10-02'), touch);
-  await expect(page).toHaveURL(/\?daily=2026-10-02$/);
-  await expect(page.locator('h1')).toHaveText('Daily · Oct 2, 2026');
+  await press(day(page, '2026-11-02'), touch);
+  await expect(page).toHaveURL(/\?daily=2026-11-02$/);
+  await expect(page.locator('h1')).toHaveText('Daily · Nov 2, 2026');
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   expect(await bodies(page)).toEqual(onTheDay);
   // Its back button returns to its month.
   await press(page.getByRole('link', { name: 'Back to the calendar' }), touch);
-  await expect(page).toHaveURL(/\?calendar=2026-10$/);
+  await expect(page).toHaveURL(/\?calendar=2026-11$/);
 });
 
 test('days ahead cannot be opened, from the calendar or by a link', async ({ page, touch }) => {
   await page.goto('./?calendar');
-  const ahead = day(page, '2026-10-15');
+  const ahead = day(page, '2026-11-12');
   await expect(ahead).toHaveAttribute('data-state', 'locked');
   await expect(ahead).not.toHaveAttribute('href');
   await press(ahead, touch);
   await expect(page).toHaveURL(/\?calendar$/);
   await expect(page.locator('.play')).toHaveCount(0);
 
-  await page.goto('./?daily=2026-10-20');
+  await page.goto('./?daily=2026-11-20');
   await expect(page.locator('h1')).toHaveText('Daily challenge');
-  await expect(page).toHaveURL(/\?calendar=2026-10$/);
+  await expect(page).toHaveURL(/\?calendar=2026-11$/);
   await expect(page.locator('.play')).toHaveCount(0);
-  await page.goto('./?daily=2025-12-31');
-  await expect(page).toHaveURL(/\?calendar=2026-01$/);
+  // Nor days before the first daily, 1 October 2026.
+  await page.goto('./?daily=2026-09-30');
+  await expect(page).toHaveURL(/\?calendar=2026-10$/);
 });
 
 test('months move back and forth, and Play today opens today', async ({ page, touch }) => {
@@ -83,16 +85,18 @@ test('months move back and forth, and Play today opens today', async ({ page, to
   const previous = page.getByRole('button', { name: 'Previous month' });
   await expect(next).toBeDisabled();
   await press(previous, touch);
-  await expect(page.locator('.month-title h2')).toHaveText('September 2026');
-  await expect(page).toHaveURL(/\?calendar=2026-09$/);
-  await expect(page.locator('.month-days a[data-day]')).toHaveCount(30);
-  await press(next, touch);
   await expect(page.locator('.month-title h2')).toHaveText('October 2026');
+  await expect(page).toHaveURL(/\?calendar=2026-10$/);
+  await expect(page.locator('.month-days a[data-day]')).toHaveCount(31);
+  // The first daily's month: nothing before it.
+  await expect(previous).toBeDisabled();
+  await press(next, touch);
+  await expect(page.locator('.month-title h2')).toHaveText('November 2026');
 
   await expect(page.locator('#today-board')).toHaveText('Weekday board · Medium · 16 × 24');
   await press(page.getByRole('link', { name: 'Play today' }), touch);
-  await expect(page).toHaveURL(/\?daily=2026-10-14$/);
-  await expect(page.locator('h1')).toHaveText('Daily · Oct 14, 2026');
+  await expect(page).toHaveURL(/\?daily=2026-11-11$/);
+  await expect(page.locator('h1')).toHaveText('Daily · Nov 11, 2026');
 });
 
 test('winning a day earns its star, kept after a reload', async ({ page, touch }) => {
@@ -111,8 +115,12 @@ test('winning a day earns its star, kept after a reload', async ({ page, touch }
 });
 
 test('a long trophies row scrolls on its own, never the page', async ({ page }) => {
-  // Stars in every month from January to September: nine cards, wider than a phone.
-  const days = Array.from({ length: 9 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}-10`);
+  // Stars in every month from October 2026 to June 2027: nine cards, wider than a phone.
+  await page.clock.setFixedTime(new Date('2027-07-14T10:00:00+01:00'));
+  const days = Array.from({ length: 9 }, (_, i) => {
+    const month = new Date(Date.UTC(2026, 9 + i, 10));
+    return month.toISOString().slice(0, 10);
+  });
   await page.goto('./?calendar');
   await storeDays(page, days);
   await page.reload();

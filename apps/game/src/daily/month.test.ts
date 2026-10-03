@@ -37,65 +37,71 @@ describe('monthModel', () => {
   });
 
   it('navigates from the first daily’s month up to today’s', () => {
-    const october = monthModel('2026-10', '2026-10-14', new Set());
-    expect(october.previous).toBe('2026-09');
-    expect(october.next).toBeNull();
-    const first = monthModel(FIRST_MONTH, '2026-10-14', new Set());
+    // The first daily's month is the launch month, October 2026.
+    expect(FIRST_MONTH).toBe('2026-10');
+    const march = monthModel('2027-03', '2027-03-14', new Set());
+    expect(march.previous).toBe('2027-02');
+    expect(march.next).toBeNull();
+    const first = monthModel(FIRST_MONTH, '2027-03-14', new Set());
     expect(first.previous).toBeNull();
-    expect(first.next).toBe('2026-02');
-    expect(monthModel('2026-09', '2026-10-14', new Set()).next).toBe('2026-10');
+    expect(first.next).toBe('2026-11');
+    expect(monthModel('2027-02', '2027-03-14', new Set()).next).toBe('2027-03');
+    // In the launch month itself there is nowhere to go either way.
+    const launch = monthModel(FIRST_MONTH, '2026-10-14', new Set());
+    expect([launch.previous, launch.next]).toEqual([null, null]);
     // Days before the first daily are locked, like days ahead.
-    expect(monthModel('2025-12', '2026-10-14', new Set()).days.every((d) => !d.playable)).toBe(
+    expect(monthModel('2026-09', '2027-03-14', new Set()).days.every((d) => !d.playable)).toBe(
       true,
     );
   });
 
   it('clamps a month into the calendar', () => {
-    expect(clampMonth('2026-07', '2026-10-14')).toBe('2026-07');
-    expect(clampMonth('2027-03', '2026-10-14')).toBe('2026-10');
-    expect(clampMonth('2019-03', '2026-10-14')).toBe(FIRST_MONTH);
+    expect(clampMonth('2027-01', '2027-03-14')).toBe('2027-01');
+    expect(clampMonth('2027-07', '2027-03-14')).toBe('2027-03');
+    expect(clampMonth('2019-03', '2027-03-14')).toBe(FIRST_MONTH);
   });
 });
 
 describe('trophies', () => {
   it('shows earlier months with a star, newest first, complete or counted', () => {
     const finished = new Set([
-      ...days('2026-09', 1, 30), // all of September: a trophy
-      ...days('2026-07', 1, 29), // July missed by two days
-      '2026-03-05',
-      ...days('2026-10', 1, 14), // this month: not in the row
+      ...days('2027-09', 1, 30), // all of September: a trophy
+      ...days('2027-07', 1, 29), // July missed by two days
+      '2027-03-05',
+      ...days('2027-10', 1, 14), // this month: not in the row
     ]);
-    expect(trophies('2026-10-14', finished)).toEqual([
-      { month: '2026-09', stars: 30, total: 30, complete: true },
-      { month: '2026-07', stars: 29, total: 31, complete: false },
-      { month: '2026-03', stars: 1, total: 31, complete: false },
+    expect(trophies('2027-10-14', finished)).toEqual([
+      { month: '2027-09', stars: 30, total: 30, complete: true },
+      { month: '2027-07', stars: 29, total: 31, complete: false },
+      { month: '2027-03', stars: 1, total: 31, complete: false },
     ]);
   });
 
   it('shows today’s month once every day of it is won, on its last day', () => {
-    const september = new Set(days('2026-09', 1, 29));
-    expect(trophies('2026-09-30', september)).toEqual([]);
-    september.add('2026-09-30');
-    expect(trophies('2026-09-30', september)).toEqual([
-      { month: '2026-09', stars: 30, total: 30, complete: true },
+    const september = new Set(days('2027-09', 1, 29));
+    expect(trophies('2027-09-30', september)).toEqual([]);
+    september.add('2027-09-30');
+    expect(trophies('2027-09-30', september)).toEqual([
+      { month: '2027-09', stars: 30, total: 30, complete: true },
     ]);
     // An unfinished current month is still being played: not in the row.
-    expect(trophies('2026-10-14', new Set(days('2026-10', 1, 14)))).toEqual([]);
+    expect(trophies('2027-10-14', new Set(days('2027-10', 1, 14)))).toEqual([]);
   });
 
   it('is empty before any star, and ignores days outside the calendar', () => {
-    expect(trophies('2026-10-14', new Set())).toEqual([]);
-    expect(trophies('2026-10-14', new Set(['2025-12-31', '2027-01-01']))).toEqual([]);
+    expect(trophies('2027-10-14', new Set())).toEqual([]);
+    // Before the first daily, and ahead of today.
+    expect(trophies('2027-10-14', new Set(['2026-09-30', '2027-11-01']))).toEqual([]);
   });
 });
 
 describe('monthComplete', () => {
   it('is true once every day of the month is won', () => {
-    const september = new Set(days('2026-09', 1, 29));
-    expect(monthComplete('2026-09-10', '2026-10-14', september)).toBe(false);
-    september.add('2026-09-30');
-    expect(monthComplete('2026-09-10', '2026-10-14', september)).toBe(true);
+    const september = new Set(days('2027-09', 1, 29));
+    expect(monthComplete('2027-09-10', '2027-10-14', september)).toBe(false);
+    september.add('2027-09-30');
+    expect(monthComplete('2027-09-10', '2027-10-14', september)).toBe(true);
     // The current month cannot be complete before its last day.
-    expect(monthComplete('2026-10-14', '2026-10-14', new Set(days('2026-10', 1, 31)))).toBe(false);
+    expect(monthComplete('2027-10-14', '2027-10-14', new Set(days('2027-10', 1, 31)))).toBe(false);
   });
 });

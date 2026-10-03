@@ -7,10 +7,11 @@ export type MonthKey = string;
 
 /**
  * The first daily (docs/PRODUCT.md, Daily challenge): the calendar starts in
- * its month, and no earlier day can be opened. It moves to the launch month
- * before release (T10).
+ * its month, and no earlier day can be opened. It is the first day of the
+ * earliest month the game can launch in, so today's daily is never locked; a
+ * later launch only leaves a few past days to play.
  */
-export const DAILY_FIRST_DAY: DateKey = '2026-01-01';
+export const DAILY_FIRST_DAY: DateKey = '2026-10-01';
 
 const MONTH_KEY = /^(\d{4})-(0[1-9]|1[0-2])$/;
 

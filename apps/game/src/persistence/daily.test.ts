@@ -43,13 +43,15 @@ describe('DailyStore', () => {
 
   it('says when a first win completes its month', () => {
     const daily = new DailyStore(new MemoryStore());
-    for (let day = 1; day < 30; day++) {
-      const win = daily.recordWin(`2026-09-${String(day).padStart(2, '0')}`, 1000, TODAY);
+    // Today is in November: October, the first daily's month, is behind.
+    const today = '2026-11-14';
+    for (let day = 1; day < 31; day++) {
+      const win = daily.recordWin(`2026-10-${String(day).padStart(2, '0')}`, 1000, today);
       expect(win.monthComplete).toBe(false);
     }
-    expect(daily.recordWin('2026-09-30', 1000, TODAY).monthComplete).toBe(true);
+    expect(daily.recordWin('2026-10-31', 1000, today).monthComplete).toBe(true);
     // A replay in a complete month earns nothing new.
-    expect(daily.recordWin('2026-09-30', 900, TODAY).monthComplete).toBe(false);
+    expect(daily.recordWin('2026-10-31', 900, today).monthComplete).toBe(false);
   });
 
   it('never writes an out-of-date copy over another page’s results', () => {

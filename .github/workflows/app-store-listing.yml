@@ -1,0 +1,52 @@
+name: App Store listing
+
+# Uploads the store listing to App Store Connect, by hand from the Actions tab: the
+# text in apps/game/ios/App/fastlane/metadata and the screenshots in
+# apps/game/ios/App/fastlane/screenshots, in English and Portuguese. No build is
+# uploaded and nothing is submitted for review (docs/STORE.md). It needs the App
+# Store Connect API key of the TestFlight workflow:
+#
+#   APP_STORE_CONNECT_API_KEY_ID
+#   APP_STORE_CONNECT_API_ISSUER_ID
+#   APP_STORE_CONNECT_API_KEY_P8      the key's .p8 file, base64
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-store-listing
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: Upload the listing
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+    steps:
+      - name: Check the secrets
+        run: |
+          missing=()
+          for name in APP_STORE_CONNECT_API_KEY_ID APP_STORE_CONNECT_API_ISSUER_ID \
+            APP_STORE_CONNECT_API_KEY_P8; do
+            if [ -z "${!name}" ]; then missing+=("$name"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing repository secrets: ${missing[*]} (see docs/STORE.md)"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install fastlane
+        run: gem install fastlane --no-document --version '~> 2.228'
+      - name: Upload the listing
+        working-directory: apps/game/ios/App
+        run: fastlane listing
