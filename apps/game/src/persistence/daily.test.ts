@@ -62,6 +62,16 @@ describe('DailyStore', () => {
   });
 });
 
+it('leaves a newer build’s daily record alone', () => {
+  const store = new MemoryStore();
+  const newer = '{"version":2,"days":[]}';
+  store.setItem(DAILY_KEY, newer);
+  const daily = new DailyStore(store);
+  daily.recordWin('2026-10-02', 1000, TODAY);
+  expect(daily.finished()).toEqual(new Set(['2026-10-02']));
+  expect(store.getItem(DAILY_KEY)).toBe(newer);
+});
+
 describe('parseDailyResults', () => {
   it('keeps each valid day and drops the rest', () => {
     const parsed = parseDailyResults(

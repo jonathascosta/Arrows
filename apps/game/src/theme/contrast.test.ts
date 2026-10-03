@@ -49,7 +49,7 @@ const PAIRS: [string, string, string, number][] = [
   // Calendar: day numbers on a day cell, today's outline, stars and trophies.
   ['day number on a day cell', colors.text, colors.surface, 4.5],
   ['day number on a won day', colors.text, colors.surfaceRaised, 4.5],
-  ['locked day number on the page', colors.textMuted, colors.background, 4.5],
+  ['locked day number on the month card', colors.textMuted, colors.surfaceRaised, 4.5],
   ['today outline on a day cell', colors.primary, colors.surface, 3],
   ['star on a won day', colors.hint, colors.surfaceRaised, 3],
   ['trophy on its card', colors.hint, colors.surfaceRaised, 3],

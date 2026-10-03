@@ -1,5 +1,6 @@
 import { dailySpec } from '@arrows/engine';
 import type { DateKey, MonthKey } from '../daily/days.ts';
+import { isPlayableDay } from '../daily/days.ts';
 import { monthModel, trophies } from '../daily/month.ts';
 import type { DayCell } from '../daily/month.ts';
 import { tierLabel } from '../puzzles.ts';
@@ -29,6 +30,8 @@ export class CalendarScreen {
   readonly element: HTMLElement;
   private readonly options: CalendarScreenOptions;
   private readonly monthCard: HTMLElement;
+  /** Says the new month when the month buttons move, since focus stays on the button. */
+  private readonly status: HTMLElement;
   /** Listeners of the month shown, dropped when it changes. */
   private readonly disposers: (() => void)[] = [];
 
@@ -50,11 +53,14 @@ export class CalendarScreen {
       class: 'card month-card',
       'aria-labelledby': 'month-title',
     });
+    this.status = el(doc, 'p', { class: 'sr-only', 'aria-live': 'polite' });
     this.element = el(doc, 'main', { class: 'calendar' }, [
       top,
       this.monthCard,
       this.trophies(doc, theme, today, finished),
-      this.playToday(doc, today),
+      // A clock set before the first daily has no today to play.
+      ...(isPlayableDay(today, today) ? [this.playToday(doc, today)] : []),
+      this.status,
     ]);
     this.showMonth(options.month);
     root.replaceChildren(this.element);
@@ -134,6 +140,11 @@ export class CalendarScreen {
 
     // The pressed button may have just become disabled at either end: then the other one.
     if (focus !== undefined) {
+      this.status.textContent = t('calendar.moved', {
+        month: formatMonth(model.month),
+        n: model.stars,
+        total: model.total,
+      });
       const pressed = focus === 'previous' ? previous : next;
       (pressed.disabled ? (focus === 'previous' ? next : previous) : pressed).focus();
     }
@@ -150,35 +161,29 @@ export class CalendarScreen {
       const month = el(doc, 'span', { class: 'trophy-month', 'aria-hidden': 'true' }, [
         formatMonthShort(trophy.month, year),
       ]);
-      if (trophy.complete) {
-        return el(
-          doc,
-          'li',
-          {
-            class: 'trophy complete',
-            'aria-label': t('calendar.trophy', { month: formatMonth(trophy.month) }),
-          },
-          [iconSpan(doc, theme.icons.trophy, 'icon'), month],
-        );
-      }
-      return el(
-        doc,
-        'li',
-        {
-          class: 'trophy missed',
-          'aria-label': t('calendar.missedLabel', {
+      // Screen readers read the hidden sentence; the card's short text is for sight only.
+      const label = trophy.complete
+        ? t('calendar.trophy', { month: formatMonth(trophy.month) })
+        : t('calendar.missedLabel', {
             month: formatMonth(trophy.month),
             n: trophy.stars,
             total: trophy.total,
-          }),
-        },
-        [
-          el(doc, 'span', { class: 'trophy-count', 'aria-hidden': 'true' }, [
-            t('calendar.missed', { n: trophy.stars, total: trophy.total }),
-          ]),
+          });
+      const said = el(doc, 'span', { class: 'sr-only' }, [label]);
+      if (trophy.complete) {
+        return el(doc, 'li', { class: 'trophy complete' }, [
+          said,
+          iconSpan(doc, theme.icons.trophy, 'icon'),
           month,
-        ],
-      );
+        ]);
+      }
+      return el(doc, 'li', { class: 'trophy missed' }, [
+        said,
+        el(doc, 'span', { class: 'trophy-count', 'aria-hidden': 'true' }, [
+          t('calendar.missed', { n: trophy.stars, total: trophy.total }),
+        ]),
+        month,
+      ]);
     });
     return el(doc, 'section', { class: 'trophies', 'aria-labelledby': 'trophies-title' }, [
       el(doc, 'h2', { class: 'section-title', id: 'trophies-title' }, [t('calendar.trophies')]),

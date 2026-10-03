@@ -79,7 +79,9 @@ describe('CalendarScreen', () => {
   });
 
   it('moves between months, and stops at the first daily and at today', () => {
-    const { root, moves } = mount('2026-10', '2026-10-14');
+    const { root, moves } = mount('2026-10', '2026-10-14', ['2026-09-01']);
+    const status = root.querySelector('[aria-live="polite"]')!;
+    expect(status.textContent).toBe('');
     const next = (): HTMLButtonElement => root.querySelector('.month-head .next')!;
     const previous = (): HTMLButtonElement => root.querySelector('.month-head .previous')!;
     expect(next().disabled).toBe(true);
@@ -87,6 +89,8 @@ describe('CalendarScreen', () => {
     previous().click();
     expect(moves).toEqual(['2026-09']);
     expect(root.querySelector('.month-title h2')?.textContent).toBe('September 2026');
+    // Focus stays on the button, so the new month is said aloud.
+    expect(status.textContent).toBe('September 2026, 1 of 30 stars');
     expect(next().disabled).toBe(false);
     // Every day of September is in the past: all open.
     expect(root.querySelectorAll('.month-days a[data-day]')).toHaveLength(30);
@@ -102,10 +106,17 @@ describe('CalendarScreen', () => {
     const { root } = mount('2026-10', '2026-10-14', finished);
     const cards = [...root.querySelectorAll('.trophy-row li')];
     expect(cards.map((card) => card.className)).toEqual(['trophy complete', 'trophy missed']);
-    expect(cards[0]?.getAttribute('aria-label')).toBe('September 2026: trophy, every day won');
-    expect(cards[0]?.textContent).toBe('Sep');
-    expect(cards[1]?.getAttribute('aria-label')).toBe('August 2026: 29 of 31 days won');
-    expect(cards[1]?.textContent).toBe('29 of 31Aug');
+    // A hidden sentence for screen readers, the short text for sight.
+    const said = (card?: Element) => card?.querySelector('.sr-only')?.textContent;
+    const shown = (card?: Element) =>
+      [...(card?.querySelectorAll(':scope > [aria-hidden="true"]:not(.icon)') ?? [])]
+        .map((part) => part.textContent)
+        .join(' ');
+    expect(said(cards[0])).toBe('September 2026: trophy, every day won');
+    expect(shown(cards[0])).toBe('Sep');
+    expect(said(cards[1])).toBe('August 2026: 29 of 31 days won');
+    expect(shown(cards[1])).toBe('29 of 31 Aug');
+    expect(cards.some((card) => card.hasAttribute('aria-label'))).toBe(false);
 
     const empty = mount('2026-10', '2026-10-14', ['2026-10-01']);
     expect(empty.root.querySelector('.trophy-row')).toBeNull();
@@ -126,6 +137,12 @@ describe('CalendarScreen', () => {
     expect(weekend.root.querySelector('#today-board')?.textContent).toBe(
       'Weekend board · Hard · 18 × 27',
     );
+  });
+
+  it('offers no Play today while the clock is before the first daily', () => {
+    const { root } = mount('2026-01', '2025-11-20');
+    expect(root.querySelector('.play-today')).toBeNull();
+    expect(root.querySelectorAll('.month-days a[data-day]')).toHaveLength(0);
   });
 
   it('drops its listeners on destroy', () => {

@@ -149,11 +149,12 @@ strip is not tappable: Play opens the current level.
   Hard · 18 × 27", from the engine).
 
 As built in T4: days not won yet sit on `surface`; days ahead are bare muted numbers; the month
-buttons are round buttons, the disabled one faded. The trophies row shows each earlier month with
-at least one star and scrolls sideways; before any, it says how to earn a trophy. A daily's back
-button and its sheets' second link ("Calendar") lead to its month. The trophy is the `hint`
-colour, like the stars. The home screen's Daily card opens the calendar and shows the month's
-stars ("★ 10 of 31").
+buttons are round buttons, the disabled one faded. The trophies row shows the current month once
+it is complete and each earlier month with at least one star, and scrolls sideways; before any,
+it says how to earn a trophy. "Play today" is left out while the device's clock is before the
+first daily. A daily's back button and its sheets' second link ("Calendar") lead to its month.
+The trophy is the `hint` colour, like the stars. The home screen's Daily card opens the calendar
+and shows the month's stars ("★ 10 of 31").
 
 ### Daily league
 

@@ -35,6 +35,7 @@ const en = {
   'calendar.previous': 'Previous month',
   'calendar.next': 'Next month',
   'calendar.stars': '{n} of {total} stars',
+  'calendar.moved': '{month}, {n} of {total} stars',
   'calendar.days': 'Days of {month}',
   'calendar.today': 'today',
   'calendar.done': 'star earned',

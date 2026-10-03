@@ -90,20 +90,20 @@ export interface Trophy {
 }
 
 /**
- * The trophies row: every month before today's with at least one star, from
- * the most recent back to the first daily's month.
+ * The trophies row: today's month once every day of it is won (on its last
+ * day), then every earlier month with at least one star, back to the first
+ * daily's month, most recent first.
  */
 export function trophies(today: DateKey, finished: ReadonlySet<DateKey>): Trophy[] {
   const row: Trophy[] = [];
-  for (
-    let month = addMonths(monthOf(today), -1);
-    month >= FIRST_MONTH;
-    month = addMonths(month, -1)
-  ) {
+  const current = monthOf(today);
+  for (let month = current; month >= FIRST_MONTH; month = addMonths(month, -1)) {
     const stars = starsOf(month, today, finished);
-    if (stars === 0) continue;
     const total = daysInMonth(month);
-    row.push({ month, stars, total, complete: stars === total });
+    const complete = stars === total;
+    // Today's month shows only once it has its trophy: until then it is still being played.
+    if (stars === 0 || (month === current && !complete)) continue;
+    row.push({ month, stars, total, complete });
   }
   return row;
 }

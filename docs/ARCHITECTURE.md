@@ -110,7 +110,9 @@ product document sets.
 plays the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`), shows
 the daily calendar (`?calendar`, or `?calendar=YYYY-MM` for a month), or the home screen when the
 URL names nothing (or something invalid); `dev.html` opens any puzzle by seed and shows what the
-solver measured, and the home screen's menu button leads to it.
+solver measured, and the home screen's menu button leads to it. Its Preview shows any day, but
+its Play link follows the game's rules: a day ahead of today, or before the first daily, opens
+the calendar.
 
 ### Module map
 
@@ -167,7 +169,9 @@ leads home. A daily's back button and its sheets lead to its month in the calend
 naming a day ahead of today, or before the first daily, opens the calendar instead and replaces
 the address. When the browser restores a page from its back-forward cache (`pageshow` with
 `persisted`), or another tab saves progress (`storage`), `App.refresh` draws the home screen or
-the calendar again if one is showing; a board in play is left as it is.
+the calendar again if one is showing, and puts focus back on the same control; a board in play is
+left as it is. The calendar says a new month through a live region, since focus stays on the
+month button.
 
 The day is the device's local date (`localDateKey`), read when a screen is drawn; date names come
 from tables in `strings.ts` rather than `Intl`, whose output differs between engines.

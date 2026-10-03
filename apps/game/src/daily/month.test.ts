@@ -72,6 +72,17 @@ describe('trophies', () => {
     ]);
   });
 
+  it('shows today’s month once every day of it is won, on its last day', () => {
+    const september = new Set(days('2026-09', 1, 29));
+    expect(trophies('2026-09-30', september)).toEqual([]);
+    september.add('2026-09-30');
+    expect(trophies('2026-09-30', september)).toEqual([
+      { month: '2026-09', stars: 30, total: 30, complete: true },
+    ]);
+    // An unfinished current month is still being played: not in the row.
+    expect(trophies('2026-10-14', new Set(days('2026-10', 1, 14)))).toEqual([]);
+  });
+
   it('is empty before any star, and ignores days outside the calendar', () => {
     expect(trophies('2026-10-14', new Set())).toEqual([]);
     expect(trophies('2026-10-14', new Set(['2025-12-31', '2027-01-01']))).toEqual([]);

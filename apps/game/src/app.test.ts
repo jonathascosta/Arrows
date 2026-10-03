@@ -2,7 +2,7 @@ import { createGame, freeArrows, head } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './app.ts';
 import { cellCenter } from './board/geometry.ts';
-import { DAILY_KEY } from './persistence/daily.ts';
+import { DAILY_KEY, DailyStore } from './persistence/daily.ts';
 import { PROGRESS_KEY, ProgressStore } from './persistence/progress.ts';
 import { MemoryStore } from './persistence/store.ts';
 import { loadPuzzle } from './puzzles.ts';
@@ -279,9 +279,43 @@ describe('App', () => {
       '00:00 · 3 of 3 chances left. A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
     );
     app.show('?calendar');
-    expect(root.querySelector('.trophy.complete')?.getAttribute('aria-label')).toBe(
+    expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
       'September 2026: trophy, every day won',
     );
+  });
+
+  it('shows the trophy of today’s month as soon as its last day is won', async () => {
+    const store = new MemoryStore();
+    const days: Record<string, { bestMs: number }> = {};
+    for (let day = 1; day < 30; day++) {
+      days[`2026-09-${String(day).padStart(2, '0')}`] = { bestMs: 1000 };
+    }
+    store.setItem(DAILY_KEY, JSON.stringify({ version: 1, days }));
+    const { app, root } = mount(store, '2026-09-30');
+    app.show('?daily=2026-09-30');
+    await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toContain(
+      'Every day of September 2026 won: a trophy!',
+    );
+    app.show('?calendar');
+    expect(root.querySelector('.month-stars')?.textContent).toBe('30 of 30 stars');
+    expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
+      'September 2026: trophy, every day won',
+    );
+  });
+
+  it('keeps focus on the same control when a refresh redraws the calendar', () => {
+    const { app, root, store } = mount();
+    app.show('?calendar');
+    root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!.focus();
+    new DailyStore(store).recordWin('2026-10-02', 1000, '2026-10-03');
+    app.refresh();
+    const day = root.querySelector<HTMLElement>('[data-day="2026-10-02"]')!;
+    expect(day.dataset.state).toBe('done');
+    expect(document.activeElement).toBe(day);
+    root.querySelector<HTMLElement>('.month-head .previous')!.focus();
+    app.refresh();
+    expect(document.activeElement).toBe(root.querySelector('.month-head .previous'));
   });
 
   it('opens the calendar instead of a day ahead or before the first daily', () => {

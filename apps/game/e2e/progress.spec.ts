@@ -95,6 +95,8 @@ test('the home cards open the calendar and the event board', async ({ page, touc
 });
 
 test('a lost daily leaves the streak alone', async ({ page, touch }) => {
+  // Days ahead cannot be opened: pin the clock after the day this test plays.
+  await page.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
   await page.goto('./');
   await storeProgress(page, { currentLevel: 3, streak: 2 });
   await page.goto('./?daily=2026-10-03');

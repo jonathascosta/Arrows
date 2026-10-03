@@ -27,6 +27,14 @@ export interface AppOptions {
   readonly pickerHref: string;
 }
 
+/** A selector that finds a control again after its screen is drawn anew, or null. */
+function focusSelector(element: Element | null, root: HTMLElement): string | null {
+  if (!(element instanceof HTMLElement) || !root.contains(element)) return null;
+  if (element.dataset.day !== undefined) return `[data-day="${element.dataset.day}"]`;
+  if (element.classList.length === 0) return null;
+  return [...element.classList].map((name) => `.${name}`).join('');
+}
+
 /** One screen at a time; each can be torn down. */
 interface Screen {
   destroy(): void;
@@ -75,8 +83,12 @@ export class App {
    * or when another tab has saved progress. A board in play is left as it is.
    */
   refresh(): void {
+    if (this.route.screen === 'play') return;
+    // The screen is drawn anew: keep focus on the same control, as far as it still exists.
+    const focused = focusSelector(this.root.ownerDocument.activeElement, this.root);
     if (this.route.screen === 'home') this.showHome();
-    else if (this.route.screen === 'calendar') this.showCalendar(this.route.month);
+    else this.showCalendar(this.route.month);
+    if (focused !== null) this.root.querySelector<HTMLElement>(focused)?.focus();
   }
 
   /** Tears down the screen showing and puts the one `make` builds in its place. */

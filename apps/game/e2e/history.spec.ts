@@ -60,3 +60,36 @@ test('progress saved in another tab shows on this home screen', async ({ page, c
   await expectHome(page, 9, 3);
   await other.close();
 });
+
+test('the calendar reads stored results again when shown from the cache or another tab', async ({
+  page,
+  context,
+}) => {
+  await page.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
+  await page.goto('./?calendar');
+  await expect(page.locator('.month-stars')).toHaveText('0 of 31 stars');
+  const store = (target: typeof page, days: string[]) =>
+    target.evaluate(
+      (json) => localStorage.setItem('arrows.daily', json),
+      JSON.stringify({
+        version: 1,
+        days: Object.fromEntries(days.map((day) => [day, { bestMs: 1000 }])),
+      }),
+    );
+
+  // Restored from the back-forward cache (the listener alone, as above).
+  await store(page, ['2026-10-02']);
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  });
+  await expect(page.locator('.month-stars')).toHaveText('1 of 31 stars');
+
+  // Saved from another tab: the storage event.
+  const other = await context.newPage();
+  await other.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
+  await other.goto('./?calendar');
+  await store(other, ['2026-10-02', '2026-10-05']);
+  await expect(page.locator('.month-stars')).toHaveText('2 of 31 stars');
+  await expect(page.locator('[data-day="2026-10-05"]')).toHaveAttribute('data-state', 'done');
+  await other.close();
+});

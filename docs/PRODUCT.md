@@ -128,8 +128,9 @@ weekends.
   The date moves to the launch month before release (T10).
 - A day earns its star when its board is won, on that day or any day after. A lost board earns
   nothing and is not stored. Days can be replayed; a replay keeps the best time.
-- A month's trophy needs every day of the month. The trophies row shows each earlier month with
-  at least one star: a trophy when complete, its count ("29 of 30") otherwise.
+- A month's trophy needs every day of the month. The trophies row shows the current month once
+  every day of it is won (on its last day), and each earlier month with at least one star: a
+  trophy when complete, its count ("29 of 30") otherwise.
 - Future days, and days before the first daily, cannot be opened, not even by a link: the
   calendar opens instead.
 - Daily boards do not touch the level path or the win streak.
@@ -206,6 +207,9 @@ localization beyond English (strings are externalized from day one so Portuguese
   [DESIGN.md](DESIGN.md) (2026-10-03).
 - Replays of a level already won do not touch the win streak; only new levels count (session
   decision in T3, open to the owner) (2026-10-03).
+- Daily challenge (session decisions in T4, open to the owner) (2026-10-03): the calendar starts
+  on 1 January 2026 until the launch month is known; a day won late still earns its star; a
+  daily's sheets lead back to the calendar instead of home.
 
 ## Open questions
 

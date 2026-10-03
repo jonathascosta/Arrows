@@ -32,8 +32,7 @@ test('the calendar shows the stored results, after a reload too', async ({ page 
   await expect(day(page, '2026-10-05')).toHaveAttribute('data-state', 'done');
   await expect(day(page, '2026-10-06')).toHaveAttribute('data-state', 'open');
   await expect(day(page, '2026-10-14')).toHaveAttribute('aria-current', 'date');
-  await expect(page.locator('.trophy.missed')).toHaveAttribute(
-    'aria-label',
+  await expect(page.locator('.trophy.missed .sr-only')).toHaveText(
     'September 2026: 1 of 30 days won',
   );
   await page.goto('./');
