@@ -377,6 +377,11 @@ beyond English and Portuguese.
   drawings in turn and the tiers in the levels' cycle of ten; the home card shows the boards won
   as a filled bar, and the badge comes with the 300th. The Autumn event's six boards become 300
   before any player has it.
+- The listing's pages (owner's decision) (2026-10-03): the support and marketing page and the
+  privacy policy live on the owner's site, jonathas.net (`/arrows.html`, `/arrows/pt.html`,
+  `/arrows/privacy.html`, `/arrows/privacidade.html`), with support by e-mail at
+  jonathaspcosta@gmail.com, instead of GitHub Pages and the repository's issues; the app's own
+  copy of the policy gives the same address. `app-ads.txt` goes there too once AdMob exists.
 - Puzzle picker (owner's decision) (2026-10-03): a tool for testing, so it leaves the app (the
   iOS build does not ship it, and Settings has no link to it there); the web build keeps it for
   development.

@@ -11,7 +11,7 @@ Monetization, the decisions log); how the app is built and uploaded is in
 | :------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Listing text, en and pt-BR | `apps/game/ios/App/fastlane/metadata/` (name, subtitle, description, keywords, promotional text, release notes, URLs, category, copyright)             |
 | Screenshots, 1290 × 2796   | `apps/game/ios/App/fastlane/screenshots/{en-US,pt-BR}/`, made by `pnpm store:screenshots` from the web build                                           |
-| Privacy policy             | `apps/game/privacy.html`, in both languages: in the app (Settings), and published by the Privacy policy workflow                                       |
+| Privacy policy             | `apps/game/privacy.html`, in both languages: in the app (Settings), and a copy on jonathas.net (step 2)                                                |
 | Privacy manifest           | `apps/game/ios/App/App/PrivacyInfo.xcprivacy`: the game's own code collects nothing and tracks no one; it reads its preferences (UserDefaults, CA92.1) |
 | Tracking prompt text       | `NSUserTrackingUsageDescription` in `Info.plist`, translated in `en.lproj` and `pt.lproj/InfoPlist.strings`                                            |
 | Credits                    | The game's Credits screen, with the licences of the bundled fonts (SIL Open Font License) and libraries (MIT), read from the packages at build time    |
@@ -21,9 +21,11 @@ Monetization, the decisions log); how the app is built and uploaded is in
 The listing's name is **Arrows: Tap Puzzle** (Arrows was taken), subtitle "Clear the board of
 arrows" ("Limpe o tabuleiro de flechas"), under Games, Puzzle and Board; on the home screen the
 app is still Arrows (`CFBundleDisplayName` in `Info.plist`). The keywords leave out the words of
-the name and the subtitle, which the App Store already searches. Support goes to the repository's
-issues; the privacy policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once
-published.
+the name and the subtitle, which the App Store already searches. The owner's site hosts the
+listing's pages (repository `jonathascosta/jonathas.net`, `src/pages/arrows*`): support and
+marketing at `https://www.jonathas.net/arrows.html` (`/arrows/pt.html` in Portuguese), with
+support by e-mail at jonathaspcosta@gmail.com, and the privacy policy at
+`https://www.jonathas.net/arrows/privacy.html` (`/arrows/privacidade.html`).
 
 ## The owner's steps
 
@@ -33,9 +35,10 @@ published.
    hand or left to the listing workflow (step 6), which creates it. If the listing is renamed
    again, the new name (at most 30 characters, and free on the App Store) goes in both
    `name.txt` files, and its words come out of the keywords.
-2. **GitHub Pages: publish the privacy policy.** In the repository's Settings, Pages, set the
-   source to GitHub Actions, then run the `Privacy policy` workflow from the Actions tab. Check
-   that the address above opens the policy. Run it again whenever `privacy.html` changes.
+2. **The listing's pages on jonathas.net.** Done (3 October 2026): the support and privacy pages
+   above, deployed with the site. Check that the four addresses open. Whenever `privacy.html`
+   changes, change the site's copy with it (`src/pages/arrows/privacy.astro` and
+   `privacidade.astro`, and the date in `src/data/arrows.ts`).
 3. **AdMob: the app, the units and the messages.**
    - Add the iOS app and its interstitial and rewarded units, and set the repository secrets
      `ADMOB_APP_ID`, `ADMOB_INTERSTITIAL_ID` and `ADMOB_REWARDED_ID` (ARCHITECTURE.md, iOS).
@@ -44,9 +47,9 @@ published.
      when the explainer does not. A US states message is optional. Without a GDPR message, the
      EEA, the UK and Switzerland get limited ads or none.
    - Once the app is live, link it to its App Store listing in AdMob.
-   - Optional: `app-ads.txt` must sit at the root of the developer website's domain. With the
-     github.io address, that means a `jonathascosta.github.io` repository with the file at its
-     root, and that site as the listing's marketing URL.
+   - `app-ads.txt` must sit at the root of the developer website's domain, which AdMob reads from
+     the listing's marketing URL (jonathas.net): add `public/app-ads.txt` to the site with the
+     line AdMob gives for the account (`google.com, pub-…, DIRECT, f08c47fec0942fa0`).
 4. **SKAdNetwork ids.** Copy Google's list of partner ids from
    <https://developers.google.com/admob/ios/3p-skadnetworks> into `SKAdNetworkItems` in
    `apps/game/ios/App/App/Info.plist`, keeping Google's own `cstr6suwn9.skadnetwork`. The session
@@ -107,8 +110,9 @@ published.
 - Update `release_notes.txt` in both languages.
 - If a screen changed, run `pnpm store:screenshots` and commit the screenshots.
 - If no event runs when the version comes out (the Autumn event ends on 30 November 2026), drop
-  the seasonal events line from the descriptions, and the event board from the screenshots
-  (`apps/game/store/screenshots.spec.ts`), until the next event.
+  the seasonal events line from the descriptions and from the site's support pages
+  (jonathas.net, `src/pages/arrows.astro` and `arrows/pt.astro`), and the event board from the
+  screenshots (`apps/game/store/screenshots.spec.ts`), until the next event.
 - If what the app does with data changed, update `privacy.html` (its date too), the privacy
-  manifest and the App Privacy answers, and run the `Privacy policy` workflow.
+  manifest, the App Privacy answers and the site's copy of the policy (jonathas.net, step 2).
 - Run the `App Store listing` workflow, then the `TestFlight` one, then submit.

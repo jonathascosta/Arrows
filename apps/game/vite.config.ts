@@ -39,14 +39,13 @@ function sizeBudget(limit: number): Plugin {
 }
 
 /**
- * BASE_PATH lets a static host serve the app from a sub-path ("/<repo>/");
- * locally and in the iOS wrapper it is served from the root. The iOS build
+ * The app is served from the root, locally and in the iOS wrapper. The iOS build
  * (`vite build --mode ios`, `pnpm build:ios`) leaves out the puzzle picker,
  * a tool for testing that the app does not ship (docs/PRODUCT.md, Settings).
  * Being its own mode, it reads `.env.ios` files, not `.env.production`.
  */
 export default defineConfig(({ mode }) => ({
-  base: process.env.BASE_PATH ?? './',
+  base: './',
   plugins: [sizeBudget(BUDGET_BYTES)],
   build: {
     target: 'es2022',

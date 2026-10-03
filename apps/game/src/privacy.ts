@@ -21,8 +21,8 @@ const portuguese = document.getElementById('policy-pt');
 if (locale === 'pt' && english !== null && portuguese !== null) english.before(portuguese);
 document.title = `${t('app.name')} · ${t('settings.privacyPolicy')}`;
 
-// Back to the game when Settings opened the page (PRIVACY_HREF); the store's link
-// opens it on its own, with no game to go back to.
+// Back to the game when Settings opened the page (PRIVACY_HREF); opened on its own
+// (straight from the web build), it has no game to go back to.
 const back = document.querySelector<HTMLAnchorElement>('.doc .back');
 if (back !== null) {
   back.append(iconSpan(document, DEFAULT_THEME.icons.back, 'icon'));

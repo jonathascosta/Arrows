@@ -1340,6 +1340,8 @@ button.text-button {
 }
 
 .doc a:not(.round-button) {
+  /* An e-mail address or a URL breaks where it must on a narrow phone. */
+  overflow-wrap: anywhere;
   color: var(--color-text);
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
