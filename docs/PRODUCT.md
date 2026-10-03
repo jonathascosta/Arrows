@@ -123,6 +123,17 @@ playable, future days locked, today shows progress. Each completed day earns a s
 with every star earns a trophy. The daily board is a larger medium or hard rectangle, bigger on
 weekends.
 
+- The day is the device's local date (`YYYY-MM-DD`), like the league's.
+- The calendar starts on 1 January 2026, the first daily; earlier days and months do not exist.
+  The date moves to the launch month before release (T10).
+- A day earns its star when its board is won, on that day or any day after. A lost board earns
+  nothing and is not stored. Days can be replayed; a replay keeps the best time.
+- A month's trophy needs every day of the month. The trophies row shows each earlier month with
+  at least one star: a trophy when complete, its count ("29 of 30") otherwise.
+- Future days, and days before the first daily, cannot be opened, not even by a link: the
+  calendar opens instead.
+- Daily boards do not touch the level path or the win streak.
+
 ### Daily league
 
 A league table that resets every day at midnight in the player's local time (a day key is

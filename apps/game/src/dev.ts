@@ -5,7 +5,8 @@ import { boardSizeForLevel, DRAWINGS, renderAscii, TIER_ORDER, tierForLevel } fr
 import type { Tier } from '@arrows/engine';
 import { loadPuzzle, tierLabel } from './puzzles.ts';
 import type { PuzzleRef } from './route.ts';
-import { localDateKey, routeSearch } from './route.ts';
+import { localDateKey } from './daily/days.ts';
+import { puzzleHref } from './route.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 import { el } from './ui/dom.ts';
@@ -66,7 +67,7 @@ function section(
     'Preview',
   ]);
   const update = (): void => {
-    open.setAttribute('href', `./${routeSearch(current())}`);
+    open.setAttribute('href', puzzleHref(current()));
   };
   for (const control of controls) control.addEventListener('input', update);
   analyze.addEventListener('click', () => showPreview(current()));

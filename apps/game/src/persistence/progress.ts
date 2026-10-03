@@ -1,3 +1,4 @@
+import { isCount, readJson, RecordSlot } from './record.ts';
 import type { KeyValueStore } from './store.ts';
 
 export const PROGRESS_KEY = 'arrows.progress';
@@ -35,32 +36,7 @@ export const INITIAL_PROGRESS: Progress = {
   lostLevels: [],
 };
 
-const isCount = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
-
 const isLevel = (value: unknown): value is number => isCount(value) && value >= 1;
-
-function readJson(raw: string | null): Record<string, unknown> | null {
-  if (raw === null) return null;
-  try {
-    const data: unknown = JSON.parse(raw);
-    return typeof data === 'object' && data !== null && !Array.isArray(data)
-      ? (data as Record<string, unknown>)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Whether stored progress was written by a newer build. This build cannot
- * read it and must not overwrite it: going back to an older build (a TestFlight
- * downgrade) would otherwise lose the newer progress.
- */
-export function isNewerRecord(raw: string | null): boolean {
-  const version = readJson(raw)?.version;
-  return typeof version === 'number' && version > PROGRESS_VERSION;
-}
 
 /**
  * Reads stored progress. Nothing stored, broken JSON or another version gives
@@ -111,23 +87,24 @@ export interface WinRecord {
 }
 
 /**
- * The progress of this device. Every read and every change goes to the store,
- * so another tab, or a page the browser kept from earlier, never writes back
- * an out-of-date copy over newer progress.
+ * The progress of this device. Every read and every change goes to the store
+ * (see `RecordSlot`), so an out-of-date copy never overwrites newer progress.
  */
 export class ProgressStore {
-  private readonly store: KeyValueStore;
-  /** Progress kept in memory while the store holds a newer build's record. */
-  private detached: Progress | null = null;
+  private readonly slot: RecordSlot<Progress>;
 
   constructor(store: KeyValueStore) {
-    this.store = store;
+    this.slot = new RecordSlot(
+      store,
+      PROGRESS_KEY,
+      PROGRESS_VERSION,
+      parseProgress,
+      INITIAL_PROGRESS,
+    );
   }
 
   get progress(): Progress {
-    const raw = this.store.getItem(PROGRESS_KEY);
-    if (isNewerRecord(raw)) return this.detached ?? INITIAL_PROGRESS;
-    return parseProgress(raw);
+    return this.slot.read();
   }
 
   bestTime(level: number): number | undefined {
@@ -183,10 +160,6 @@ export class ProgressStore {
   }
 
   private save(progress: Progress): void {
-    if (isNewerRecord(this.store.getItem(PROGRESS_KEY))) {
-      this.detached = progress;
-      return;
-    }
-    this.store.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    this.slot.write(progress);
   }
 }

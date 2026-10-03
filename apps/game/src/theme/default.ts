@@ -78,6 +78,14 @@ export const DEFAULT_THEME: Theme = {
     ),
     menu: icon('<path d="M4 7h16M4 12h16M4 17h16"/>'),
     streak: icon('<path d="M4 18L10 12l3.5 3.5L20 9"/><path d="M14.5 9H20v5.5"/>'),
+    star: icon(
+      '<path fill="currentColor" stroke-width="1.2" d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>',
+    ),
+    trophy: icon(
+      '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 4"/><path d="M16 6h2.5a2.5 2.5 0 0 1-2.6 4"/><path d="M12 13v4"/><path d="M8.5 20h7"/>',
+    ),
+    previous: icon('<path d="M15 5l-7 7 7 7"/>'),
+    next: icon('<path d="M9 5l7 7-7 7"/>'),
   },
   motion: {
     exitMinMs: 250,

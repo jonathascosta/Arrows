@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRng, cyrb53 } from '../rng/rng.ts';
 import { BUTTERFLY, drawingMask } from '../drawings/drawings.ts';
 import { renderAscii } from '../debug/ascii.ts';
-import { generateBoard, generateDaily, generateLevel, weekdayOf } from './levels.ts';
+import { dailySpec, generateBoard, generateDaily, generateLevel, weekdayOf } from './levels.ts';
 import { PLATEAU_LEVEL, TIERS, boardSizeForLevel, tierForLevel } from './tiers.ts';
 
 describe('tierForLevel', () => {
@@ -92,6 +92,22 @@ describe('generateDaily', () => {
     expect(generateDaily('2026-10-02').tier).toBe('medium');
     expect(generateDaily('2026-10-03').tier).toBe('hard');
     expect(generateDaily('2026-10-04').puzzle.width).toBe(18);
+  });
+
+  it('tells the board of a day without generating it', () => {
+    expect(dailySpec('2026-10-02')).toEqual({
+      weekend: false,
+      tier: 'medium',
+      width: 16,
+      height: 24,
+    });
+    expect(dailySpec('2026-10-04')).toEqual({ weekend: true, tier: 'hard', width: 18, height: 27 });
+    for (const dateKey of ['2026-10-02', '2026-10-03']) {
+      const { puzzle, tier } = generateDaily(dateKey);
+      const spec = dailySpec(dateKey);
+      expect([tier, puzzle.width, puzzle.height]).toEqual([spec.tier, spec.width, spec.height]);
+    }
+    expect(() => dailySpec('2026-13-01')).toThrow(RangeError);
   });
 
   it('differs by day and repeats for the same day', () => {

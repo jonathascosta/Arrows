@@ -2,9 +2,10 @@ import '@fontsource/instrument-serif/latin-400.css';
 import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { App } from './app.ts';
+import { DAILY_KEY } from './persistence/daily.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
 import { browserStore } from './persistence/store.ts';
-import { localDateKey } from './route.ts';
+import { localDateKey } from './daily/days.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 
@@ -22,6 +23,8 @@ const app = new App(root, {
   reducedMotion: () => reducedMotion.matches,
   today: () => localDateKey(),
   pushUrl: (url) => history.pushState(null, '', url),
+  // An empty search would keep the current one: the home screen is './'.
+  replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
   pickerHref: 'dev.html',
 });
 
@@ -33,5 +36,5 @@ window.addEventListener('pageshow', (event) => {
   if (event.persisted) app.refresh();
 });
 window.addEventListener('storage', (event) => {
-  if (event.key === null || event.key === PROGRESS_KEY) app.refresh();
+  if (event.key === null || event.key === PROGRESS_KEY || event.key === DAILY_KEY) app.refresh();
 });

@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  INITIAL_PROGRESS,
-  isNewerRecord,
-  parseProgress,
-  PROGRESS_KEY,
-  ProgressStore,
-} from './progress.ts';
+import { INITIAL_PROGRESS, parseProgress, PROGRESS_KEY, ProgressStore } from './progress.ts';
 import { MemoryStore } from './store.ts';
 
 const win = (level: number, elapsedMs = 60_000, firstTry = true) => ({
@@ -179,14 +173,5 @@ describe('parseProgress', () => {
     expect(parseProgress('{"version":1,"lostLevels":{"0":3}}').lostLevels).toEqual([]);
     // The best streak is never below the current one.
     expect(parseProgress('{"version":1,"streak":5,"bestStreak":3}').bestStreak).toBe(5);
-  });
-});
-
-describe('isNewerRecord', () => {
-  it('is true only for a record with a higher version', () => {
-    expect(isNewerRecord('{"version":2}')).toBe(true);
-    for (const raw of [null, '', '{', '{"version":1}', '{"version":"2"}', '{}', '[2]']) {
-      expect(isNewerRecord(raw), String(raw)).toBe(false);
-    }
   });
 });

@@ -11,6 +11,7 @@ function mount(progress: Partial<Progress> = {}): { root: HTMLElement; screen: H
   const screen = new HomeScreen(root, {
     theme: DEFAULT_THEME,
     progress: { ...INITIAL_PROGRESS, ...progress },
+    finishedDays: new Set(['2026-10-01', '2026-10-02', '2026-09-30']),
     today: '2026-10-03',
     pickerHref: 'dev.html',
     reducedMotion: () => true,
@@ -77,11 +78,18 @@ describe('HomeScreen', () => {
     expect(root.querySelector('.play-button')?.getAttribute('href')).toBe('./?level=1');
   });
 
-  it('opens today’s daily and the event board, and holds the league until it exists', () => {
+  it('opens the calendar and the event board, and holds the league until it exists', () => {
     const { root } = mount();
+    // The Daily card opens the calendar, with this month's stars.
     const daily = root.querySelector('a.daily')!;
-    expect(daily.getAttribute('href')).toBe('./?daily=2026-10-03');
+    expect(daily.getAttribute('href')).toBe('./?calendar');
     expect(daily.textContent).toContain('Sat 3 Oct');
+    expect(daily.querySelector('.daily-stars .sr-only')?.textContent).toBe(
+      '2 of 31 stars this month',
+    );
+    expect(daily.querySelector('.daily-stars > [aria-hidden="true"]:not(.icon)')?.textContent).toBe(
+      '2 of 31',
+    );
     // Not a link, and drawn as one that opens nothing yet.
     const league = root.querySelector('.league')!;
     expect(league.tagName).toBe('DIV');
