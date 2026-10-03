@@ -14,9 +14,9 @@ together is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). What comes next, ta
 | Area                                              | State                                                                                                                                                                                 |
 | :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`packages/engine`](packages/engine/src/index.ts) | Done for v1: seeded RNG, boards and drawings, generator (partition and peel), solver and difficulty metrics, tiers, level and daily seeds, game state, daily league simulation, tests |
-| `apps/game`                                       | Next: the playable web app (board rendering, zoom and pan, lives, timer), then levels, daily, league, events                                                                          |
-| iOS                                               | Later: Capacitor project, macOS build in CI, TestFlight                                                                                                                               |
-| CI                                                | Lint, format, typecheck, unit tests, build on every push; calibration suites in their own job                                                                                         |
+| [`apps/game`](apps/game/src/main.ts)              | Playable board in the browser (T2): SVG board, tap by cell, pinch and wheel zoom, drops, timer, hint, grid, win and lose, exit animation, a dev page to open any puzzle by seed       |
+| Next                                              | Persistence and the level path (T3), then daily, league, events, ads, iOS: see [docs/PLAN.md](docs/PLAN.md)                                                                           |
+| CI                                                | Lint, format, typecheck, unit tests, build with a size budget; Playwright end to end; calibration suites                                                                              |
 
 ## Quick start
 
@@ -26,7 +26,7 @@ pnpm, which Corepack provides at the version pinned in `package.json`.
 ```sh
 corepack enable
 pnpm install
-pnpm test
+pnpm dev   # the game at http://localhost:5173, any puzzle at http://localhost:5173/dev.html
 ```
 
 | Command                                        | What it does                                                                                      |

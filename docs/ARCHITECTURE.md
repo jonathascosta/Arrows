@@ -15,10 +15,10 @@ How the repository is put together and why. [PRODUCT.md](PRODUCT.md) says what w
 
 ## Packages
 
-| Package           | Role                                                                 | May import |
-| :---------------- | :------------------------------------------------------------------- | :--------- |
-| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim | Nothing    |
-| `apps/game`       | The Vite app: rendering, input, screens, persistence, ads, Capacitor | engine     |
+| Package           | Role                                                                        | May import |
+| :---------------- | :-------------------------------------------------------------------------- | :--------- |
+| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim        | Nothing    |
+| `apps/game`       | The Vite app: rendering, input, screens (persistence, ads, Capacitor later) | engine     |
 
 Workspace packages export their TypeScript sources (`"exports": "./src/index.ts"`), so Vite,
 Vitest and `tsc` consume the source directly. The engine also has a real build (`tsc -p
@@ -104,21 +104,65 @@ sessions' smooth ramps, so the table moves during the day with no server and no 
 The calibration suite simulates 120 days per league and keeps promotion rates in the bands the
 product document sets.
 
+## App
+
+`apps/game` is a Vite app in vanilla TypeScript and DOM, with no UI framework. `index.html`
+plays the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`);
+`dev.html` opens any puzzle by seed and shows what the solver measured.
+
+### Module map
+
+| Module                   | Contents                                                                                                                                                                           |
+| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theme/`                 | `Theme` (colours, tier colours, drawing palette, board geometry, icons, fonts, motion) and `applyTheme`, which writes CSS custom properties; `default.ts` is the placeholder theme |
+| `board/geometry.ts`      | Pure: arrow body and head shapes, exit track, grid lines, board bounds, in cell units                                                                                              |
+| `board/viewport.ts`      | Pure: zoom and pan as data (fit, clamp, `zoomAt`, `pinchView`, `panBy`, `cellAt`, `ensureVisible`)                                                                                 |
+| `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                          |
+| `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                  |
+| `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                         |
+| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                           |
+| `ui/`                    | HUD, end-of-board overlay, DOM helpers                                                                                                                                             |
+| `route.ts`, `puzzles.ts` | URL to puzzle reference, reference to generated puzzle                                                                                                                             |
+| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                           |
+
+### Rendering and input
+
+The board is SVG in cell units: a cell is 1 by 1, lines run through cell centres with round caps
+and joins, so neighbouring paths are a cell apart and never touch. One `transform` on the board
+group carries zoom and pan, so strokes scale with the zoom. An arrow leaves along its exit track:
+the body line plus the straight run of its ray; a dash the length of the body slides along the
+track while the head translates along the ray, so the body follows the head's track.
+
+Input goes through `GestureTracker`. A press that stays within 8 px and lasts under 500 ms is a
+tap, resolved to a cell with `cellAt` at the current zoom, then to an arrow with the engine's
+`arrowAt`. A pinch step is computed from the view at the start of the pinch: the board point that
+was under the fingers goes under their midpoint, at the starting scale times the finger spread,
+and the result is clamped once. Computing it step by step instead lets edge clamping move the
+board away from the fingers.
+
 ## Enforced rules
 
-| Rule                                 | Enforced by                                                               |
-| :----------------------------------- | :------------------------------------------------------------------------ |
-| No `Math.random` anywhere            | ESLint `no-restricted-properties` (`repo/no-math-random`)                 |
-| Engine has no browser globals        | ESLint `no-restricted-globals` (`repo/engine-purity`)                     |
-| Engine never imports the app         | ESLint `no-restricted-imports` (`repo/engine-purity`)                     |
-| Every generated puzzle is solvable   | `generatePuzzle` throws otherwise; property tests over thousands of seeds |
-| Tiers stay in their bands            | `levels.calibration.test.ts` over levels 1 to 400                         |
-| League promotion rates stay in bands | `league.calibration.test.ts` over 120 simulated days per league           |
-| Level content does not drift         | Fingerprint pins in `levels.test.ts`                                      |
+| Rule                                 | Enforced by                                                                        |
+| :----------------------------------- | :--------------------------------------------------------------------------------- |
+| No `Math.random` anywhere            | ESLint `no-restricted-properties` (`repo/no-math-random`)                          |
+| Engine has no browser globals        | ESLint `no-restricted-globals` (`repo/engine-purity`)                              |
+| Engine never imports the app         | ESLint `no-restricted-imports` (`repo/engine-purity`)                              |
+| Every generated puzzle is solvable   | `generatePuzzle` throws otherwise; property tests over thousands of seeds          |
+| Tiers stay in their bands            | `levels.calibration.test.ts` over levels 1 to 400                                  |
+| League promotion rates stay in bands | `league.calibration.test.ts` over 120 simulated days per league                    |
+| Level content does not drift         | Fingerprint pins in `levels.test.ts`                                               |
+| Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
+| Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
 
 ## Testing
 
 - `pnpm test`: unit and property tests, in seconds, on every commit (Husky) and in CI.
 - `pnpm test:calibration`: the long suites, in their own CI job.
+- `pnpm test:e2e`: Playwright against the production build, on a touch phone profile
+  (390 by 844) and a desktop profile. The tests use the engine as their oracle: the page and the
+  test generate the same puzzle from the same seed, so a test knows which arrows are free or
+  blocked without the page exposing it. Claude Code cloud sessions use the Chromium at
+  `/opt/pw-browsers/chromium` and must not run `playwright install`; CI installs its own.
 
-Tests are next to the code (`*.test.ts`), calibration suites are `*.calibration.test.ts`.
+Tests are next to the code (`*.test.ts`), calibration suites are `*.calibration.test.ts`, and the
+app's end-to-end specs are in `apps/game/e2e/`.

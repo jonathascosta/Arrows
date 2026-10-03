@@ -9,6 +9,9 @@ is next, and what done means) before changing anything. Work on one task of the 
 - `pnpm test:calibration` — difficulty and league bands (about 10 s). Run after touching the
   generator, the tiers, the solver or the league.
 - `pnpm lint`, `pnpm format:check`, `pnpm typecheck` — the same gates as CI and the pre-commit hook.
+- `pnpm dev` — the app at http://localhost:5173 (`/dev.html` opens any puzzle by seed).
+- `pnpm test:e2e` — Playwright on the production build, phone and desktop profiles. In cloud
+  sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 
 ## Rules
 
@@ -19,4 +22,5 @@ is next, and what done means) before changing anything. Work on one task of the 
   every player's level N. The fingerprint test in `levels.test.ts` will fail: update it only on
   purpose and say so in the commit message.
 - Keep the product document current: when behaviour changes, change `docs/PRODUCT.md` first.
-- Code, comments and documents are in English.
+- Colours live in `apps/game/src/theme/` only; lint and a CSS test reject them elsewhere.
+- Code, comments and documents are in English; player-facing text goes through `strings.ts`.

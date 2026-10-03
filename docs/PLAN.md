@@ -56,7 +56,7 @@ The first thing anyone can play.
   Pinch zoom and two-finger pan on touch, wheel zoom and drag on desktop, board clamped to the
   viewport, double tap resets.
 - HUD: drops (three, lost on a blocked tap), timer that starts on the first tap, hint button
-  (calls `hint` directly for now; the ad gate comes in T8), grid toggle.
+  (calls `hint` directly for now; the ad gate comes in T7), grid toggle.
 - Flow: win and lose overlays; lose offers retry of the same puzzle; win offers next level.
 - Exit animation: the arrow slides along its own body and then the ray, 250 to 400 ms; a
   blocked arrow shakes. Reduced-motion preference respected.
@@ -168,15 +168,15 @@ API within the budget in the product document, Android, iPad.
 
 ## Status
 
-| Task | State | Pull request |
-| :--- | :---- | :----------- |
-| T1   | open  |              |
-| T2   | open  |              |
-| T3   | open  |              |
-| T4   | open  |              |
-| T5   | open  |              |
-| T6   | open  |              |
-| T7   | open  |              |
-| T8   | open  |              |
-| T9   | open  |              |
-| T10  | open  |              |
+| Task | State | Pull request                                         |
+| :--- | :---- | :--------------------------------------------------- |
+| T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1) |
+| T2   | done  | this branch, `claude/t2-playable-board`              |
+| T3   | open  |                                                      |
+| T4   | open  |                                                      |
+| T5   | open  |                                                      |
+| T6   | open  |                                                      |
+| T7   | open  |                                                      |
+| T8   | open  |                                                      |
+| T9   | open  |                                                      |
+| T10  | open  |                                                      |
