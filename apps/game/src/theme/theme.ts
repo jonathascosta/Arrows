@@ -8,26 +8,34 @@ import type { Tier } from '@arrows/engine';
  */
 export interface ThemeColors {
   readonly background: string;
-  /** Pills and quiet surfaces, like the timer. */
+  /** Quiet surfaces: round back buttons, chips, day cells. */
   readonly surface: string;
-  /** Raised surfaces: the grid button, overlay cards. */
+  /** Raised surfaces: cards, sheets, tool bar buttons. */
   readonly surfaceRaised: string;
-  readonly shadow: string;
   readonly text: string;
   readonly textMuted: string;
   readonly title: string;
   readonly divider: string;
-  /** Arrows on plain boards. Drawings colour arrows from `drawingPalette`. */
+  /** Arrow bodies on plain boards. Drawings colour arrows from `drawingPalette`. */
   readonly stroke: string;
+  /** Arrowheads on plain boards. */
+  readonly head: string;
   readonly hint: string;
   readonly blocked: string;
   readonly grid: string;
-  readonly drop: string;
-  readonly dropEmpty: string;
-  readonly scrim: string;
-  readonly button: string;
-  readonly buttonText: string;
+  /** An intact chance. */
+  readonly chance: string;
+  /** A lost chance, and the faded board after a loss. */
+  readonly chanceLost: string;
+  readonly primary: string;
+  readonly onPrimary: string;
+  /** Keyboard focus ring. */
   readonly focus: string;
+}
+
+/** Full CSS `box-shadow` values. */
+export interface ThemeShadows {
+  readonly raised: string;
 }
 
 /** Arrow geometry, in cell units (a cell is 1 by 1). */
@@ -49,8 +57,6 @@ export interface BoardStyle {
 
 export interface ThemeIcons {
   readonly back: string;
-  readonly drop: string;
-  readonly clock: string;
   readonly hint: string;
   readonly grid: string;
 }
@@ -61,7 +67,9 @@ export interface ThemeMotion {
   /** Extra exit time per cell travelled, before clamping to the range. */
   readonly exitMsPerCell: number;
   readonly shakeMs: number;
-  /** Pause between the last arrow leaving and the win overlay. */
+  /** A chance breaking: halves split, twist apart and settle. */
+  readonly chanceBreakMs: number;
+  /** Pause between the last arrow leaving and the end-of-board sheet. */
   readonly settleMs: number;
 }
 
@@ -72,8 +80,11 @@ export interface Theme {
   readonly tiers: Readonly<Record<Tier, string>>;
   /** Drawing palette names (from the drawing's legend) to colours. */
   readonly drawingPalette: Readonly<Record<string, string>>;
+  readonly shadows: ThemeShadows;
   readonly board: BoardStyle;
-  readonly fonts: { readonly ui: string };
+  /** Which way the chance arrowheads point in the header. */
+  readonly chanceDirection: 'right' | 'up';
+  readonly fonts: { readonly title: string; readonly ui: string };
   /** Inline SVG markup drawn with `currentColor`. */
   readonly icons: ThemeIcons;
   readonly motion: ThemeMotion;
@@ -93,6 +104,8 @@ export function themeProperties(theme: Theme): Record<string, string> {
   for (const [tier, value] of Object.entries(theme.tiers)) {
     properties[`--tier-${kebab(tier)}`] = value;
   }
+  properties['--shadow-raised'] = theme.shadows.raised;
+  properties['--font-title'] = theme.fonts.title;
   properties['--font-ui'] = theme.fonts.ui;
   return properties;
 }
@@ -109,14 +122,20 @@ export function applyTheme(theme: Theme, root: HTMLElement): void {
 
 const CSS_COLOR = /^(#[0-9a-f]{3,8}|(rgb|hsl|oklch|oklab)a?\(.*\))$/i;
 
+export interface ArrowColors {
+  readonly body: string;
+  readonly head: string;
+}
+
 /**
- * The colour of an arrow whose cells have palette entry `entry`: the theme's
- * colour for that name, the entry itself when it already is a CSS colour
- * (a drawing decoded from a PNG), or the plain stroke.
+ * The colours of an arrow whose cells have palette entry `entry`: the theme's
+ * colour for that name, the entry itself when it already is a CSS colour (a
+ * drawing decoded from a PNG), both for body and head; or, on a plain board,
+ * the theme's stroke and head.
  */
-export function arrowColor(theme: Theme, entry: string | undefined): string {
-  if (entry === undefined) return theme.colors.stroke;
-  const named = theme.drawingPalette[entry];
-  if (named !== undefined) return named;
-  return CSS_COLOR.test(entry) ? entry : theme.colors.stroke;
+export function arrowColors(theme: Theme, entry: string | undefined): ArrowColors {
+  const named = entry === undefined ? undefined : theme.drawingPalette[entry];
+  if (named !== undefined) return { body: named, head: named };
+  if (entry !== undefined && CSS_COLOR.test(entry)) return { body: entry, head: entry };
+  return { body: theme.colors.stroke, head: theme.colors.head };
 }

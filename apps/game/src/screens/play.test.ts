@@ -78,12 +78,13 @@ describe('PlayScreen', () => {
     vi.restoreAllMocks();
   });
 
-  it('shows the title, tier, three drops and every arrow', () => {
+  it('shows the title, tier, three chances and every arrow', () => {
     const { root } = mount({ kind: 'level', level: 300 });
     expect(root.querySelector('h1')?.textContent).toBe('Level 300');
     expect(root.querySelector('.tier')?.textContent).toBe('Super Hard');
     expect(root.querySelector('.tier')?.getAttribute('data-tier')).toBe('superHard');
-    expect(root.querySelectorAll('.drop')).toHaveLength(3);
+    expect(root.querySelectorAll('.chance')).toHaveLength(3);
+    expect(root.querySelector('.chances')?.getAttribute('aria-label')).toBe('3 of 3 chances left');
     expect(root.querySelectorAll('[data-arrow]')).toHaveLength(
       generateLevel(300).puzzle.arrows.length,
     );
@@ -107,7 +108,7 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.time')?.textContent).toBe('01:05');
   });
 
-  it('costs a drop on a blocked arrow, loses at zero, and retries the whole board', async () => {
+  it('costs a chance on a blocked arrow, loses at zero, and retries the whole board', async () => {
     const { root } = mount();
     const { puzzle } = generateLevel(1);
     const play = root.querySelector<HTMLElement>('.play')!;
@@ -129,30 +130,56 @@ describe('PlayScreen', () => {
     const stuck = [...game.remaining].find((id) => !free.has(id))!;
     const { x, y } = puzzle.arrows[stuck]!.cells[0]!;
     tapCell(root, x, y);
-    expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('2');
-    expect(root.querySelectorAll('.drop.lost')).toHaveLength(1);
-    expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 2 drops left.');
+    expect(root.querySelector('.chances')?.getAttribute('data-chances')).toBe('2');
+    // The rightmost chance breaks in the blocked colour, then settles as lost.
+    expect(root.querySelectorAll('.chance.breaking')).toHaveLength(1);
+    expect(root.querySelectorAll('.chance')[2]?.classList.contains('breaking')).toBe(true);
+    await vi.advanceTimersByTimeAsync(DEFAULT_THEME.motion.chanceBreakMs);
+    expect(root.querySelectorAll('.chance.breaking')).toHaveLength(0);
+    expect(root.querySelectorAll('.chance.lost')).toHaveLength(1);
+    expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 2 chances left.');
     tapCell(root, x, y);
-    expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 1 drop left.');
+    expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 1 chance left.');
+    // A hint is up when the board is lost: the loss clears it.
+    root.querySelector<HTMLButtonElement>('.hint')!.click();
+    expect(root.querySelectorAll('.hinted')).toHaveLength(1);
     tapCell(root, x, y);
+    // The losing tap flashes like any blocked tap; the board is not faded yet.
+    expect(root.querySelector(`[data-arrow="${stuck}"]`)?.classList.contains('blocked')).toBe(true);
+    expect(play.dataset.status).toBe('lost');
+    expect(play.dataset.faded).toBeUndefined();
+    expect(root.querySelectorAll('.hinted')).toHaveLength(0);
+    expect(root.querySelector('.hint .tool-label')?.textContent).toBe('Hint');
     await vi.advanceTimersByTimeAsync(1000);
+    expect(play.dataset.faded).toBe('true');
 
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.hidden).toBe(false);
     expect(overlay.dataset.overlay).toBe('lost');
-    // Everything behind the card is out of reach while it shows.
-    for (const selector of ['.topbar', '.hud', '.stage', '.grid-toggle']) {
+    expect(play.dataset.status).toBe('lost');
+    expect(root.querySelectorAll('.chance.lost')).toHaveLength(3);
+    expect(overlay.querySelector('h2')?.textContent).toBe('Out of chances');
+    expect(overlay.querySelector('p')?.textContent).toBe(
+      'Retry plays the same puzzle again, with three fresh chances and the timer reset.',
+    );
+    expect(overlay.querySelector('a')?.getAttribute('href')).toBe('dev.html');
+    expect(overlay.querySelector('a')?.textContent).toBe('Home');
+    // Everything behind the sheet is out of reach while it shows.
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
     }
 
     overlay.querySelector('button')!.click();
     expect(overlay.hidden).toBe(true);
-    expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('3');
+    expect(root.querySelector('.chances')?.getAttribute('data-chances')).toBe('3');
+    expect(root.querySelectorAll('.chance.lost')).toHaveLength(0);
+    expect(play.dataset.status).toBe('playing');
+    expect(play.dataset.faded).toBeUndefined();
     expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length));
     expect(root.querySelectorAll('[data-arrow]')).toHaveLength(puzzle.arrows.length);
     expect([...root.querySelectorAll('.body')].map((p) => p.getAttribute('d'))).toEqual(before);
     expect(root.querySelector('.time')?.textContent).toBe('00:00');
-    for (const selector of ['.topbar', '.hud', '.stage', '.grid-toggle']) {
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
     }
     expect(document.activeElement).toBe(root.querySelector('.stage'));
@@ -175,7 +202,7 @@ describe('PlayScreen', () => {
     tapCell(root, x, y);
     expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 1));
     expect(play.dataset.zoom).toBe(zoom);
-    expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('3');
+    expect(root.querySelector('.chances')?.getAttribute('data-chances')).toBe('3');
   });
 
   it('wins by following hints and offers the next level', async () => {
@@ -191,7 +218,8 @@ describe('PlayScreen', () => {
     await vi.advanceTimersByTimeAsync(1000);
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.dataset.overlay).toBe('won');
-    expect(overlay.textContent).toContain('3 of 3 drops left');
+    expect(overlay.querySelector('h2')?.textContent).toBe('Solved');
+    expect(overlay.textContent).toContain('3 of 3 chances left');
     overlay.querySelector('button')!.click();
     expect(navigations).toEqual([{ kind: 'level', level: 2 }]);
   });
@@ -212,6 +240,20 @@ describe('PlayScreen', () => {
     overlay.querySelector('button')!.click();
     expect(navigations).toEqual([]);
     expect(root.querySelectorAll('[data-arrow]')).toHaveLength(loaded.puzzle.arrows.length);
+  });
+
+  it('labels the hint button "Hint shown" until the hinted arrow is gone', () => {
+    const { root } = mount();
+    const { puzzle } = generateLevel(1);
+    const hint = root.querySelector<HTMLButtonElement>('.hint')!;
+    expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint');
+    expect(hint.textContent).toContain('AD');
+    hint.click();
+    expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint shown');
+    const id = Number(root.querySelector('.hinted')!.getAttribute('data-arrow'));
+    const { x, y } = head(puzzle.arrows[id]!);
+    tapCell(root, x, y);
+    expect(hint.querySelector('.tool-label')?.textContent).toBe('Hint');
   });
 
   it('zooms with the wheel and keyboard, and toggles the grid', () => {

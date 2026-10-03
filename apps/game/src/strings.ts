@@ -11,22 +11,26 @@ const en = {
   'tier.hard': 'Hard',
   'tier.superHard': 'Super Hard',
   'nav.back': 'Back to puzzles',
-  'hud.drops': '{n} of {total} drops left',
+  'nav.home': 'Home',
+  'hud.chances': '{n} of {total} chances left',
   'hud.timer': 'Time {time}',
-  'hud.hint': 'Hint',
-  'hud.grid': 'Grid',
+  'tools.grid': 'Grid',
+  'tools.hint': 'Hint',
+  'tools.hintShown': 'Hint shown',
+  'tools.ad': 'AD',
+  'tools.adNote': '(plays an ad)',
   'board.label.one': 'Board, 1 arrow left. Pinch or scroll to zoom, drag to move.',
   'board.label.other': 'Board, {n} arrows left. Pinch or scroll to zoom, drag to move.',
-  'status.blocked.one': 'Blocked. 1 drop left.',
-  'status.blocked.other': 'Blocked. {n} drops left.',
+  'status.blocked.one': 'Blocked. 1 chance left.',
+  'status.blocked.other': 'Blocked. {n} chances left.',
   'status.hint': 'Try the highlighted arrow.',
   'status.noHint': 'No free arrow right now.',
-  'won.title': 'Board cleared!',
-  'won.summary': '{time} · {drops} of {total} drops left',
+  'won.title': 'Solved',
+  'won.summary': '{time} · {chances} of {total} chances left',
   'won.next': 'Next level',
   'won.again': 'Play again',
-  'lost.title': 'Out of drops',
-  'lost.body': 'Same board, fresh drops. Look before you tap.',
+  'lost.title': 'Out of chances',
+  'lost.body': 'Retry plays the same puzzle again, with {total} fresh chances and the timer reset.',
   'lost.retry': 'Retry',
 } as const;
 
@@ -52,6 +56,25 @@ export function tn(
 ): string {
   const form = plurals.select(n) === 'one' ? 'one' : 'other';
   return t(`${key}.${form}`, { ...params, n });
+}
+
+const SMALL_NUMBERS = [
+  'zero',
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+];
+
+/** Small counts in words, as running text prefers ("three fresh chances"); digits from 11. */
+export function spellOut(n: number): string {
+  return SMALL_NUMBERS[n] ?? String(n);
 }
 
 /** `2026-10-02` as `Oct 2, 2026`. */

@@ -1,74 +1,80 @@
 import type { Theme } from './theme.ts';
 
-const icon = (body: string, viewBox = '0 0 24 24'): string =>
-  `<svg viewBox="${viewBox}" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+const icon = (body: string): string =>
+  `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 /**
- * The placeholder theme: the palette of the reference screenshots (pale green
- * background, dark green strokes, blue drops) until the designed theme from
- * Claude Design arrives (docs/PLAN.md, T9).
+ * Paper: the direction delivered by Claude Design (docs/DESIGN.md). Warm paper
+ * and ink, Instrument Serif for titles and Geist for the interface.
  */
 export const DEFAULT_THEME: Theme = {
-  id: 'meadow',
-  name: 'Meadow',
+  id: 'paper',
+  name: 'Paper',
   colors: {
-    background: '#dcefe2',
-    surface: '#c9e1d1',
-    surfaceRaised: '#f2faf4',
-    shadow: 'rgba(31, 61, 43, 0.18)',
-    text: '#2f4a3a',
-    textMuted: '#5d7667',
-    title: '#3a86a0',
-    divider: '#c5dccc',
-    stroke: '#2f4a3a',
-    hint: '#e08a2c',
-    blocked: '#c8424f',
-    grid: 'rgba(47, 74, 58, 0.16)',
-    drop: '#56a5c0',
-    dropEmpty: '#b9cfc1',
-    scrim: 'rgba(28, 48, 37, 0.45)',
-    button: '#3a86a0',
-    buttonText: '#ffffff',
-    focus: '#e08a2c',
+    background: '#f4f0e8',
+    surface: '#e9e3d6',
+    surfaceRaised: '#fcfaf6',
+    text: '#2a2723',
+    textMuted: '#6e675c',
+    title: '#1e1b17',
+    divider: '#ddd5c6',
+    stroke: '#2b2925',
+    head: '#2b2925',
+    hint: '#c9741f',
+    blocked: '#b93d2a',
+    grid: '#e8e1d3',
+    chance: '#2b2925',
+    chanceLost: '#d6cebf',
+    primary: '#2b2925',
+    onPrimary: '#fcfaf6',
+    focus: '#c9741f',
   },
   tiers: {
-    easy: '#3f9a63',
-    medium: '#3a86a0',
-    hard: '#6c4fc2',
-    superHard: '#a8455a',
+    // The design's #3F7D4E reaches 4.34:1 on the background; this shade reaches 4.5:1
+    // for the small tier label (docs/DESIGN.md, Tokens).
+    easy: '#3d784b',
+    medium: '#3c6fa0',
+    hard: '#7a4fa6',
+    superHard: '#a83e34',
   },
+  // drawing1 to drawing4 of the design, by the names the drawings use. The design has
+  // no red, blue, purple or black yet (DESIGN.md, open points): the tier colours and the
+  // stroke stand in.
   drawingPalette: {
-    red: '#c8475a',
-    orange: '#e08a3c',
-    yellow: '#c99a1e',
-    brown: '#7a5233',
-    green: '#2f6b3f',
-    blue: '#3a86a0',
-    purple: '#6c4fc2',
-    black: '#2b2b2b',
+    orange: '#d9822b',
+    yellow: '#c9a227',
+    brown: '#7a4e2d',
+    green: '#4f8a5b',
+    red: '#a83e34',
+    blue: '#3c6fa0',
+    purple: '#7a4fa6',
+    black: '#2b2925',
+  },
+  shadows: {
+    raised: '0 1px 2px rgba(43, 41, 37, 0.06), 0 6px 18px rgba(43, 41, 37, 0.08)',
   },
   board: {
     strokeWidth: 0.12,
     tailReach: 0.38,
-    headTip: 0.38,
-    headDepth: 0.3,
-    headHalfWidth: 0.19,
-    bodyEnd: 0.12,
+    headTip: 0.42,
+    headDepth: 0.42,
+    headHalfWidth: 0.17,
+    bodyEnd: 0.14,
     gridWidth: 0.03,
     margin: 0.6,
   },
+  chanceDirection: 'right',
   fonts: {
-    ui: 'ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif',
+    title: '"Instrument Serif", "Iowan Old Style", Georgia, serif',
+    ui: '"Geist Variable", Geist, system-ui, -apple-system, "Segoe UI", sans-serif',
   },
   icons: {
-    back: icon('<path d="M20 12H5"/><path d="M11 5l-7 7 7 7"/>'),
-    drop: `<svg viewBox="0 0 24 30" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 1.5C9.4 6.2 3 13.4 3 19.2 3 24.3 7 28.5 12 28.5s9-4.2 9-9.3C21 13.4 14.6 6.2 12 1.5z"/></svg>`,
-    clock: icon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l-2.5 2.5"/>'),
+    back: icon('<path d="M15 5l-7 7 7 7"/>'),
     hint: icon(
       '<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>',
     ),
     grid: icon(
-      '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+      '<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/>',
     ),
   },
   motion: {
@@ -76,6 +82,7 @@ export const DEFAULT_THEME: Theme = {
     exitMaxMs: 400,
     exitMsPerCell: 9,
     shakeMs: 280,
+    chanceBreakMs: 300,
     settleMs: 150,
   },
 };

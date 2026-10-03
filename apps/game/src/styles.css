@@ -1,7 +1,7 @@
 /*
- * Colours, fonts and sizes of the board come from the theme as custom
- * properties (src/theme). No colour literal belongs in this file; a test
- * enforces it.
+ * The look of docs/DESIGN.md. Colours, fonts and shadows come from the theme
+ * as custom properties (src/theme). No colour literal belongs in this file; a
+ * test enforces it.
  */
 
 *,
@@ -70,52 +70,53 @@ body {
 
 .topbar {
   display: grid;
-  grid-template-columns: 48px 1fr 48px;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px 8px;
-  border-bottom: 2px solid var(--color-divider);
+  gap: 12px;
+  padding: 14px 16px 6px;
 }
 
-.icon-button {
+.round-button {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 14px;
-  background: transparent;
+  border-radius: 50%;
+  background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
 }
 
-.icon-button .icon {
-  width: 30px;
-  height: 30px;
-}
-
-.icon-button:disabled {
-  opacity: 0.4;
-  cursor: default;
+.round-button .icon {
+  width: 22px;
+  height: 22px;
 }
 
 .title {
-  text-align: center;
-  line-height: 1.15;
+  min-width: 0;
+  line-height: 1;
 }
 
 .title h1 {
+  overflow: hidden;
   margin: 0;
   color: var(--color-title);
-  font-size: 1.65rem;
-  font-weight: 800;
+  font-family: var(--font-title);
+  font-size: 2.1rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tier {
-  margin: 2px 0 0;
-  font-size: 1.05rem;
-  font-weight: 800;
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .tier[data-tier='easy'] {
@@ -134,48 +135,69 @@ body {
   color: var(--tier-super-hard);
 }
 
-.hud {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 12px 16px 4px;
-}
-
-.drops {
+.status {
   display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.drop {
-  width: 26px;
-  height: 32px;
-  color: var(--color-drop);
-  transition: color 200ms ease;
+.status-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--color-divider);
 }
 
-.drop.lost {
-  color: var(--color-drop-empty);
+.time {
+  min-width: 3.2em;
+  color: var(--color-text);
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-.timer {
+/* Chances: the board's arrowhead, split when lost */
+
+.chances {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--color-surface);
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  gap: 3px;
 }
 
-.timer .icon {
-  width: 22px;
-  height: 22px;
+.chance {
+  display: block;
+  width: 17px;
+  height: 17px;
+  color: var(--color-chance);
+  overflow: visible;
+  transition: color 150ms ease;
 }
 
-.hud .hint {
-  justify-self: end;
+.chance path {
+  fill: currentColor;
+}
+
+.chance.breaking {
+  color: var(--color-blocked);
+}
+
+.chance.lost {
+  color: var(--color-chance-lost);
+}
+
+.chances[data-direction='up'] .chance {
+  transform: rotate(-90deg);
+}
+
+/* Board */
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: pointer;
 }
 
 .stage:focus {
@@ -185,15 +207,6 @@ body {
 .stage:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: -3px;
-}
-
-.stage {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  touch-action: none;
-  cursor: pointer;
 }
 
 .board {
@@ -220,8 +233,10 @@ body {
   transition: color 120ms ease;
 }
 
+/* Sharp-cornered arrowheads: filled, never stroked. */
 .arrow .head {
-  fill: currentColor;
+  fill: var(--arrow-head, currentColor);
+  stroke: none;
 }
 
 .arrow.hinted {
@@ -234,86 +249,147 @@ body {
   color: var(--color-blocked);
 }
 
+.arrow.hinted .head,
+.arrow.blocked .head,
+.arrow.blocker .head {
+  fill: currentColor;
+}
+
+/* A lost board fades once the sheet is up (not on the losing tap, which flashes first). */
+.play[data-faded] .arrow {
+  color: var(--color-chance-lost);
+}
+
+.play[data-faded] .arrow .head {
+  fill: currentColor;
+}
+
 @keyframes hint-pulse {
   50% {
     opacity: 0.45;
   }
 }
 
-.fab {
-  position: absolute;
-  right: calc(20px + env(safe-area-inset-right));
-  bottom: calc(24px + env(safe-area-inset-bottom));
+/* Tool bar */
+
+.toolbar {
   display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 8px 16px 18px;
+}
+
+.tool {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 18px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 18px;
   background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
   color: var(--color-text);
-  box-shadow: 0 4px 14px var(--color-shadow);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.fab .icon {
-  width: 34px;
-  height: 34px;
+.tool .icon {
+  width: 22px;
+  height: 22px;
 }
 
-.fab[aria-pressed='true'] {
-  color: var(--color-title);
+.tool:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
-/* Overlay */
+.tool-label {
+  flex: 1;
+  text-align: left;
+}
+
+/* The icon carries the hint colour; the label stays in text colour for 4.5:1. */
+.tool.hint.shown .icon {
+  color: var(--color-hint);
+}
+
+.ad-badge {
+  padding: 3px 7px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: 7px;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/*
+ * On wide screens the chrome keeps the width of a phone column, centred, so
+ * the tool bar does not become a 1,000-pixel button; the board keeps the full
+ * stage.
+ */
+.topbar,
+.toolbar,
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+/* End-of-board sheet */
 
 .overlay {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: var(--color-scrim);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .overlay[hidden] {
   display: none;
 }
 
-.card {
-  width: min(100%, 340px);
-  padding: 28px 24px 24px;
-  border-radius: 24px;
+.sheet {
+  width: 100%;
+  padding: 28px 24px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0;
   background: var(--color-surface-raised);
-  box-shadow: 0 12px 40px var(--color-shadow);
-  text-align: center;
+  box-shadow: var(--shadow-raised);
+  animation: sheet-in 260ms ease-out;
 }
 
-.card h2 {
-  margin: 0 0 8px;
+.sheet h2 {
+  margin: 0 0 10px;
   color: var(--color-title);
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-family: var(--font-title);
+  font-size: 2.3rem;
+  font-weight: 400;
+  line-height: 1.05;
 }
 
-.card p {
-  margin: 0 0 20px;
+.sheet p {
+  margin: 0 0 22px;
   color: var(--color-text-muted);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.45;
 }
 
 .button {
-  display: inline-block;
-  min-width: 160px;
+  display: block;
+  width: 100%;
+  min-height: 56px;
   padding: 14px 24px;
   border: 0;
   border-radius: 16px;
-  background: var(--color-button);
-  color: var(--color-button-text);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font: inherit;
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 1.08rem;
+  font-weight: 650;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -324,13 +400,38 @@ body {
   color: var(--color-text);
 }
 
+.text-button {
+  display: block;
+  margin-top: 6px;
+  padding: 14px;
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
+.text-button[hidden] {
+  display: none;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .arrow,
-  .drop {
+  .chance {
     transition: none;
   }
 
   .arrow.hinted {
+    animation: none;
+  }
+
+  .sheet {
     animation: none;
   }
 }
@@ -346,6 +447,9 @@ body {
 .dev h1 {
   margin: 0 0 4px;
   color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.4rem;
+  font-weight: 400;
 }
 
 .dev-note {
@@ -357,14 +461,17 @@ body {
 .dev-preview {
   margin-top: 16px;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: 18px;
   background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
 }
 
 .dev-card h2,
 .dev-preview h2 {
   margin: 0 0 12px;
-  font-size: 1.2rem;
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+  font-weight: 400;
 }
 
 .dev label {
@@ -372,13 +479,13 @@ body {
   flex-direction: column;
   gap: 4px;
   margin-bottom: 8px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dev input,
 .dev select {
   padding: 10px 12px;
-  border: 2px solid var(--color-divider);
+  border: 1.5px solid var(--color-divider);
   border-radius: 12px;
   background: var(--color-background);
   color: var(--color-text);
@@ -408,7 +515,7 @@ body {
 
 .dev dd {
   margin: 0;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 

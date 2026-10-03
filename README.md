@@ -5,18 +5,19 @@ whose way out is free and it slides off the board. Clear the board. Every level,
 and event board is generated on the phone from a seed, so there are infinitely many and everyone
 plays the same ones.
 
-What we are building, and why, is in [docs/PRODUCT.md](docs/PRODUCT.md). How the code is put
+What we are building, and why, is in [docs/PRODUCT.md](docs/PRODUCT.md); how it looks is in
+[docs/DESIGN.md](docs/DESIGN.md). How the code is put
 together is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). What comes next, task by task, is in
 [docs/PLAN.md](docs/PLAN.md).
 
 ## Status
 
-| Area                                              | State                                                                                                                                                                                 |
-| :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`packages/engine`](packages/engine/src/index.ts) | Done for v1: seeded RNG, boards and drawings, generator (partition and peel), solver and difficulty metrics, tiers, level and daily seeds, game state, daily league simulation, tests |
-| [`apps/game`](apps/game/src/main.ts)              | Playable board in the browser (T2): SVG board, tap by cell, pinch and wheel zoom, drops, timer, hint, grid, win and lose, exit animation, a dev page to open any puzzle by seed       |
-| Next                                              | Persistence and the level path (T3), then daily, league, events, ads, iOS: see [docs/PLAN.md](docs/PLAN.md)                                                                           |
-| CI                                                | Lint, format, typecheck, unit tests, build with a size budget; Playwright end to end; calibration suites                                                                              |
+| Area                                              | State                                                                                                                                                                                                                                |
+| :------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`packages/engine`](packages/engine/src/index.ts) | Done for v1: seeded RNG, boards and drawings, generator (partition and peel), solver and difficulty metrics, tiers, level and daily seeds, game state, daily league simulation, tests                                                |
+| [`apps/game`](apps/game/src/main.ts)              | Playable board in the browser in the designed Paper theme (T2, T2b): SVG board, tap by cell, pinch and wheel zoom, chances, timer, hint, grid, win and lose sheets, exit and break animations, a dev page to open any puzzle by seed |
+| Next                                              | Persistence and the level path (T3), then daily, league, events, ads, iOS: see [docs/PLAN.md](docs/PLAN.md)                                                                                                                          |
+| CI                                                | Lint, format, typecheck, unit tests, build with a size budget; Playwright end to end; calibration suites                                                                                                                             |
 
 ## Quick start
 

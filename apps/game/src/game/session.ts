@@ -78,7 +78,7 @@ export class PlaySession {
     this.watch.resume(now);
   }
 
-  /** The same puzzle again, with fresh drops and timer (docs/PRODUCT.md: a lost board is retried). */
+  /** The same puzzle again, with fresh chances and timer (docs/PRODUCT.md: a lost board is retried). */
   retry(): void {
     this.game = createGame(this.puzzle, this.options);
     this.watch = new Stopwatch();

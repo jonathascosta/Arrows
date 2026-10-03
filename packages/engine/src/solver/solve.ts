@@ -29,7 +29,7 @@ export interface Analysis {
   readonly avgRayLength: number;
   /** Share of arrows whose head sits at the edge, pointing out (ray length 0). */
   readonly borderHeadRatio: number;
-  /** Mean number, per step, of arrows blocked by exactly one cell: the ones that cost drops. */
+  /** Mean number, per step, of arrows blocked by exactly one cell: the ones that cost a life (a chance, in the app). */
   readonly avgNearMiss: number;
   /** A provisional 0 to 100 composite; tiers are tuned on the raw metrics. */
   readonly difficulty: number;
