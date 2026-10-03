@@ -1059,19 +1059,18 @@ button.text-button {
 
 /* One segment per board, filled when won. The text beside it says the same. */
 .event-progress {
-  display: flex;
-  gap: 3px;
-  margin: 0 0 8px;
-}
-
-.event-progress span {
-  flex: 1;
+  display: block;
   height: 6px;
+  margin: 0 0 8px;
+  overflow: hidden;
   border-radius: 3px;
   background: var(--color-divider);
 }
 
-.event-progress span[data-done] {
+.event-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
   background: var(--color-hint);
 }
 

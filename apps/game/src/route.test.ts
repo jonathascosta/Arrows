@@ -43,7 +43,7 @@ describe('parseRoute', () => {
       '?daily=2026-02-30',
       '?drawing=nope',
       '?event=nope',
-      '?event=autumn-2026&board=7',
+      '?event=autumn-2026&board=301',
       '?event=autumn-2026&board=0',
     ]) {
       expect(parseRoute(search), search).toEqual({ screen: 'home' });
@@ -63,7 +63,7 @@ describe('parseRoute', () => {
       play({ kind: 'level', level: 1 }),
       play({ kind: 'daily', dateKey: '2026-12-31' }),
       play({ kind: 'drawing', drawingId: 'heart', tier: 'superHard' }),
-      play({ kind: 'event', eventId: 'autumn-2026', board: 6 }),
+      play({ kind: 'event', eventId: 'autumn-2026', board: 300 }),
     ];
     for (const route of routes) {
       expect(parseRoute(routeHref(route).slice(2))).toEqual(route);

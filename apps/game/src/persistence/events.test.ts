@@ -6,7 +6,7 @@ import { MemoryStore } from './store.ts';
 describe('EventStore', () => {
   it('starts with nothing won and the first board next', () => {
     const events = new EventStore(new MemoryStore());
-    expect(events.progress(AUTUMN_2026)).toEqual({ won: [], total: 6, next: 1, complete: false });
+    expect(events.progress(AUTUMN_2026)).toEqual({ won: [], total: 300, next: 1, complete: false });
   });
 
   it('keeps every board won, and survives a reload', () => {
@@ -17,7 +17,7 @@ describe('EventStore', () => {
     events.recordWin(AUTUMN_2026, 2);
     expect(new EventStore(store).progress(AUTUMN_2026)).toEqual({
       won: [1, 2],
-      total: 6,
+      total: 300,
       next: 3,
       complete: false,
     });
@@ -29,13 +29,13 @@ describe('EventStore', () => {
 
   it('earns the badge with the last board, once', () => {
     const events = new EventStore(new MemoryStore());
-    for (let board = 1; board < 6; board++) {
+    for (let board = 1; board < 300; board++) {
       expect(events.recordWin(AUTUMN_2026, board).badge).toBe(false);
     }
-    const last = events.recordWin(AUTUMN_2026, 6);
+    const last = events.recordWin(AUTUMN_2026, 300);
     expect(last).toMatchObject({ first: true, badge: true });
     expect(last.progress).toMatchObject({ next: null, complete: true });
-    expect(events.recordWin(AUTUMN_2026, 6).badge).toBe(false);
+    expect(events.recordWin(AUTUMN_2026, 300).badge).toBe(false);
   });
 
   it('never writes an out-of-date copy over another page’s progress', () => {
@@ -67,7 +67,7 @@ describe('parseEventResults', () => {
 
   it('ignores boards past the end of the event', () => {
     const store = new MemoryStore();
-    store.setItem(EVENTS_KEY, JSON.stringify({ version: 1, events: { 'autumn-2026': [1, 9] } }));
+    store.setItem(EVENTS_KEY, JSON.stringify({ version: 1, events: { 'autumn-2026': [1, 301] } }));
     expect(new EventStore(store).progress(AUTUMN_2026)).toMatchObject({ won: [1], next: 2 });
   });
 });

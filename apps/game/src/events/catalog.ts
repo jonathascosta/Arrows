@@ -1,3 +1,4 @@
+import { tierForLevel } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
 import type { DateKey } from '../daily/days.ts';
 import type { StringKey } from '../strings.ts';
@@ -22,6 +23,24 @@ export interface GameEvent {
   readonly boards: readonly EventBoard[];
 }
 
+/** Boards in an event (docs/PRODUCT.md, Events and championships). */
+export const EVENT_BOARDS = 300;
+
+/**
+ * An event's boards: its drawings in turn, the tiers in the levels' cycle of
+ * ten (medium, medium, hard, medium, medium, medium, hard, medium, medium, super
+ * hard), so board n has the tier of level 10 + n.
+ */
+export function eventBoards(
+  drawingIds: readonly string[],
+  count: number = EVENT_BOARDS,
+): EventBoard[] {
+  return Array.from({ length: count }, (_, i) => ({
+    drawingId: drawingIds[i % drawingIds.length]!,
+    tier: tierForLevel(10 + i + 1),
+  }));
+}
+
 export const AUTUMN_2026: GameEvent = {
   id: 'autumn-2026',
   name: 'event.autumn2026',
@@ -29,14 +48,7 @@ export const AUTUMN_2026: GameEvent = {
   badge: 'event.autumn2026.badge',
   start: '2026-10-01',
   end: '2026-11-30',
-  boards: [
-    { drawingId: 'maple-leaf', tier: 'medium' },
-    { drawingId: 'acorn', tier: 'medium' },
-    { drawingId: 'maple-leaf', tier: 'hard' },
-    { drawingId: 'acorn', tier: 'hard' },
-    { drawingId: 'maple-leaf', tier: 'superHard' },
-    { drawingId: 'acorn', tier: 'superHard' },
-  ],
+  boards: eventBoards(['maple-leaf', 'acorn']),
 };
 
 export const EVENTS: readonly GameEvent[] = [AUTUMN_2026];

@@ -15,7 +15,7 @@ import type { HomeEvent, HomeScreenOptions } from './home.ts';
 const AUTUMN: HomeEvent = {
   event: AUTUMN_2026,
   state: 'running',
-  progress: { won: [1, 2], total: 6, next: 3, complete: false },
+  progress: { won: [1, 2], total: 300, next: 3, complete: false },
   daysLeft: 59,
 };
 
@@ -239,25 +239,18 @@ describe('HomeScreen', () => {
     expect(league.querySelector('.card-note')?.textContent).toBe('Win a board to join today');
   });
 
-  it('opens the event’s next board, with a segment per board and the days left', () => {
+  it('opens the event’s next board, with a bar of the boards won and the days left', () => {
     const { root } = mount();
     const card = root.querySelector('a.event-card')!;
     expect(card.getAttribute('href')).toBe('./?event=autumn-2026&board=3');
     expect(card.querySelector('.card-label')?.textContent).toBe('Autumn event');
     // Board 3 is the maple leaf at Hard.
     expect(card.querySelector('.card-title')?.textContent).toBe('Maple leaf');
-    const segments = [...card.querySelectorAll('.event-progress span')];
-    expect(segments).toHaveLength(6);
-    expect(segments.map((segment) => segment.hasAttribute('data-done'))).toEqual([
-      true,
-      true,
-      false,
-      false,
-      false,
-      false,
-    ]);
+    // 2 of 300 boards: the bar is filled to 0.7%.
+    const fill = card.querySelector<HTMLElement>('.event-progress .event-progress-fill')!;
+    expect(fill.style.width).toBe('0.7%');
     expect(card.querySelector('.event-progress')?.getAttribute('aria-hidden')).toBe('true');
-    expect(card.querySelector('.card-note')?.textContent).toBe('2 of 6 boards · 59 days left');
+    expect(card.querySelector('.card-note')?.textContent).toBe('2 of 300 boards · 59 days left');
     // The thumbnail is that board itself, drawn small.
     const board = loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 3 });
     expect(card.querySelectorAll('.event-thumb [data-arrow]')).toHaveLength(
@@ -269,22 +262,23 @@ describe('HomeScreen', () => {
   it('says the last day, the badge, the end, or shows no event at all', () => {
     const lastDay = mount({}, { ...AUTUMN, daysLeft: 1 });
     expect(lastDay.root.querySelector('.event-card .card-note')?.textContent).toBe(
-      '2 of 6 boards · Last day',
+      '2 of 300 boards · Last day',
     );
 
-    const complete = { won: [1, 2, 3, 4, 5, 6], total: 6, next: null, complete: true };
+    const all = Array.from({ length: 300 }, (_, i) => i + 1);
+    const complete = { won: all, total: 300, next: null, complete: true };
     const done = mount({}, { ...AUTUMN, progress: complete });
     // Nothing left to open: not a link, and the badge in place of the drawing.
     expect(done.root.querySelector('a.event-card')).toBeNull();
     const card = done.root.querySelector('.event-card')!;
     expect(card.querySelector('.badge-earned')?.textContent).toBe('Badge earned');
-    expect(card.querySelectorAll('.event-progress [data-done]')).toHaveLength(6);
+    expect(card.querySelector<HTMLElement>('.event-progress-fill')?.style.width).toBe('100%');
 
     const ended = mount({}, { ...AUTUMN, state: 'ended', daysLeft: 0 });
     expect(ended.root.querySelector('a.event-card')).toBeNull();
     expect(ended.root.querySelector('.event-card')?.getAttribute('data-state')).toBe('ended');
     expect(ended.root.querySelector('.event-card .card-note')?.textContent).toBe(
-      '2 of 6 boards · Ended Mon 30 Nov',
+      '2 of 300 boards · Ended Mon 30 Nov',
     );
 
     expect(mount({}, null).root.querySelector('.event-card')).toBeNull();

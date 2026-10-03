@@ -281,7 +281,7 @@ API within the budget in the product document, Android, iPad.
 | T12  | done  | [#17](https://github.com/jonathascosta/Arrows/pull/17) |
 | T13  | done  | [#18](https://github.com/jonathascosta/Arrows/pull/18) |
 | T14  | open  |                                                        |
-| T15  | open  |                                                        |
+| T15  | done  | this pull request                                      |
 | T16  | open  |                                                        |
 
 T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an

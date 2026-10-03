@@ -158,12 +158,13 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-As built in T6, the event card shows the running event, or the one that ended last: the label
-is the event's name ("Autumn event"), the title the next board's drawing, the progress bar a
-segment per board (won ones in `hint`), and the note "2 of 6 boards · 48 days left" ("Last day",
-or "Ended Mon 30 Nov" after it). It opens the next board while the event runs; once every board
-is won the title is the badge ("Badge earned", the badge icon in `hint`), and the card opens
-nothing. The level strip is not tappable: Play opens the current level.
+As built in T6, the event card shows the running event, or the one that ended last: the label is
+the event's name ("Autumn event"), the title the next board's drawing, the progress bar one track
+in `divider` filled in `hint` by the share of boards won (T15: 300 boards are too many for a
+segment each), and the note "2 of 300 boards · 48 days left" ("Last day", or "Ended Mon 30 Nov"
+after it). It opens the next board while the event runs; once every board is won the title is the
+badge ("Badge earned", the badge icon in `hint`), and the card opens nothing. The level strip is
+not tappable: Play opens the current level.
 
 As built in T9, the menu button opens **Settings**, a bottom sheet like the others: "Settings"
 in serif, a list on `background` with a row per switch (Sound; Haptics in the iOS app only),

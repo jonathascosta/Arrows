@@ -4,25 +4,58 @@ import { BoardRenderer } from '../board/renderer.ts';
 import { loadPuzzle } from '../puzzles.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
 import type { GameEvent } from './catalog.ts';
-import { AUTUMN_2026, daysLeft, eventOn, eventState, EVENTS, findEvent } from './catalog.ts';
+import {
+  AUTUMN_2026,
+  daysLeft,
+  EVENT_BOARDS,
+  eventBoards,
+  eventOn,
+  eventState,
+  EVENTS,
+  findEvent,
+} from './catalog.ts';
 
 describe('the event catalog', () => {
-  it('has the Autumn event: six boards, a maple leaf and an acorn at three tiers', () => {
+  it('has the Autumn event: 300 boards, a maple leaf and an acorn in turn', () => {
     expect(findEvent('autumn-2026')).toBe(AUTUMN_2026);
     expect(findEvent('nope')).toBeUndefined();
-    expect(AUTUMN_2026.boards.map((board) => `${board.drawingId}:${board.tier}`)).toEqual([
-      'maple-leaf:medium',
-      'acorn:medium',
-      'maple-leaf:hard',
-      'acorn:hard',
-      'maple-leaf:superHard',
-      'acorn:superHard',
+    expect(AUTUMN_2026.boards).toHaveLength(300);
+    expect(EVENT_BOARDS).toBe(300);
+    expect(AUTUMN_2026.boards.slice(0, 4).map((board) => board.drawingId)).toEqual([
+      'maple-leaf',
+      'acorn',
+      'maple-leaf',
+      'acorn',
     ]);
     for (const event of EVENTS) {
       expect(event.start <= event.end, event.id).toBe(true);
       for (const board of event.boards)
         expect(findDrawing(board.drawingId), event.id).toBeDefined();
     }
+  });
+
+  it('cycles the tiers in tens, like the levels: medium, medium, hard, …, super hard', () => {
+    const tiers = eventBoards(['a'], 20).map((board) => board.tier);
+    const cycle = [
+      'medium',
+      'medium',
+      'hard',
+      'medium',
+      'medium',
+      'medium',
+      'hard',
+      'medium',
+      'medium',
+      'superHard',
+    ];
+    expect(tiers).toEqual([...cycle, ...cycle]);
+    expect(AUTUMN_2026.boards[299]!.tier).toBe('superHard');
+    // Three drawings in turn, whatever the count.
+    expect(
+      eventBoards(['a', 'b', 'c'], 7)
+        .map((board) => board.drawingId)
+        .join(''),
+    ).toBe('abcabca');
   });
 
   it('runs from its first to its last day, both included', () => {
@@ -53,29 +86,22 @@ describe('the event catalog', () => {
 
 describe('event boards', () => {
   it('each has its own seed, its drawing, the bounds ray rule and where it stands', () => {
-    const boards = AUTUMN_2026.boards.map((_, i) =>
+    // The first cycle of ten, which has every tier; the rest follow the same rule.
+    const boards = Array.from({ length: 10 }, (_, i) =>
       loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: i + 1 }),
     );
-    expect(new Set(boards.map((board) => board.puzzle.seed)).size).toBe(6);
+    expect(new Set(boards.map((board) => board.puzzle.seed)).size).toBe(10);
     expect(boards[0]!.puzzle.seed).toMatch(/^board:event:autumn-2026:1#/);
-    expect(boards.map((board) => board.title)).toEqual([
+    expect(boards.slice(0, 3).map((board) => board.title)).toEqual([
       'Maple leaf',
       'Acorn',
       'Maple leaf',
-      'Acorn',
-      'Maple leaf',
-      'Acorn',
     ]);
-    expect(boards.map((board) => board.tier)).toEqual([
-      'medium',
-      'medium',
-      'hard',
-      'hard',
-      'superHard',
-      'superHard',
-    ]);
+    expect(boards.map((board) => board.tier)).toEqual(
+      AUTUMN_2026.boards.slice(0, 10).map((board) => board.tier),
+    );
     expect(boards.every((board) => board.puzzle.rayMode === 'bounds')).toBe(true);
-    expect(boards[4]!.subtitle).toBe('Autumn · 5 of 6');
+    expect(boards[4]!.subtitle).toBe('Autumn · 5 of 300');
     // The same board twice is the same puzzle.
     expect(loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 1 }).puzzle.arrows).toEqual(
       boards[0]!.puzzle.arrows,
@@ -83,7 +109,8 @@ describe('event boards', () => {
   });
 
   it('are drawn in the drawing’s colours, cell by cell', () => {
-    for (let board = 1; board <= AUTUMN_2026.boards.length; board++) {
+    // One of each drawing at each tier: the first ten boards.
+    for (let board = 1; board <= 10; board++) {
       const spec = AUTUMN_2026.boards[board - 1]!;
       const drawing = findDrawing(spec.drawingId)!;
       const { puzzle } = loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board });
@@ -105,7 +132,7 @@ describe('event boards', () => {
   });
 
   it('refuses a board the event does not have', () => {
-    expect(() => loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 7 })).toThrow(
+    expect(() => loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 301 })).toThrow(
       RangeError,
     );
     expect(() => loadPuzzle({ kind: 'event', eventId: 'nope', board: 1 })).toThrow(RangeError);
