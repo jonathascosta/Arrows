@@ -583,10 +583,10 @@ describe('App', () => {
     const { app, root, replaced } = mount();
     app.show('?event=autumn-2026&board=1');
     expect(root.querySelector('.play h1')?.textContent).toBe('Maple leaf');
-    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 1 of 6');
+    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 1 of 300');
     // A board further on than the next opens the next one instead.
     app.show('?event=autumn-2026&board=4');
-    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 1 of 6');
+    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 1 of 300');
     expect(replaced).toEqual(['?event=autumn-2026&board=1']);
   });
 
@@ -606,9 +606,11 @@ describe('App', () => {
     app.show('?event=autumn-2026&board=1');
     await solve(root, ref);
     const sheet = root.querySelector('.score-screen')!;
-    expect(scorePart(root, 'lines')).toBe('Board 1 of 6 done.');
+    expect(scorePart(root, 'lines')).toBe('Board 1 of 300 done.');
     expect(scorePart(root, 'league')).toMatch(LEAGUE_LINE);
-    expect(sheet.querySelector('.score-heading')?.textContent).toBe('Maple leaf · Autumn · 1 of 6');
+    expect(sheet.querySelector('.score-heading')?.textContent).toBe(
+      'Maple leaf · Autumn · 1 of 300',
+    );
     expect(JSON.parse(store.getItem(EVENTS_KEY)!)).toEqual({
       version: 1,
       events: { 'autumn-2026': [1] },
@@ -649,7 +651,7 @@ describe('App', () => {
     const { app, root } = mount(store, () => clock);
     const ref: PuzzleRef = { kind: 'event', eventId: 'autumn-2026', board: 5 };
     app.show('?event=autumn-2026&board=5');
-    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 5 of 6');
+    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 5 of 300');
     clock = new Date(2026, 11, 1, 0, 1);
     await solve(root, ref);
     const sheet = root.querySelector('.score-screen')!;
@@ -677,7 +679,7 @@ describe('App', () => {
     expect(scorePart(root, 'total')).toBe(String(points));
     app.show('');
     expect(root.querySelector('.event-card .card-note')?.textContent).toBe(
-      '4 of 6 boards · Ended Mon 30 Nov',
+      '4 of 300 boards · Ended Mon 30 Nov',
     );
   });
 
@@ -685,20 +687,23 @@ describe('App', () => {
     const store = new MemoryStore();
     store.setItem(
       EVENTS_KEY,
-      JSON.stringify({ version: 1, events: { 'autumn-2026': [1, 2, 3, 4, 5] } }),
+      JSON.stringify({
+        version: 1,
+        events: { 'autumn-2026': Array.from({ length: 299 }, (_, i) => i + 1) },
+      }),
     );
     const { app, root } = mount(store);
-    app.show('?event=autumn-2026&board=6');
-    await solve(root, { kind: 'event', eventId: 'autumn-2026', board: 6 });
+    app.show('?event=autumn-2026&board=300');
+    await solve(root, { kind: 'event', eventId: 'autumn-2026', board: 300 });
     const sheet = root.querySelector('.score-screen')!;
     expect(scorePart(root, 'lines')).toBe(
-      'Board 6 of 6 done. Every board won: the Autumn 2026 badge is yours!',
+      'Board 300 of 300 done. Every board won: the Autumn 2026 badge is yours!',
     );
     expect(sheet.querySelector('button')?.textContent).toBe('Play again');
     app.show('');
     expect(root.querySelector('.event-card .badge-earned')?.textContent).toBe('Badge earned');
     // Every board is open again for a replay, which counts for nothing new.
     app.show('?event=autumn-2026&board=2');
-    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 2 of 6');
+    expect(root.querySelector('.play .tier')?.textContent).toBe('Autumn · 2 of 300');
   });
 });

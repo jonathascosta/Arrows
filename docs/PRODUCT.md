@@ -222,16 +222,19 @@ reward. A championship is an event with its own league table over the event's du
 the drawing boards and one event; the championship table reuses the league code.
 
 - An event runs from a first to a last day, in the player's local time, like the daily.
-- Its boards are played in order: the next board opens when the one before is won. Every board
-  has its own seed (`board:event:<id>:<n>`), so everyone plays the same boards.
+- An event has 300 boards, played in order: the next board opens when the one before is won.
+  Every board has its own seed (`board:event:<id>:<n>`), so everyone plays the same boards. The
+  event's drawings take turns, and the tiers follow the levels' cycle of ten (medium, medium,
+  hard, medium, medium, medium, hard, medium, medium, super hard): board n has the tier of level
+  10 + n.
 - Progress is kept per board. Winning every board earns the event's badge.
 - Boards count only while the event runs. Before it starts and after its last day the boards
   cannot be opened; the home screen shows how far the player got and the badge, if earned. A
   board opened on the last day and won after midnight counts for neither the event nor the
   event bonus: the league scores it like any other board.
 - Event boards earn league points with the event bonus.
-- The first event is the Autumn event (1 October to 30 November 2026): a maple leaf and an acorn,
-  each at Medium, Hard and Super Hard, six boards in all.
+- The first event is the Autumn event (1 October to 30 November 2026): a maple leaf and an acorn
+  in turn, 300 boards.
 - Drawings are pixel art, one pixel per cell, drawn in the drawing palette (DESIGN.md) and
   converted to boards by a tool; the art lives in the repository as PNG.
 
@@ -370,6 +373,10 @@ beyond English and Portuguese.
   that a grid node serves one end only, so no arrow points straight into a tail and no two tails
   meet; that changes every level, Easy and Medium included, before any player has them. Super
   Hard boards have about half as many arrows as before, each harder to find.
+- Events of 300 boards (owner's decision) (2026-10-03): every event has 300 boards in order, its
+  drawings in turn and the tiers in the levels' cycle of ten; the home card shows the boards won
+  as a filled bar, and the badge comes with the 300th. The Autumn event's six boards become 300
+  before any player has it.
 - Puzzle picker (owner's decision) (2026-10-03): a tool for testing, so it leaves the app (the
   iOS build does not ship it, and Settings has no link to it there); the web build keeps it for
   development.

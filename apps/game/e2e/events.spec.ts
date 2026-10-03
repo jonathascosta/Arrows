@@ -30,11 +30,11 @@ test('the event card opens the first board, drawn in the drawing’s colours', a
   const card = page.locator('a.event-card');
   await expect(card.locator('.card-label')).toHaveText('Autumn event');
   await expect(card.locator('.card-title')).toHaveText('Maple leaf');
-  await expect(card.locator('.card-note')).toHaveText('0 of 6 boards · 48 days left');
+  await expect(card.locator('.card-note')).toHaveText('0 of 300 boards · 48 days left');
   await press(card, touch);
   await expect(page).toHaveURL(/\?event=autumn-2026&board=1$/);
   await expect(page.locator('h1')).toHaveText('Maple leaf');
-  await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 6');
+  await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 300');
 
   const { puzzle } = loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 1 });
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
@@ -66,18 +66,18 @@ test('a board won counts, opens the next, and the progress survives a reload', a
     loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 1 }).puzzle,
   );
   const sheet = page.locator('.score-screen');
-  await expect(sheet).toContainText('Board 1 of 6 done.');
+  await expect(sheet).toContainText('Board 1 of 300 done.');
   await press(sheet.getByRole('button', { name: 'Next board' }), touch);
   await expect(page).toHaveURL(/\?event=autumn-2026&board=2$/);
   await expect(page.locator('h1')).toHaveText('Acorn');
-  await expect(page.locator('.tier')).toHaveText('Autumn · 2 of 6');
+  await expect(page.locator('.tier')).toHaveText('Autumn · 2 of 300');
 
   await page.goto('./');
   await page.reload();
   const card = page.locator('a.event-card');
   await expect(card).toHaveAttribute('href', './?event=autumn-2026&board=2');
-  await expect(card.locator('.card-note')).toHaveText('1 of 6 boards · 48 days left');
-  await expect(card.locator('.event-progress [data-done]')).toHaveCount(1);
+  await expect(card.locator('.card-note')).toHaveText('1 of 300 boards · 48 days left');
+  await expect(card.locator('.event-progress-fill')).toHaveAttribute('style', 'width: 0.3%');
   // A board further on opens the next one instead.
   await page.goto('./?event=autumn-2026&board=5');
   await expect(page).toHaveURL(/\?event=autumn-2026&board=2$/);
@@ -87,12 +87,15 @@ test('a board won counts, opens the next, and the progress survives a reload', a
 test('the last board earns the badge', async ({ page, touch }) => {
   test.slow();
   await page.goto('./');
-  await storeWon(page, [1, 2, 3, 4, 5]);
-  await page.goto('./?event=autumn-2026&board=6');
+  await storeWon(
+    page,
+    Array.from({ length: 299 }, (_, i) => i + 1),
+  );
+  await page.goto('./?event=autumn-2026&board=300');
   await solveWithHints(
     page,
     touch,
-    loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 6 }).puzzle,
+    loadPuzzle({ kind: 'event', eventId: 'autumn-2026', board: 300 }).puzzle,
   );
   await expect(page.locator('.score-screen')).toContainText(
     'Every board won: the Autumn 2026 badge is yours!',
@@ -101,7 +104,7 @@ test('the last board earns the badge', async ({ page, touch }) => {
   const card = page.locator('.event-card');
   await expect(card.locator('.badge-earned')).toHaveText('Badge earned');
   await expect(page.locator('a.event-card')).toHaveCount(0);
-  await expect(card.locator('.card-note')).toHaveText('6 of 6 boards · 48 days left');
+  await expect(card.locator('.card-note')).toHaveText('300 of 300 boards · 48 days left');
 });
 
 test('after the last day the boards close and the card says how far you got', async ({ page }) => {
@@ -113,7 +116,7 @@ test('after the last day the boards close and the card says how far you got', as
   await expect(page).toHaveURL(/\/$/);
   const card = page.locator('.event-card');
   await expect(card).toHaveAttribute('data-state', 'ended');
-  await expect(card.locator('.card-note')).toHaveText('2 of 6 boards · Ended Mon 30 Nov');
+  await expect(card.locator('.card-note')).toHaveText('2 of 300 boards · Ended Mon 30 Nov');
   await expect(page.locator('a.event-card')).toHaveCount(0);
 });
 
@@ -126,7 +129,7 @@ for (const width of [320, 360, 375]) {
     test('a board’s title and its place in the event read in full', async ({ page }) => {
       await page.goto('./?event=autumn-2026&board=1');
       await expect(page.locator('.topbar h1')).toHaveText('Maple leaf');
-      await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 6');
+      await expect(page.locator('.tier')).toHaveText('Autumn · 1 of 300');
       for (const selector of ['.topbar h1', '.topbar .tier']) {
         const cut = await page
           .locator(selector)

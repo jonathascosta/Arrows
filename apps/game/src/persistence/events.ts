@@ -66,13 +66,10 @@ export class EventStore {
   progress(event: GameEvent): EventProgress {
     const total = event.boards.length;
     const won = (this.slot.read().events[event.id] ?? []).filter((n) => n <= total);
-    let next: number | null = null;
-    for (let n = 1; n <= total; n++) {
-      if (!won.includes(n)) {
-        next = n;
-        break;
-      }
-    }
+    // Sorted and once each (parseEventResults), so the first gap is the next board.
+    const gap = won.findIndex((n, i) => n !== i + 1);
+    const first = gap === -1 ? won.length + 1 : gap + 1;
+    const next = first <= total ? first : null;
     return { won, total, next, complete: won.length === total };
   }
 

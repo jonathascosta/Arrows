@@ -34,8 +34,8 @@ export const PLATEAU_LEVEL = 300;
  * about 3 (hard) and 2 (super hard) free arrows at a time, with fewer queues;
  * their walks are longer and wind, and both cut a path rather than use a
  * stale end: super hard as soon as the best end is not the freshest
- * (`staleCut: 0`), hard once it is 4 removals stale. Picking the hardest of several candidates trims the outliers.
- * The bands overlap on purpose: a medium board at level 300 is about as hard
+ * (`staleCut: 0`), hard once it is 4 removals stale. Picking the hardest of
+ * several candidates trims the outliers. The bands overlap on purpose: a medium board at level 300 is about as hard
  * as a hard board at level 11, as in the reference game, where the label is
  * relative to the path.
  */

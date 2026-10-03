@@ -123,9 +123,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - Primary button "Next level" (or "Play again" off the level path), text button "Home".
 - As built in T7: a full screen over the board, on `background`, in a column 480 px wide at
   most. The tier line is "{title} · {line under the title}", so a daily reads "DAILY · OCT 12,
-  2026 · MEDIUM" and an event board "MAPLE LEAF · AUTUMN · 3 OF 6". The line under "Solved" holds
+  2026 · MEDIUM" and an event board "MAPLE LEAF · AUTUMN · 3 OF 300". The line under "Solved" holds
   what the win did: the streak, a daily's star and trophy ("A star for Mon 12 Oct."), an event's
-  board and badge ("Board 3 of 6 done."); a replay has none. Next to the time, "best 01:31" on a
+  board and badge ("Board 3 of 300 done."); a replay has none. Next to the time, "best 01:31" on a
   replay or "new best". The league line reads "Already counted in today’s league." when the
   board earned its points earlier that day. The primary button reads "Next board" on an event
   while boards are left; a daily's text button is "Calendar". Below 640 px tall the spacing
@@ -158,12 +158,13 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-As built in T6, the event card shows the running event, or the one that ended last: the label
-is the event's name ("Autumn event"), the title the next board's drawing, the progress bar a
-segment per board (won ones in `hint`), and the note "2 of 6 boards · 48 days left" ("Last day",
-or "Ended Mon 30 Nov" after it). It opens the next board while the event runs; once every board
-is won the title is the badge ("Badge earned", the badge icon in `hint`), and the card opens
-nothing. The level strip is not tappable: Play opens the current level.
+As built in T6, the event card shows the running event, or the one that ended last: the label is
+the event's name ("Autumn event"), the title the next board's drawing, the progress bar one track
+in `divider` filled in `hint` by the share of boards won (T15: 300 boards are too many for a
+segment each), and the note "2 of 300 boards · 48 days left" ("Last day", or "Ended Mon 30 Nov"
+after it). It opens the next board while the event runs; once every board is won the title is the
+badge ("Badge earned", the badge icon in `hint`), and the card opens nothing. The level strip is
+not tappable: Play opens the current level.
 
 As built in T9, the menu button opens **Settings**, a bottom sheet like the others: "Settings"
 in serif, a list on `background` with a row per switch (Sound; Haptics in the iOS app only),
