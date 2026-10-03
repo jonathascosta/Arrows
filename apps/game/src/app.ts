@@ -46,7 +46,8 @@ export interface AppOptions {
   readonly pushUrl: (url: string) => void;
   /** Replaces the current address (no reload, no new history entry). */
   readonly replaceUrl: (url: string) => void;
-  readonly pickerHref: string;
+  /** The puzzle picker, a tool for testing: the web build only, null in the app. */
+  readonly pickerHref: string | null;
   /** The interstitial and the rewarded ad (docs/PRODUCT.md, Monetization); none when left out. */
   readonly ads?: AdProvider;
   /** The phone's haptics (docs/PRODUCT.md, iOS); none when left out or null (the web). */

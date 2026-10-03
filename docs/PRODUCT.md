@@ -232,7 +232,7 @@ the drawing boards and one event; the championship table reuses the league code.
   chances in words included, except the brand (Arrows), the characters' names in the league,
   which are names ("Wonderful Butterfly"), the "AD" mark on the Hint button, which the word
   "Anúncio" would not fit (VoiceOver says "mostra um anúncio"), and the puzzle picker, a tool for
-  testing that Settings links to.
+  testing that only the web build has (Settings links to it there).
 - The privacy policy is a page written in both languages, the player's first. The licences in
   Credits stay as their authors wrote them, in English.
 
@@ -243,8 +243,10 @@ the drawing boards and one event; the championship table reuses the league code.
   the game (no recordings), quiet, and follow the phone's silent switch in the app.
 - The home screen's menu opens Settings: Sound and Haptics switches (Haptics only in the app),
   both on at first, then Privacy choices (in the app, where the law asks for a way back to the
-  choices about ads), the privacy policy, Credits and the puzzle picker. The choices stay on the
-  device.
+  choices about ads), the privacy policy and Credits. The choices stay on the device.
+- The puzzle picker, which opens any level, daily or event board and can turn on test ads, is a
+  tool for testing: only the web build has it, and Settings links to it there. The app does not
+  ship it.
 - Credits name the fonts and the software the game is made with, each with its licence in full
   (the fonts' licence asks for it), and say where the ads come from.
 
@@ -267,8 +269,8 @@ the drawing boards and one event; the championship table reuses the league code.
 - Ads in the iOS app follow the player's choices about them (see The iOS app): consent where the
   law requires it, Apple's tracking prompt, and Privacy choices in Settings.
 - The web build shows no ads: there is no interstitial, and the rewarded ad grants its reward at
-  once. The puzzle picker can turn on test ads, which show a card in place of an ad so the flow
-  can be tried; the iOS build (T8) plugs in the ad network.
+  once. There the puzzle picker can turn on test ads, which show a card in place of an ad so the
+  flow can be tried; the iOS app always uses the ad network.
 - Chances are lives only in v1. A currency (buy a continue, buy a hint without an ad) is v2.
 - Remove-ads purchase is v2.
 
@@ -350,6 +352,9 @@ beyond English and Portuguese.
   consent order is Google's message, then Apple's prompt; the screenshots are the web build's
   screens without captions; Google's list of SKAdNetwork ids for its partners is the owner's to
   paste in (it could not be fetched from the session); the copyright holder is Jonathas Costa.
+- Puzzle picker (owner's decision) (2026-10-03): a tool for testing, so it leaves the app (the
+  iOS build does not ship it, and Settings has no link to it there); the web build keeps it for
+  development.
 - App id (owner's decision) (2026-10-03): `net.jonathas.arrows`, from the owner's domain
   `jonathas.net` in reverse, as bundle ids are written, instead of `com.jonathascosta.arrows`;
   chosen before anything was uploaded, so nothing else changes.

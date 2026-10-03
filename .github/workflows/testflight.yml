@@ -75,7 +75,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # The owner's ad units, when set, go into the web build (VITE_ADMOB_*).
-      - run: pnpm --filter @arrows/game build
+      - run: pnpm --filter @arrows/game build:ios
       - run: pnpm --filter @arrows/game exec cap sync ios
       - uses: ruby/setup-ruby@v1
         with:

@@ -130,9 +130,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 
 - The interstitial and the rewarded ad come from the ad network (T8) and look like it. The web
   build shows none.
-- The test ads of the puzzle picker are a full-screen card on `primary` with `onPrimary` text:
-  the `AD` badge, "Test ad" in serif, one line saying which ad would show, and inverted
-  buttons ("Close ad"; for the rewarded ad "Watch to the end" and the text button "Close
+- The test ads of the puzzle picker (the web build only) are a full-screen card on `primary` with
+  `onPrimary` text: the `AD` badge, "Test ad" in serif, one line saying which ad would show, and
+  inverted buttons ("Close ad"; for the rewarded ad "Watch to the end" and the text button "Close
   without the reward").
 
 ### Lose
@@ -165,7 +165,7 @@ in serif, a list on `background` with a row per switch (Sound; Haptics in the iO
 each a label and a pill switch (off: outlined in `textMuted` with a `textMuted` knob; on:
 `primary` with a `surfaceRaised` knob, every part at 3:1 against the list), then "Done" as the
 primary button and the text buttons under it: "Privacy choices" (in the app, where the law asks
-for it), "Privacy policy", "Credits" and "Puzzle picker".
+for it), "Privacy policy", "Credits" and, in the web build only, "Puzzle picker".
 
 As built in T10, **Credits** is a text screen like the league's: the round back button, "Credits"
 in serif, a short thank-you, then "Fonts" and "Software" as section titles over a card per
@@ -242,8 +242,8 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
 - Character avatars: the design uses initials on colour; illustrated avatars, league badges, the
   event art and the app icon are T9's assets still to come from Claude Design. Until then the
   app icon is the favicon's arrow on paper, and the launch screen is the plain paper colour.
-- Settings: designed in the session from the sheet's parts (T9); the puzzle picker stays in it,
-  also in release builds, and hiding it there is one line if the owner prefers.
+- Settings: designed in the session from the sheet's parts (T9); the puzzle picker is in it only
+  in the web build (T12, the owner's decision).
 - Portuguese and large text: the layouts hold the Portuguese strings, which run up to a third
   longer, and the phone's text size up to 1.5 times, down to 320 px (`e2e/fit.spec.ts`). Where
   a line does not fit, it wraps: the streak and the menu go under the wordmark, the league's

@@ -47,6 +47,7 @@ function mount(
   progress: Partial<Progress> = {},
   event: HomeEvent | null = AUTUMN,
   settings = settingsControl(),
+  pickerHref: string | null = 'dev.html',
 ): { root: HTMLElement; screen: HomeScreen } {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
@@ -59,7 +60,7 @@ function mount(
       new Date(2026, 9, 3, 16, 12),
     ),
     today: '2026-10-03',
-    pickerHref: 'dev.html',
+    pickerHref,
     reducedMotion: () => true,
     settings: settings.control,
   });
@@ -161,6 +162,13 @@ describe('HomeScreen', () => {
     expect(choices()?.textContent).toBe('Privacy choices');
     choices()!.click();
     expect(shown).toEqual(['form']);
+  });
+
+  it('links to no puzzle picker in the app, which does not ship it', () => {
+    const { root } = mount({}, AUTUMN, settingsControl(true), null);
+    root.querySelector<HTMLButtonElement>('button.menu')!.click();
+    const links = [...root.querySelectorAll('[data-overlay="settings"] .settings-links > *')];
+    expect(links.map((link) => link.textContent)).toEqual(['Privacy policy', 'Credits']);
   });
 
   it('shows no haptics switch where there are no haptics (the web)', () => {

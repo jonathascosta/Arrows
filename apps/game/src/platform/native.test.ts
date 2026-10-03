@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AdMobAds } from '../ads/admob.ts';
 import { ADS_KEY } from '../ads/ads.ts';
-import { DebugAds } from '../ads/debug.ts';
 import { PreferencesStore } from '../persistence/preferences.ts';
 import { nativePlatform } from './native.ts';
 
@@ -14,7 +13,7 @@ describe('nativePlatform', () => {
 
   it('keeps records in Preferences and shows AdMob ads', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const platform = await nativePlatform(document);
+    const platform = await nativePlatform();
     expect(platform.store).toBeInstanceOf(PreferencesStore);
     expect(platform.ads).toBeInstanceOf(AdMobAds);
     // The choices about ads: offered once the consent check says the law asks for them.
@@ -22,13 +21,11 @@ describe('nativePlatform', () => {
     expect(platform.privacy?.required()).toBe(false);
   });
 
-  it('shows the test ads when the puzzle picker turned them on, as on the web', async () => {
+  it('always shows the real network: the app has no puzzle picker to turn on test ads', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    // The picker (dev.ts) writes the setting to the web view's storage.
+    // Left over from a web view that once ran the picker, the switch changes nothing.
     localStorage.setItem(ADS_KEY, 'test');
-    const platform = await nativePlatform(document);
-    expect(platform.ads).toBeInstanceOf(DebugAds);
-    // The setting is not one of the player's records.
-    expect(platform.store.getItem(ADS_KEY)).toBeNull();
+    const platform = await nativePlatform();
+    expect(platform.ads).toBeInstanceOf(AdMobAds);
   });
 });

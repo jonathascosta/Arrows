@@ -40,7 +40,8 @@ export interface HomeScreenOptions {
   readonly finishedDays: ReadonlySet<DateKey>;
   /** Today's date key in local time, for the Daily card. */
   readonly today: DateKey;
-  readonly pickerHref: string;
+  /** The puzzle picker, a tool for testing: the web build only, null in the app. */
+  readonly pickerHref: string | null;
   readonly reducedMotion: () => boolean;
   /** The player's Settings, which the menu opens. */
   readonly settings: {

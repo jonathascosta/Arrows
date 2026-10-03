@@ -3,10 +3,8 @@ import { Haptics as DeviceHaptics, ImpactStyle, NotificationType } from '@capaci
 import { Preferences } from '@capacitor/preferences';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { AdMobAds, TEST_AD_UNITS } from '../ads/admob.ts';
-import { adsFor } from '../ads/ads.ts';
 import { AdConsent } from '../ads/consent.ts';
 import { PreferencesStore } from '../persistence/preferences.ts';
-import { browserStore } from '../persistence/store.ts';
 import type { Cue, CuePlayer } from './cues.ts';
 import type { Platform } from './platform.ts';
 
@@ -50,7 +48,7 @@ const UNITS = {
   rewarded: unit(import.meta.env.VITE_ADMOB_REWARDED_ID, TEST_AD_UNITS.rewarded),
 };
 
-export async function nativePlatform(doc: Document): Promise<Platform> {
+export async function nativePlatform(): Promise<Platform> {
   const store = await PreferencesStore.load(Preferences, report);
   // Dark text on the paper colour; the page itself keeps clear of the bar (safe-area insets).
   StatusBar.setStyle({ style: Style.Light }).catch(report);
@@ -68,7 +66,7 @@ export async function nativePlatform(doc: Document): Promise<Platform> {
     required: () => consent.privacyOptionsRequired,
     show: () => consent.showPrivacyOptions(),
   };
-  // The test-ads switch is a setting of the puzzle picker, which keeps it in the web
-  // view's storage (dev.ts), not with the player's records.
-  return { store, ads: adsFor(browserStore(), doc, admob), haptics, privacy };
+  // Always the real network: the test ads are a switch of the puzzle picker, which
+  // the app does not have (docs/PRODUCT.md, Settings).
+  return { store, ads: admob, haptics, privacy };
 }
