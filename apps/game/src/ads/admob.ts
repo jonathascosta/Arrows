@@ -78,7 +78,7 @@ export class AdMobAds implements AdProvider {
   private readonly units: AdUnits;
   private readonly waitMs: number;
   private readonly onError: (error: unknown) => void;
-  private readonly started: () => Promise<unknown>;
+  private readonly mayLoad: () => Promise<unknown>;
   private readonly now: () => number;
   private readonly loads: Record<Kind, Promise<boolean> | null> = {
     interstitial: null,
@@ -95,7 +95,7 @@ export class AdMobAds implements AdProvider {
     this.units = options.units;
     this.waitMs = options.waitMs ?? WAIT_MS;
     this.onError = options.onError ?? (() => undefined);
-    this.started = options.ready ?? (() => Promise.resolve());
+    this.mayLoad = options.ready ?? (() => Promise.resolve());
     this.now = options.now ?? (() => Date.now());
   }
 
@@ -120,7 +120,7 @@ export class AdMobAds implements AdProvider {
     const options = { adId: this.units[kind] };
     this.loadedAt[kind] = null;
     // Consent first, and the SDK started: before, the plugin's show calls would never answer.
-    const attempt = this.started()
+    const attempt = this.mayLoad()
       .then(() =>
         kind === 'interstitial'
           ? this.api.prepareInterstitial(options)

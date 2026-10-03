@@ -385,8 +385,9 @@ been answered (the consent message's IDFA explainer may already have shown it), 
 `initialize` last. `AdMobAds` calls its `ready()` before every load, so no ad is requested
 before it resolves. It rejects when the player's choices allow none (`canRequestAds` false) or
 when the consent check fails (no network); the next load, when an ad is next needed, runs the
-flow again. Where the message says the player needs a way back to the choices
-(`privacyOptionsRequirementStatus`), Settings shows Privacy choices, which opens Google's
+flow again (a consent message then shows at that moment: an ad still loading when the form is
+answered is kept for the next one). Where the message says the player needs a way back to the
+choices (`privacyOptionsRequirementStatus`), Settings shows Privacy choices, which opens Google's
 privacy options form. The plugin as published wires its consent forms only in `initialize`,
 which Google's order puts last: `patches/@capacitor-community__admob@8.1.0.patch` (pnpm's
 `patchedDependencies`) wires them when the plugin loads, and a unit test reads the installed
@@ -439,9 +440,10 @@ creates the App Store provisioning profile itself.
 in English and Portuguese, is in `apps/game/ios/App/fastlane/metadata`, and its screenshots in
 `fastlane/screenshots`. `pnpm store:screenshots` makes them: Playwright drives the production
 build at 430 by 932 points at 3× (1290 by 2796 pixels) through six screens of a player a few
-weeks in (`apps/game/store/screenshots.spec.ts`, `playwright.store.config.ts`), with a fake
-clock that sets the date and jumps ahead after a board's first tap, so its timer shows a time.
-Two more workflows run by hand:
+weeks in (`apps/game/store/screenshots.spec.ts`, `playwright.store.config.ts`). The page's
+clock is paused at a fixed date and moves only when the script runs it (ahead after a board's
+first tap, so its timer shows a time, and a second before each picture), so every run takes
+the same pictures, byte for byte. Two more workflows run by hand:
 
 - `app-store-listing.yml` uploads the text and the screenshots with fastlane (`deliver`, lane
   `listing`), with the App Store Connect API key of the TestFlight workflow. It uploads no build

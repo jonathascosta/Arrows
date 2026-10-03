@@ -73,7 +73,7 @@ async function clear(page: Page, puzzle: Puzzle, elapsed: string, count = Infini
   for (let i = 0; i < count && game.status === 'playing'; i++) {
     const id = freeArrows(game)[0]!;
     await tapArrow(page, id);
-    if (i === 0) await page.clock.fastForward(elapsed);
+    if (i === 0) await page.clock.runFor(elapsed);
     game = tap(game, id).state;
     await expect(page.locator('.play')).toHaveAttribute(
       'data-arrows-left',
@@ -82,10 +82,15 @@ async function clear(page: Page, puzzle: Puzzle, elapsed: string, count = Infini
   }
 }
 
-/** Waits for the fonts and any animation, then takes the screen. */
+/**
+ * Waits for the fonts, lets the page's clock run a second for any animation
+ * (time moves only when the script says so, so every run takes the same
+ * pictures), then takes the screen.
+ */
 async function shoot(page: Page, folder: string, name: string): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(700);
+  await page.clock.runFor(1000);
+  await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}/${folder}/${name}.png` });
 }
 
@@ -94,8 +99,10 @@ for (const { locale, folder } of LANGUAGES) {
     test.use({ locale });
 
     test(`the App Store screenshots in ${locale}`, async ({ page }) => {
-      // Time flows from NOW, and jumps ahead where a board needs a time on its clock.
+      // The page's time stands at NOW and moves only when the script runs it: ahead
+      // where a board needs a time on its clock, and a second before each picture.
       await page.clock.install({ time: NOW });
+      await page.clock.pauseAt(NOW);
       await seed(page);
 
       // 1. A board in play, a few arrows already out.
@@ -127,6 +134,8 @@ for (const { locale, folder } of LANGUAGES) {
       // 6. The score of the board from the first screen, won: a new level, so the streak grows.
       await page.goto('./?level=37');
       await clear(page, generateLevel(37).puzzle, '02:41');
+      // The last arrow leaves, the board settles, and the score comes.
+      await page.clock.runFor(3000);
       await expect(page.locator('.score-screen')).toBeVisible();
       await shoot(page, folder, '6-score');
     });
