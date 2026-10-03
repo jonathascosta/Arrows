@@ -52,10 +52,12 @@ const CUES: Readonly<Record<Cue, readonly Tone[]>> = {
 const MASTER = 0.18;
 
 /**
- * How late a cue may still sound while the audio starts. A browser starts audio
- * only after a tap: a cue before any tap waits, and must not sound with a later one.
+ * How late a cue may still sound while the audio starts: long enough for the
+ * app's web view to start its audio after a cold launch. A browser starts audio
+ * only after a tap, so a cue before any tap waits; it never sounds once a later
+ * cue has come.
  */
-const LATE_MS = 250;
+const LATE_MS = 1000;
 
 type AudioContextClass = new () => AudioContext;
 
@@ -71,6 +73,8 @@ export class WebAudioSounds implements CuePlayer {
   private readonly now: () => number;
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
+  /** Counts the cues, so a cue still waiting knows when a newer one has come. */
+  private cues = 0;
 
   constructor(
     create: AudioContextClass | undefined = globalThis.AudioContext,
@@ -83,15 +87,17 @@ export class WebAudioSounds implements CuePlayer {
   play(cue: Cue): void {
     const context = this.ready();
     if (context === null) return;
+    const ticket = ++this.cues;
     if (context.state === 'running') {
       this.schedule(context, cue);
       return;
     }
-    // Starting: the cue sounds once the audio runs, unless that is too late.
+    // Starting: the cue sounds once the audio runs, unless that is too late or
+    // a newer cue has come meanwhile.
     const asked = this.now();
     context.resume().then(
       () => {
-        if (this.now() - asked <= LATE_MS) this.schedule(context, cue);
+        if (ticket === this.cues && this.now() - asked <= LATE_MS) this.schedule(context, cue);
       },
       () => undefined,
     );

@@ -101,7 +101,7 @@ describe('WebAudioSounds', () => {
     const sounds = new WebAudioSounds(Fake, () => now);
     // A promotion as the page opens: the browser keeps the audio from starting.
     sounds.play('promote');
-    now += 10_000;
+    now += 300;
     // The first tap lets it start; only the tap's own cue sounds.
     FakeContext.holdResume = null;
     sounds.play('remove');
@@ -109,6 +109,27 @@ describe('WebAudioSounds', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(contextOf(sounds).tones.map((tone) => tone.frequency)).toEqual([880]);
+  });
+
+  it('plays a cue whose audio takes a moment to start, and none that starts too late', async () => {
+    let now = 0;
+    let start = (): void => undefined;
+    FakeContext.holdResume = (go) => (start = go);
+    // The app's web view after a cold launch: no tap needed, only a little time.
+    const app = new WebAudioSounds(Fake, () => now);
+    app.play('promote');
+    now += 600;
+    start();
+    await Promise.resolve();
+    expect(contextOf(app).tones).toHaveLength(5);
+
+    const slow = new WebAudioSounds(Fake, () => now);
+    slow.play('promote');
+    now += 5_000;
+    start();
+    await Promise.resolve();
+    expect(contextOf(slow).tones).toHaveLength(0);
+    FakeContext.holdResume = null;
   });
 
   it('is silent where Web Audio is missing or refuses to start', () => {

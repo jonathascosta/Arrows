@@ -11,8 +11,8 @@ import { expect, press, solveWithHints, storeProgress, tapArrow, test } from './
 const WIDTHS = [320, 375, 390];
 const SCALES = [1, 1.25, 1.5];
 const LANGUAGES = [
-  { locale: 'en-US', settings: 'Settings' },
-  { locale: 'pt-BR', settings: 'Ajustes' },
+  { locale: 'en-US', settings: 'Settings', hint: 'Hint', watch: 'Watch to the end' },
+  { locale: 'pt-BR', settings: 'Ajustes', hint: 'Dica', watch: 'Assistir até o fim' },
 ];
 
 /** What does not fit: the page wider than the screen, or an element narrower than its content. */
@@ -71,7 +71,7 @@ async function storeLeague(page: Page, league: number): Promise<void> {
   }, league);
 }
 
-for (const { locale, settings } of LANGUAGES) {
+for (const { locale, settings, hint, watch } of LANGUAGES) {
   test.describe(`in ${locale}`, () => {
     test.use({ locale });
 
@@ -91,6 +91,10 @@ for (const { locale, settings } of LANGUAGES) {
       await press(page.getByRole('button', { name: settings }), touch);
       await expect(page.locator('[data-overlay="settings"]')).toBeVisible();
       await expectFits(page, 'Settings');
+      // In the league with the longest name, joined: its card shows the name and the rank.
+      await storeLeague(page, LEAGUES.indexOf('Diamond'));
+      await page.reload();
+      await expectFits(page, 'home in Diamond');
     });
 
     test('the calendar fits', async ({ page }) => {
@@ -110,6 +114,22 @@ for (const { locale, settings } of LANGUAGES) {
       await press(page.locator('.league-screen .info'), touch);
       await expect(page.locator('.overlay .sheet')).toBeVisible();
       await expectFits(page, 'the league rules');
+    });
+
+    test('the Hint button fits in each of its states', async ({ page, touch }) => {
+      // Test ads: the rewarded ad waits for the player, as a network ad loads.
+      await page.goto('./');
+      await page.evaluate(() => localStorage.setItem('arrows.ads', 'test'));
+      await page.goto('./?level=1');
+      await expectFits(page, 'Hint');
+      await press(page.getByRole('button', { name: new RegExp(`^${hint}`) }), touch);
+      await expect(page.locator('.test-ad')).toBeVisible();
+      await expect(page.locator('.hint .ad-badge')).toBeHidden();
+      await expectFits(page, 'Hint, loading its ad');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await press(page.getByRole('button', { name: watch }), touch);
+      await expect(page.locator('.hint.shown')).toBeVisible();
+      await expectFits(page, 'Hint, shown');
     });
 
     test('the lost sheet and the score screen fit', async ({ page, touch }) => {

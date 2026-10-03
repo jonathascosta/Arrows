@@ -733,15 +733,20 @@ describe('PlayScreen', () => {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
     }
     expect(label.textContent).toBe('Loading ad…');
+    // The label says it is an ad: the AD marks make room for it.
+    const marks = [...hint.querySelectorAll<HTMLElement>('.sr-only, .ad-badge')];
+    expect(marks.map((mark) => mark.hidden)).toEqual([true, true]);
     await ads.close(false);
     for (const selector of ['.topbar', '.stage', '.toolbar']) {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
     }
     expect(label.textContent).toBe('Hint');
+    expect(marks.map((mark) => mark.hidden)).toEqual([false, false]);
     expect(document.activeElement).toBe(hint);
     await pressHint(root);
     await ads.close(true);
     expect(label.textContent).toBe('Hint shown');
+    expect(marks.map((mark) => mark.hidden)).toEqual([true, true]);
   });
 
   it('plays no haptic cue for a tap the board does not take', async () => {

@@ -19,8 +19,13 @@ export class Hud {
   private readonly chances: Chances;
   private readonly time: HTMLSpanElement;
   private readonly hintLabel: HTMLSpanElement;
-  /** "(plays an ad)" and the AD badge: gone while a hint shows, since showing it again is free. */
+  /**
+   * "(plays an ad)" and the AD badge: gone while a hint shows, since showing it
+   * again is free, and while the ad loads, since the label says so.
+   */
   private readonly adMarks: readonly HTMLSpanElement[];
+  private hintLoading = false;
+  private hintShown = false;
   private readonly back: HTMLAnchorElement;
 
   constructor(doc: Document, theme: Theme, backHref: string, reducedMotion: () => boolean) {
@@ -114,13 +119,21 @@ export class Hud {
 
   /** "Loading ad…" while a hint's rewarded ad is on its way; "Hint" again after. */
   setHintLoading(loading: boolean): void {
-    this.hintLabel.textContent = t(loading ? 'tools.hintLoading' : 'tools.hint');
+    this.hintLoading = loading;
+    this.drawHint();
   }
 
   /** "Hint shown", without the ad marks, while a hinted arrow is on the board. */
   setHintShown(shown: boolean): void {
-    this.hintLabel.textContent = t(shown ? 'tools.hintShown' : 'tools.hint');
-    this.hintButton.classList.toggle('shown', shown);
-    for (const mark of this.adMarks) mark.hidden = shown;
+    this.hintShown = shown;
+    this.drawHint();
+  }
+
+  private drawHint(): void {
+    this.hintLabel.textContent = t(
+      this.hintLoading ? 'tools.hintLoading' : this.hintShown ? 'tools.hintShown' : 'tools.hint',
+    );
+    this.hintButton.classList.toggle('shown', this.hintShown && !this.hintLoading);
+    for (const mark of this.adMarks) mark.hidden = this.hintLoading || this.hintShown;
   }
 }

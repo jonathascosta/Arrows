@@ -238,5 +238,6 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
 - Portuguese and large text: the layouts hold the Portuguese strings, which run up to a third
   longer, and the phone's text size up to 1.5 times, down to 320 px (`e2e/fit.spec.ts`). Where
   a line does not fit, it wraps: the streak and the menu go under the wordmark, the league's
-  countdown under its name, a text screen's title over two lines. The level strip's numbers and
-  the league's tags keep their default size.
+  countdown under its name, a text screen's title over two lines; with large text on a narrow
+  phone the Daily and League cards stack. The level strip's numbers and the league's tags keep
+  their default size. While a hint's ad loads, "Loading ad…" takes the AD badge's place.

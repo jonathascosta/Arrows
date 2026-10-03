@@ -302,9 +302,9 @@ go through one `CuePlayer` that `App` builds from the sounds, the platform's hap
 web) and `SettingsStore`, read at each cue so a switch takes effect at once. `WebAudioSounds`
 synthesises each cue from a few oscillator tones and lets go of their nodes when they end. It
 opens its `AudioContext` on the first cue. A browser lets the audio start only after a tap, so
-a cue that waits for it more than 250 ms is dropped: a promotion as the page opens is silent in
-a browser rather than sounding with the next tap, and plays in the app, whose web view needs no
-tap. Where Web Audio is missing or fails, cues are silent. The play screen
+a cue waiting for the audio is dropped once a newer cue comes, or after a second: a promotion as
+the page opens is silent in a browser rather than sounding with the next tap, and plays in the
+app, whose web view needs no tap. Where Web Audio is missing or fails, cues are silent. The play screen
 plays the board's cues, and `App` the promotion, when the league's summary of a promoted day
 shows (on the home screen or the league screen). The Settings sheet (`ui/settings.ts`) opens
 from the home screen's menu button: a switch per setting (haptics only in the app), Done and the
@@ -331,9 +331,11 @@ size is scaled by it, and the screens are sized in `rem`, except the play screen
 type is in pixels (the `.play` rules in `styles.css`), so the board keeps its room; its sheets
 and the score are in `rem` like everything else. A few graphic parts keep their size too: the
 level strip's numbers and the league's tags, whose meaning the screen reader text carries.
-`e2e/fit.spec.ts` holds every text screen to the width of a 320, 375 and 390 px phone at 1,
-1.25 and 1.5 times, in both languages: no sideways scroll, and no text spilling out of its
-box. When the board's title or its line would be cut, the HUD moves the chances and the timer
+`e2e/fit.spec.ts` holds every text screen (with the home screen in the longest league, every
+league, the sheets and the score) and the Hint button in each of its states to the width of a
+320, 375 and 390 px phone at 1, 1.25 and 1.5 times, in both languages: no sideways scroll, and
+no text spilling out of its box. With large text on a narrow phone the home screen's Daily and
+League cards stack (a container query in `rem`). When the board's title or its line would be cut, the HUD moves the chances and the timer
 to a row of their own (`Hud.fitTitle`). Reduced motion skips the board's animations, as before;
 the hinted arrow and blocked taps are marked by a wider stroke as well as by colour.
 
