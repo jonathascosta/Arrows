@@ -198,4 +198,6 @@ localization beyond English (strings are externalized from day one so Portuguese
 
 ## Open questions
 
-None at the moment.
+- Should replays of a level already won count towards the win streak? The session decided no in
+  T3, so the streak cannot be pumped by replaying an easy level (see Levels and the decisions
+  log); the owner may reverse it.
