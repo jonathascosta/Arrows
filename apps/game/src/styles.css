@@ -436,9 +436,10 @@ body {
 
 .sheet {
   width: 100%;
-  /* A sheet taller than the screen (large text on a small phone) scrolls. */
+  /* A sheet taller than the screen (large text on a small phone) scrolls, without the page. */
   max-height: 100%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 28px 24px calc(20px + env(safe-area-inset-bottom));
   border-radius: 28px 28px 0 0;
   background: var(--color-surface-raised);
