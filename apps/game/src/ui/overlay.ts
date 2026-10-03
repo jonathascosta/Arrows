@@ -18,7 +18,7 @@ export class Overlay {
 
   constructor(doc: Document) {
     this.title = el(doc, 'h2', { id: 'overlay-title' });
-    this.body = el(doc, 'p');
+    this.body = el(doc, 'p', { id: 'overlay-body' });
     this.button = el(doc, 'button', { class: 'button', type: 'button' });
     this.button.addEventListener('click', () => this.onAction?.());
     this.element = el(
@@ -29,6 +29,7 @@ export class Overlay {
         role: 'dialog',
         'aria-modal': 'true',
         'aria-labelledby': 'overlay-title',
+        'aria-describedby': 'overlay-body',
       },
       [el(doc, 'div', { class: 'card' }, [this.title, this.body, this.button])],
     );

@@ -30,5 +30,7 @@ is next, and what done means) before changing anything.
   every player's level N. The fingerprint test in `levels.test.ts` will fail: update it only on
   purpose and say so in the commit message.
 - Keep the product document current: when behaviour changes, change `docs/PRODUCT.md` first.
-- Colours live in `apps/game/src/theme/` only; lint and a CSS test reject them elsewhere.
+- In code and CSS, colours live in `apps/game/src/theme/` only; lint and a CSS test reject them
+  elsewhere. Static files in `apps/game/public/` (the favicon) are exempt and keep the theme's
+  colours by hand.
 - Code, comments and documents are in English; player-facing text goes through `strings.ts`.

@@ -1,5 +1,4 @@
-import { createGame, freeArrows, generateLevel, head } from '@arrows/engine';
-import type { Puzzle } from '@arrows/engine';
+import { createGame, freeArrows, generateLevel, head, tap } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
@@ -68,11 +67,6 @@ function tapCell(root: HTMLElement, x: number, y: number): void {
   stage.dispatchEvent(new PointerEvent('pointerup', init));
 }
 
-function blocked(puzzle: Puzzle): number {
-  const free = new Set(freeArrows(createGame(puzzle)));
-  return puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
-}
-
 describe('PlayScreen', () => {
   beforeEach(() => {
     sizeStage();
@@ -113,26 +107,75 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.time')?.textContent).toBe('01:05');
   });
 
-  it('costs a drop on a blocked arrow, loses at zero, and retries the same board', async () => {
+  it('costs a drop on a blocked arrow, loses at zero, and retries the whole board', async () => {
     const { root } = mount();
     const { puzzle } = generateLevel(1);
-    const id = blocked(puzzle);
-    const { x, y } = puzzle.arrows[id]!.cells[0]!;
+    const play = root.querySelector<HTMLElement>('.play')!;
+    const before = [...root.querySelectorAll('.body')].map((p) => p.getAttribute('d'));
+
+    // Clear two arrows first, so a retry that forgot to rebuild the board would show.
+    let game = createGame(puzzle);
+    for (let i = 0; i < 2; i++) {
+      const id = freeArrows(game)[0]!;
+      const { x, y } = head(puzzle.arrows[id]!);
+      tapCell(root, x, y);
+      game = tap(game, id).state;
+    }
+    await vi.advanceTimersByTimeAsync(0);
+    expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 2));
+    expect(root.querySelectorAll('[data-arrow]')).toHaveLength(puzzle.arrows.length - 2);
+
+    const free = new Set(freeArrows(game));
+    const stuck = [...game.remaining].find((id) => !free.has(id))!;
+    const { x, y } = puzzle.arrows[stuck]!.cells[0]!;
     tapCell(root, x, y);
     expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('2');
     expect(root.querySelectorAll('.drop.lost')).toHaveLength(1);
     expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 2 drops left.');
     tapCell(root, x, y);
+    expect(root.querySelector('[aria-live]')?.textContent).toBe('Blocked. 1 drop left.');
     tapCell(root, x, y);
     await vi.advanceTimersByTimeAsync(1000);
+
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.hidden).toBe(false);
     expect(overlay.dataset.overlay).toBe('lost');
-    const before = [...root.querySelectorAll('.body')].map((p) => p.getAttribute('d'));
+    // Everything behind the card is out of reach while it shows.
+    for (const selector of ['.topbar', '.hud', '.stage', '.grid-toggle']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
+    }
+
     overlay.querySelector('button')!.click();
     expect(overlay.hidden).toBe(true);
     expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('3');
+    expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length));
+    expect(root.querySelectorAll('[data-arrow]')).toHaveLength(puzzle.arrows.length);
     expect([...root.querySelectorAll('.body')].map((p) => p.getAttribute('d'))).toEqual(before);
+    expect(root.querySelector('.time')?.textContent).toBe('00:00');
+    for (const selector of ['.topbar', '.hud', '.stage', '.grid-toggle']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
+    }
+    expect(document.activeElement).toBe(root.querySelector('.stage'));
+  });
+
+  it('plays a quick double tap on an arrow without resetting the zoom', () => {
+    const { root } = mount({ kind: 'level', level: 300 });
+    const { puzzle } = generateLevel(300);
+    const play = root.querySelector<HTMLElement>('.play')!;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '+' }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '+' }));
+    const zoom = play.dataset.zoom;
+    expect(Number(zoom)).toBeGreaterThan(1);
+    // The hint brings a free arrow into the zoomed view.
+    root.querySelector<HTMLButtonElement>('.hint')!.click();
+    const hinted = Number(root.querySelector('.hinted')!.getAttribute('data-arrow'));
+    const { x, y } = head(puzzle.arrows[hinted]!);
+    // Both taps land on the same cell: the first removes the arrow, the second finds it empty.
+    tapCell(root, x, y);
+    tapCell(root, x, y);
+    expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 1));
+    expect(play.dataset.zoom).toBe(zoom);
+    expect(root.querySelector('.drops')?.getAttribute('data-lives')).toBe('3');
   });
 
   it('wins by following hints and offers the next level', async () => {
@@ -232,10 +275,14 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.time')?.textContent).toBe('00:15');
   });
 
-  it('cleans up its listeners on destroy', () => {
+  it('cleans up its listeners and its clock on destroy', () => {
     const { screen, root } = mount();
+    const grid = root.querySelector<HTMLButtonElement>('.grid-toggle')!;
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
     screen.destroy();
     expect(root.childElementCount).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g' }));
+    expect(grid.getAttribute('aria-pressed')).toBe('false');
   });
 });

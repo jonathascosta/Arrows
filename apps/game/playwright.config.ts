@@ -1,7 +1,11 @@
 import { existsSync } from 'node:fs';
 import { defineConfig } from '@playwright/test';
 
-const PORT = 4173;
+/**
+ * A port nothing else defaults to (vite preview uses 4173), and never reuse a
+ * running server: the tests must run against the build they just made.
+ */
+const PORT = Number(process.env.ARROWS_E2E_PORT ?? 4317);
 
 /**
  * Claude Code cloud sessions ship a Chromium at this path, possibly of another
@@ -44,7 +48,7 @@ export default defineConfig({
     // The tests run against the production build, as players get it.
     command: `pnpm build && pnpm preview --port ${PORT} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}/`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

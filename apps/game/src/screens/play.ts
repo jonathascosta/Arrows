@@ -18,11 +18,12 @@ import { PlaySession } from '../game/session.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
 import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
-import { formatDuration, t } from '../strings.ts';
+import { formatDuration, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
 import { Hud } from '../ui/hud.ts';
 import { Overlay } from '../ui/overlay.ts';
+import type { OverlayContent } from '../ui/overlay.ts';
 
 export interface PlayScreenOptions {
   readonly theme: Theme;
@@ -57,6 +58,8 @@ export class PlayScreen {
   /** The view when the current pinch started; pinch steps are measured from it. */
   private pinchBase: Viewport | null = null;
   private gridVisible = false;
+  /** Whether the previous tap landed on empty space: a double tap resets only if both did. */
+  private lastTapEmpty = false;
   private readonly options: PlayScreenOptions;
 
   constructor(root: HTMLElement, options: PlayScreenOptions) {
@@ -64,7 +67,8 @@ export class PlayScreen {
     const doc = root.ownerDocument;
     const { theme } = options;
     this.hud = new Hud(doc, theme, options.backHref);
-    this.stage = el(doc, 'main', { class: 'stage' });
+    // Focusable from script only: focus returns here when an overlay closes.
+    this.stage = el(doc, 'main', { class: 'stage', tabindex: '-1' });
     this.renderer = new BoardRenderer(this.stage, theme, options.reducedMotion);
     this.gridButton = el(
       doc,
@@ -73,7 +77,7 @@ export class PlayScreen {
         class: 'fab grid-toggle',
         type: 'button',
         'aria-pressed': 'false',
-        'aria-label': t('hud.gridShow'),
+        'aria-label': t('hud.grid'),
       },
       [iconSpan(doc, theme.icons.grid, 'icon')],
     );
@@ -111,7 +115,8 @@ export class PlayScreen {
 
   private start(): void {
     const session = this.session!;
-    this.overlay.hide();
+    this.hideOverlay();
+    this.lastTapEmpty = false;
     this.renderer.render(session.puzzle);
     this.renderer.setGridVisible(this.gridVisible);
     this.fit();
@@ -136,7 +141,7 @@ export class PlayScreen {
     this.refresh();
     const { state } = session;
     if (outcome === 'lost') {
-      this.overlay.show({
+      this.showOverlay({
         kind: 'lost',
         title: t('lost.title'),
         body: t('lost.body'),
@@ -146,7 +151,7 @@ export class PlayScreen {
       return;
     }
     const { ref } = loaded;
-    this.overlay.show({
+    this.showOverlay({
       kind: 'won',
       title: t('won.title'),
       body: t('won.summary', {
@@ -160,6 +165,23 @@ export class PlayScreen {
         else this.restart();
       },
     });
+  }
+
+  /** Shows the end-of-board card and takes everything behind it out of reach. */
+  private showOverlay(content: OverlayContent): void {
+    for (const element of this.background()) element.toggleAttribute('inert', true);
+    this.overlay.show(content);
+  }
+
+  private hideOverlay(): void {
+    if (!this.overlay.visible) return;
+    this.overlay.hide();
+    for (const element of this.background()) element.toggleAttribute('inert', false);
+    this.stage.focus();
+  }
+
+  private background(): HTMLElement[] {
+    return [this.hud.topbar, this.hud.row, this.stage, this.gridButton];
   }
 
   // Input.
@@ -307,10 +329,13 @@ export class PlayScreen {
     if (session === null || this.overlay.visible) return;
     const cell = cellAt(this.view, x, y);
     const result = session.tapCell(cell.x, cell.y, this.options.now());
+    const previousEmpty = this.lastTapEmpty;
+    this.lastTapEmpty = result.kind === 'empty';
     switch (result.kind) {
       case 'empty':
-        // Double tap on empty space resets the view; taps on arrows always play.
-        if (double) {
+        // A double tap resets the view only when both taps were on empty space: the
+        // second tap of a quick double tap on an arrow lands where the arrow just was.
+        if (double && previousEmpty) {
           this.view = resetView(this.view);
           this.applyView();
         }
@@ -325,7 +350,7 @@ export class PlayScreen {
       case 'blocked':
         void this.renderer.bump(result.arrowId, result.blockedBy);
         this.refresh();
-        this.announce(t('status.blocked', { n: session.state.lives }));
+        this.announce(tn('status.blocked', session.state.lives));
         if (session.state.status === 'lost') void this.finish('lost');
         return;
     }
@@ -349,11 +374,8 @@ export class PlayScreen {
   private toggleGrid(): void {
     this.gridVisible = !this.gridVisible;
     this.renderer.setGridVisible(this.gridVisible);
+    // The label stays "Grid"; aria-pressed carries the state.
     this.gridButton.setAttribute('aria-pressed', String(this.gridVisible));
-    this.gridButton.setAttribute(
-      'aria-label',
-      t(this.gridVisible ? 'hud.gridHide' : 'hud.gridShow'),
-    );
   }
 
   // Drawing.
@@ -389,7 +411,7 @@ export class PlayScreen {
     this.hud.setHintEnabled(state.status === 'playing');
     this.element.dataset.status = state.status;
     this.element.dataset.arrowsLeft = String(state.remaining.size);
-    this.stage.setAttribute('aria-label', t('board.label', { n: state.remaining.size }));
+    this.stage.setAttribute('aria-label', tn('board.label', state.remaining.size));
     this.tick();
   }
 

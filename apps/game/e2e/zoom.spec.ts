@@ -1,6 +1,6 @@
 import { createGame, freeArrows, generateLevel } from '@arrows/engine';
 import type { Page } from '@playwright/test';
-import { expect, play, tapArrow, test } from './fixtures.ts';
+import { expect, play, press, tapArrow, test } from './fixtures.ts';
 
 const zoomOf = async (page: Page): Promise<number> =>
   Number(await play(page).getAttribute('data-zoom'));
@@ -73,4 +73,30 @@ test('the wheel zooms at the pointer, drag pans, double click on empty space res
   await page.mouse.dblclick(box.x + 4, box.y + 4);
   await expect.poll(() => zoomOf(page)).toBe(1);
   await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+});
+
+test('a quick double tap on an arrow plays it and keeps the zoom', async ({ page, touch }) => {
+  const { puzzle } = generateLevel(300);
+  await page.goto('./?level=300');
+  await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
+  await page.keyboard.press('+');
+  await page.keyboard.press('+');
+  await expect.poll(() => zoomOf(page)).toBeGreaterThan(1.5);
+  const zoom = await zoomOf(page);
+
+  await press(page.locator('.hud .hint'), touch);
+  const id = Number(await page.locator('.arrow.hinted').getAttribute('data-arrow'));
+  const box = (await page.locator(`[data-arrow="${id}"] .head`).boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  if (touch) {
+    await page.touchscreen.tap(x, y);
+    await page.touchscreen.tap(x, y);
+  } else {
+    await page.mouse.dblclick(x, y);
+  }
+
+  await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length - 1));
+  await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  expect(await zoomOf(page)).toBe(zoom);
 });

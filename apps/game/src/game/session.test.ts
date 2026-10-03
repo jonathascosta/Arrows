@@ -1,4 +1,4 @@
-import { createGame, freeArrows, generateLevel, head } from '@arrows/engine';
+import { arrowAt, createGame, freeArrows, generateLevel, head } from '@arrows/engine';
 import type { Puzzle } from '@arrows/engine';
 import { describe, expect, it } from 'vitest';
 import { PlaySession } from './session.ts';
@@ -65,14 +65,19 @@ describe('PlaySession', () => {
     expect(session.hintsUsed).toBe(puzzle.arrows.length);
   });
 
-  it('retries the same puzzle with fresh drops, timer and hint count', () => {
+  it('retries the same puzzle with removed arrows back, fresh drops, timer and hint count', () => {
     const session = new PlaySession(puzzle);
+    const removed = session.hint()!;
+    const { x: hx, y: hy } = head(puzzle.arrows[removed]!);
+    expect(session.tapCell(hx, hy, 0).kind).toBe('removed');
     const { x, y } = puzzle.arrows[blockedArrow(puzzle)]!.cells[0]!;
-    session.tapCell(x, y, 0);
-    session.hint();
+    session.tapCell(x, y, 10);
+    expect(session.state.remaining.size).toBe(puzzle.arrows.length - 1);
+    expect(arrowAt(session.state, hx, hy)).toBeNull();
     session.retry();
     expect(session.state.lives).toBe(3);
     expect(session.state.remaining.size).toBe(puzzle.arrows.length);
+    expect(arrowAt(session.state, hx, hy)).toBe(removed);
     expect(session.timerStarted).toBe(false);
     expect(session.hintsUsed).toBe(0);
     expect(session.puzzle).toBe(puzzle);

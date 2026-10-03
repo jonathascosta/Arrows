@@ -14,10 +14,11 @@ const en = {
   'hud.drops': '{n} of {total} drops left',
   'hud.timer': 'Time {time}',
   'hud.hint': 'Hint',
-  'hud.gridShow': 'Show grid',
-  'hud.gridHide': 'Hide grid',
-  'board.label': 'Board, {n} arrows left. Pinch or scroll to zoom, drag to move.',
-  'status.blocked': 'Blocked. {n} drops left.',
+  'hud.grid': 'Grid',
+  'board.label.one': 'Board, 1 arrow left. Pinch or scroll to zoom, drag to move.',
+  'board.label.other': 'Board, {n} arrows left. Pinch or scroll to zoom, drag to move.',
+  'status.blocked.one': 'Blocked. 1 drop left.',
+  'status.blocked.other': 'Blocked. {n} drops left.',
   'status.hint': 'Try the highlighted arrow.',
   'status.noHint': 'No free arrow right now.',
   'won.title': 'Board cleared!',
@@ -31,10 +32,26 @@ const en = {
 
 export type StringKey = keyof typeof en;
 
+/** Keys that come in `.one` and `.other` forms, chosen by count. */
+type PluralBase<K> = K extends `${infer Base}.other` ? Base : never;
+export type PluralKey = PluralBase<StringKey>;
+
+const plurals = new Intl.PluralRules('en');
+
 export function t(key: StringKey, params: Readonly<Record<string, string | number>> = {}): string {
   return en[key].replace(/\{(\w+)\}/g, (match, name: string) =>
     name in params ? String(params[name]) : match,
   );
+}
+
+/** A string that depends on a count: `{n}` is the count, the form follows English plural rules. */
+export function tn(
+  key: PluralKey,
+  n: number,
+  params: Readonly<Record<string, string | number>> = {},
+): string {
+  const form = plurals.select(n) === 'one' ? 'one' : 'other';
+  return t(`${key}.${form}`, { ...params, n });
 }
 
 /** `2026-10-02` as `Oct 2, 2026`. */

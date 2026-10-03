@@ -1,12 +1,7 @@
-import { createGame, freeArrows, generateLevel } from '@arrows/engine';
-import type { Puzzle } from '@arrows/engine';
+import { createGame, freeArrows, generateLevel, tap } from '@arrows/engine';
 import { bodies, expect, play, press, tapArrow, test } from './fixtures.ts';
 
-/** The engine is the oracle: the page generates the same puzzle from the same seed. */
-function blockedArrow(puzzle: Puzzle): number {
-  const free = new Set(freeArrows(createGame(puzzle)));
-  return puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
-}
+// The engine is the oracle: the page generates the same puzzle from the same seed.
 
 test('level 1 is won by following the hints, then opens level 2', async ({ page, touch }) => {
   const { puzzle } = generateLevel(1);
@@ -36,21 +31,35 @@ test('level 1 is won by following the hints, then opens level 2', async ({ page,
   await expect(page.locator('[data-arrow]')).toHaveCount(generateLevel(2).puzzle.arrows.length);
 });
 
-test('a blocked tap costs a drop; three lose; retry brings back the same arrows', async ({
+test('a blocked tap costs a drop; three lose; retry brings back the whole board', async ({
   page,
   touch,
 }) => {
   const { puzzle } = generateLevel(1);
-  const id = blockedArrow(puzzle);
   await page.goto('./?level=1');
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   const initial = await bodies(page);
 
+  // Clear two arrows first, so a retry that does not rebuild the board fails.
+  let game = createGame(puzzle);
+  for (let move = 0; move < 2; move++) {
+    const id = freeArrows(game)[0]!;
+    await tapArrow(page, touch, id);
+    game = tap(game, id).state;
+    await expect(play(page)).toHaveAttribute(
+      'data-arrows-left',
+      String(puzzle.arrows.length - move - 1),
+    );
+  }
+  await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length - 2);
+
+  const free = new Set(freeArrows(game));
+  const id = [...game.remaining].find((arrow) => !free.has(arrow))!;
   await tapArrow(page, touch, id);
   await expect(page.locator('.drops')).toHaveAttribute('data-lives', '2');
   await expect(page.locator('.drop.lost')).toHaveCount(1);
   await expect(page.locator(`[data-arrow="${id}"]`)).toBeAttached();
-  await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length));
+  await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length - 2));
 
   await tapArrow(page, touch, id);
   await tapArrow(page, touch, id);
@@ -61,8 +70,10 @@ test('a blocked tap costs a drop; three lose; retry brings back the same arrows'
   await press(overlay.getByRole('button', { name: 'Retry' }), touch);
   await expect(overlay).toBeHidden();
   await expect(page.locator('.drops')).toHaveAttribute('data-lives', '3');
+  await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length));
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   expect(await bodies(page)).toEqual(initial);
+  await expect(page.locator('.time')).toHaveText('00:00');
   await expect(page).toHaveURL(/\?level=1$/);
 });
 
@@ -96,7 +107,6 @@ test('level 300 renders quickly and answers taps at once', async ({ page, touch 
     });
     expect(Date.now() - started).toBeLessThan(1000);
     // Mirror the move in the oracle.
-    const { tap } = await import('@arrows/engine');
     game = tap(game, id).state;
   }
   await expect(play(page)).toHaveAttribute('data-arrows-left', String(puzzle.arrows.length - 5));
@@ -108,12 +118,11 @@ test('level 300 renders quickly and answers taps at once', async ({ page, touch 
 
 test('the grid toggles and the hint button lights one arrow', async ({ page, touch }) => {
   await page.goto('./?level=13');
-  const toggle = page.getByRole('button', { name: 'Show grid' });
+  // One fixed label; aria-pressed carries the state.
+  const toggle = page.getByRole('button', { name: 'Grid', exact: true });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
   await press(toggle, touch);
-  await expect(page.getByRole('button', { name: 'Hide grid' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.grid')).toHaveAttribute('visibility', 'visible');
   await press(page.locator('.hud .hint'), touch);
   await expect(page.locator('.arrow.hinted')).toHaveCount(1);

@@ -29,12 +29,14 @@ pnpm install
 pnpm dev   # the game at http://localhost:5173, any puzzle at http://localhost:5173/dev.html
 ```
 
-| Command                                        | What it does                                                                                      |
-| :--------------------------------------------- | :------------------------------------------------------------------------------------------------ |
-| `pnpm test`                                    | Unit and property tests for every package (a few seconds)                                         |
-| `pnpm test:calibration`                        | The long suites: difficulty bands over 400 levels, league promotion rates over 120 simulated days |
-| `pnpm lint` · `pnpm format` · `pnpm typecheck` | Type-aware ESLint, Prettier, and `tsc` for every project                                          |
-| `pnpm build`                                   | Builds the engine into `packages/engine/dist`                                                     |
+| Command                                        | What it does                                                                                               |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| `pnpm dev` · `pnpm preview`                    | Runs the app with Vite (the puzzle picker is at `/dev.html`); serves the production build                  |
+| `pnpm build`                                   | Builds the engine into `packages/engine/dist` and the app into `apps/game/dist`; fails over 300 kB gzipped |
+| `pnpm test:e2e`                                | Playwright against a fresh production build, as a touch phone and on a desktop                             |
+| `pnpm test`                                    | Unit and property tests for every package (a few seconds)                                                  |
+| `pnpm test:calibration`                        | The long suites: difficulty bands over 400 levels, league promotion rates over 120 simulated days          |
+| `pnpm lint` · `pnpm format` · `pnpm typecheck` | Type-aware ESLint, Prettier, and `tsc` for every project                                                   |
 
 A Husky pre-commit hook runs `lint`, `format:check`, `typecheck` and `test`.
 
