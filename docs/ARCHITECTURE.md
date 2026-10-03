@@ -376,7 +376,10 @@ about ads and starts AdMob after them (`AdConsent`), preloads both ads (each loa
 SDK to have started), and maps the haptic cues to the Taptic Engine
 (`impact` light, `notification` warning, success, error, and a heavy impact then success for a
 promotion). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
-`viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
+`viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets. The text screens
+scroll the page, as in a browser, so the web view keeps its scrolling (`scrollEnabled`);
+Capacitor turns the web view's bounce off, so the board's screen, which fits the window, stays
+still, and its stage takes every touch itself (`touch-action: none`).
 
 `AdConsent` (`ads/consent.ts`) asks for the player's choices while the game is already
 playable: Google's User Messaging Platform first (`requestConsentInfo`, then `showConsentForm`
