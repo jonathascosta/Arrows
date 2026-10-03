@@ -15,6 +15,12 @@ describe('parseRoute', () => {
   it('reads levels, dailies and drawings', () => {
     expect(parseRoute('?level=300')).toEqual(play({ kind: 'level', level: 300 }));
     expect(parseRoute('?daily=2026-10-03')).toEqual(play({ kind: 'daily', dateKey: '2026-10-03' }));
+    expect(parseRoute('?event=autumn-2026&board=3')).toEqual(
+      play({ kind: 'event', eventId: 'autumn-2026', board: 3 }),
+    );
+    expect(parseRoute('?event=autumn-2026')).toEqual(
+      play({ kind: 'event', eventId: 'autumn-2026', board: 1 }),
+    );
     expect(parseRoute('?drawing=butterfly&tier=hard')).toEqual(
       play({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' }),
     );
@@ -35,6 +41,9 @@ describe('parseRoute', () => {
       '?level=abc',
       '?daily=2026-02-30',
       '?drawing=nope',
+      '?event=nope',
+      '?event=autumn-2026&board=7',
+      '?event=autumn-2026&board=0',
     ]) {
       expect(parseRoute(search), search).toEqual({ screen: 'home' });
     }
@@ -52,6 +61,7 @@ describe('parseRoute', () => {
       play({ kind: 'level', level: 1 }),
       play({ kind: 'daily', dateKey: '2026-12-31' }),
       play({ kind: 'drawing', drawingId: 'heart', tier: 'superHard' }),
+      play({ kind: 'event', eventId: 'autumn-2026', board: 6 }),
     ];
     for (const route of routes) {
       expect(parseRoute(routeHref(route).slice(2))).toEqual(route);
@@ -68,6 +78,9 @@ describe('puzzleKey', () => {
   it('names each board once, whatever its address', () => {
     expect(puzzleKey({ kind: 'level', level: 12 })).toBe('level:12');
     expect(puzzleKey({ kind: 'daily', dateKey: '2026-10-03' })).toBe('daily:2026-10-03');
+    expect(puzzleKey({ kind: 'event', eventId: 'autumn-2026', board: 2 })).toBe(
+      'event:autumn-2026:2',
+    );
     expect(puzzleKey({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' })).toBe(
       'drawing:butterfly:hard',
     );

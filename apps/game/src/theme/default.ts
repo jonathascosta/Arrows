@@ -88,6 +88,9 @@ export const DEFAULT_THEME: Theme = {
     trophy: icon(
       '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.6 4"/><path d="M16 6h2.5a2.5 2.5 0 0 1-2.6 4"/><path d="M12 13v4"/><path d="M8.5 20h7"/>',
     ),
+    badge: icon(
+      '<circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/><path d="M12 6.4l.8 1.7 1.8.2-1.3 1.2.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.2 1.8-.2z"/>',
+    ),
     previous: icon('<path d="M15 5l-7 7 7 7"/>'),
     next: icon('<path d="M9 5l7 7-7 7"/>'),
   },

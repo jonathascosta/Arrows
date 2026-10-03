@@ -16,7 +16,7 @@ import {
 } from '../board/viewport.ts';
 import type { Viewport } from '../board/viewport.ts';
 import { PlaySession } from '../game/session.ts';
-import { loadPuzzle, tierLabel } from '../puzzles.ts';
+import { loadPuzzle } from '../puzzles.ts';
 import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
 import { monthOf } from '../daily/days.ts';
@@ -60,6 +60,14 @@ export interface ResultNote {
   readonly star?: 'day' | 'month';
   /** League points this board earned, and the player's league and rank after it. */
   readonly league?: { readonly points: number; readonly league: string; readonly rank: number };
+  /** An event board's first win: where it stands, and the badge when it completed the event. */
+  readonly event?: { readonly board: number; readonly total: number; readonly badge?: string };
+}
+
+/** What the win sheet's primary button opens instead of playing the board again. */
+export interface NextBoard {
+  readonly ref: PuzzleRef;
+  readonly label: string;
 }
 
 /** Where leaving a puzzle goes: its back button and the sheets' second link. */
@@ -84,6 +92,8 @@ export interface PlayScreenOptions {
   readonly record?: (result: BoardResult) => ResultNote | undefined;
   /** Where leaving a puzzle goes; the home screen when left out. */
   readonly exitFor?: (ref: PuzzleRef) => Exit;
+  /** The board after a win, if any; when left out, a level leads to the next level. */
+  readonly next?: (ref: PuzzleRef) => NextBoard | null;
 }
 
 /** Marks the moment a board is on screen, for tests and profiling. */
@@ -143,7 +153,7 @@ export class PlayScreen {
     this.note = undefined;
     this.loaded = loadPuzzle(ref);
     this.session = new PlaySession(this.loaded.puzzle);
-    this.hud.setTitle(this.loaded.title, tierLabel(this.loaded.tier), this.loaded.tier);
+    this.hud.setTitle(this.loaded.title, this.loaded.subtitle, this.loaded.tier);
     const exit = this.exit();
     this.hud.setBack(exit.href, exit.back);
     this.element.ownerDocument.title = `${this.loaded.title} · ${t('app.name')}`;
@@ -237,6 +247,12 @@ export class PlayScreen {
           lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
         }
       }
+      if (note.event !== undefined) {
+        lines.push(t('won.eventBoard', { n: note.event.board, total: note.event.total }));
+        if (note.event.badge !== undefined) {
+          lines.push(t('won.eventComplete', { badge: note.event.badge }));
+        }
+      }
       if (note.league !== undefined) {
         lines.push(
           t('won.league', {
@@ -251,13 +267,19 @@ export class PlayScreen {
         lines.push(t('won.best', { time: formatDuration(note.bestMs) }));
       }
     }
+    const next =
+      this.options.next !== undefined
+        ? this.options.next(ref)
+        : ref.kind === 'level'
+          ? { ref: { kind: 'level', level: ref.level + 1 } as const, label: t('won.next') }
+          : null;
     this.showOverlay({
       kind: 'won',
       title: t('won.title'),
       body: lines.join(' '),
-      action: ref.kind === 'level' ? t('won.next') : t('won.again'),
+      action: next?.label ?? t('won.again'),
       onAction: () => {
-        if (ref.kind === 'level') this.options.navigate({ kind: 'level', level: ref.level + 1 });
+        if (next !== null) this.options.navigate(next.ref);
         else this.restart();
       },
       secondary: this.home(),

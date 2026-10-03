@@ -112,11 +112,15 @@ body {
 }
 
 .tier {
+  /* One line, as narrow as the title column gets: an event board's line is longest. */
+  overflow: hidden;
   margin: 6px 0 0;
   font-size: 0.72rem;
   font-weight: 650;
   letter-spacing: 0.14em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Anything tagged with a tier gets its colour as --tier. */
@@ -144,6 +148,20 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* On the narrowest phones the chances and the timer take a row of their own, so the
+   title and its line (an event board's "Autumn · 3 of 6") keep the width. */
+@media (max-width: 359px) {
+  .play .topbar {
+    grid-template-columns: auto 1fr;
+    row-gap: 6px;
+  }
+
+  .play .status {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
 }
 
 .status-divider {
@@ -629,8 +647,45 @@ body {
   background: var(--color-background);
 }
 
+.event-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .event-text .card-title.small {
   margin: 6px 0 8px;
+}
+
+.badge-earned {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-earned .icon {
+  width: 24px;
+  height: 24px;
+  color: var(--color-hint);
+}
+
+/* One segment per board, filled when won. The text beside it says the same. */
+.event-progress {
+  display: flex;
+  gap: 3px;
+  margin: 0 0 8px;
+}
+
+.event-progress span {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-divider);
+}
+
+.event-progress span[data-done] {
+  background: var(--color-hint);
 }
 
 .daily-stars {

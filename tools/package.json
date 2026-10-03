@@ -1,0 +1,20 @@
+{
+  "name": "@arrows/tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build-time tools for the repository's content: drawings from PNG art. Never shipped.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "drawings": "node --experimental-strip-types --no-warnings=ExperimentalWarning png-to-drawing.ts",
+    "drawings:check": "node --experimental-strip-types --no-warnings=ExperimentalWarning png-to-drawing.ts --check",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@arrows/engine": "workspace:*",
+    "@types/pngjs": "^6.0.5",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.9.9"
+  }
+}

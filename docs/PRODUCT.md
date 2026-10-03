@@ -170,6 +170,18 @@ Time-limited sets of drawing boards (a butterfly, a surfboard) with their own pr
 reward. A championship is an event with its own league table over the event's duration. v1 ships
 the drawing boards and one event; the championship table reuses the league code.
 
+- An event runs from a first to a last day, in the player's local time, like the daily.
+- Its boards are played in order: the next board opens when the one before is won. Every board
+  has its own seed (`board:event:<id>:<n>`), so everyone plays the same boards.
+- Progress is kept per board. Winning every board earns the event's badge.
+- Boards count only while the event runs. Before it starts and after its last day the boards
+  cannot be opened; the home screen shows how far the player got and the badge, if earned.
+- Event boards earn league points with the event bonus.
+- The first event is the Autumn event (1 October to 30 November 2026): a maple leaf and an acorn,
+  each at Medium, Hard and Super Hard, six boards in all.
+- Drawings are pixel art, one pixel per cell, drawn in the drawing palette (DESIGN.md) and
+  converted to boards by a tool; the art lives in the repository as PNG.
+
 ## Monetization
 
 - Interstitial ad between finishing a board and the score screen. Nowhere else.

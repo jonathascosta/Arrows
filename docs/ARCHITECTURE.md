@@ -15,30 +15,44 @@ How the repository is put together and why. [PRODUCT.md](PRODUCT.md) says what w
 
 ## Packages
 
-| Package           | Role                                                                        | May import |
-| :---------------- | :-------------------------------------------------------------------------- | :--------- |
-| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim        | Nothing    |
-| `apps/game`       | The Vite app: rendering, input, screens, persistence (ads, Capacitor later) | engine     |
+| Package           | Role                                                                        | May import     |
+| :---------------- | :-------------------------------------------------------------------------- | :------------- |
+| `packages/engine` | Boards, generator, solver, difficulty, tiers, game state, league sim        | Nothing        |
+| `apps/game`       | The Vite app: rendering, input, screens, persistence (ads, Capacitor later) | engine         |
+| `tools`           | Build-time tools: drawings from PNG art (`pngjs`), never shipped            | engine (types) |
 
 Workspace packages export their TypeScript sources (`"exports": "./src/index.ts"`), so Vite,
 Vitest and `tsc` consume the source directly. The engine also has a real build (`tsc -p
 tsconfig.build.json` into `dist/`) for anything that consumes plain JavaScript.
 
+### Drawings from PNG art
+
+Drawings are pixel art in `art/drawings/`: one PNG per drawing, one pixel per cell, transparent
+where there is no cell, every other pixel exactly one colour of the drawing palette.
+`art/drawings/drawings.json` names each colour (`#a83e34` is `red`, as the theme names them) and,
+per drawing, its id, name, file and legend (character to colour name, in palette order).
+`pnpm drawings` runs `tools/png-to-drawing.ts`, which reads every PNG and writes
+`packages/engine/src/drawings/art.ts`, formatted with Prettier; the engine's `DRAWINGS` is that
+module. A pixel off the palette, half transparent, of a colour the legend does not name, or a
+legend colour never drawn fails with the file and the pixel. `pnpm drawings:check`, in CI, fails
+when `art.ts` is not what the art makes, so nobody edits the generated module by hand. The engine
+gains no dependency: `pngjs` belongs to the tools.
+
 ## Engine
 
 ### Module map
 
-| Module       | Contents                                                                                                |
-| :----------- | :------------------------------------------------------------------------------------------------------ |
-| `rng/`       | `createRng(seed)`: xoshiro128\*\* seeded from a string hash, with `fork(label)` for independent streams |
-| `board/`     | `Cell`, `Direction`, `Mask` (active cells and colours), `Path`, `Arrow`, `Puzzle`; mask constructors    |
-| `generator/` | `partition` (phase one), `peel` (phase two), `generatePuzzle`, `generateInBand`                         |
-| `solver/`    | `Occupancy` and the allocation-free ray scan; `analyze` (reference solution and metrics)                |
-| `game/`      | `GameState`: `createGame`, `tap`, `hint`, `freeArrows`, `arrowAt`. Immutable, UI-agnostic               |
-| `levels/`    | Tiers and their knobs, `tierForLevel`, `boardSizeForLevel`, `generateLevel`, `generateDaily`, boards    |
-| `drawings/`  | Pixel-art boards as text, with `drawingMask`                                                            |
-| `league/`    | Character names, `scoreBoard`, seasons, character score curves, standings, promotion rules              |
-| `debug/`     | `renderAscii`, for tests, fixtures and bug reports                                                      |
+| Module       | Contents                                                                                                                     |
+| :----------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| `rng/`       | `createRng(seed)`: xoshiro128\*\* seeded from a string hash, with `fork(label)` for independent streams                      |
+| `board/`     | `Cell`, `Direction`, `Mask` (active cells and colours), `Path`, `Arrow`, `Puzzle`; mask constructors                         |
+| `generator/` | `partition` (phase one), `peel` (phase two), `generatePuzzle`, `generateInBand`                                              |
+| `solver/`    | `Occupancy` and the allocation-free ray scan; `analyze` (reference solution and metrics)                                     |
+| `game/`      | `GameState`: `createGame`, `tap`, `hint`, `freeArrows`, `arrowAt`. Immutable, UI-agnostic                                    |
+| `levels/`    | Tiers and their knobs, `tierForLevel`, `boardSizeForLevel`, `generateLevel`, `generateDaily`, boards                         |
+| `drawings/`  | `Drawing` (rows and legend), `drawingMask`, `findDrawing`; `art.ts`, generated from art/drawings (see Drawings from PNG art) |
+| `league/`    | Character names, `scoreBoard`, seasons, character score curves, standings, promotion rules                                   |
+| `debug/`     | `renderAscii`, for tests, fixtures and bug reports                                                                           |
 
 ### The rule
 
@@ -128,13 +142,14 @@ daily, opens the calendar.
 | `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                                 |
 | `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                                               |
 | `screens/league.ts`      | The daily league: the league's name and countdown, the rules, the table of 30 with avatars, tags and the dividers where moves happen; the rules and the day's summary in sheets; a 30 s clock that moves the table and settles the day at midnight                                                                                                                 |
+| `events/`                | The event catalog (`AUTUMN_2026`: dates, boards in order, the badge), `eventState`, `eventOn`, `daysLeft`                                                                                                                                                                                                                                                          |
 | `league/`                | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                          |
 | `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
 | `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                                                                                                                                                                                                           |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won) and `LeagueStore` (the player's league and day) on top of it                                                                                                  |
+| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day) and `EventStore` (boards won per event) on top of it                                                             |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
 | `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                                      |
-| `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle                                                                                                                                                                                                                         |
+| `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
 | `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                                           |
 
 ### Progress and navigation
@@ -194,6 +209,18 @@ the days missed between, so several missed days settle once. A stored day after 
 set back) is dropped unsettled. The summary shows once, on the home screen or the league,
 whichever comes first.
 
+### Events
+
+An event (`events/catalog.ts`) runs from a first to a last local day and lists its boards in
+order, each a drawing at a tier with its own seed (`generateBoard` with the id
+`event:<event>:<n>`, the `bounds` ray rule). `EventStore` keeps the board numbers won per event
+under `arrows.events`. `App` opens an event board only while the event runs, and only up to the
+next board not won: an address naming a board further on opens the next one, and one outside
+the event's days opens the home screen. A board's first win adds the line "Board 2 of 6 done."
+and, on the last, the badge; "Next board" leads on while the event runs. Event boards earn
+league points with the event bonus. The home screen shows the running event, or the one that
+ended last: a thumbnail of the next board, a segment per board, and the days left or the end.
+
 Until a board is won today the player is not in the day's table: the view lists them last,
 without a move, below characters still at 0 (the engine's `standings` would give them the tie).
 
@@ -237,6 +264,7 @@ board away from the fingers.
 | Tiers stay in their bands            | `levels.calibration.test.ts` over levels 1 to 400                                  |
 | League promotion rates stay in bands | `league.calibration.test.ts` over 120 simulated days per league                    |
 | Level content does not drift         | Fingerprint pins in `levels.test.ts`                                               |
+| Drawings are what the art makes      | `pnpm drawings:check` in CI; `tools/drawings.test.ts` round-trips every PNG        |
 | Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
 | Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
 

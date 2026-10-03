@@ -1,0 +1,33 @@
+{
+  "palette": {
+    "#d9822b": "orange",
+    "#c9a227": "yellow",
+    "#7a4e2d": "brown",
+    "#4f8a5b": "green",
+    "#a83e34": "red",
+    "#3c6fa0": "blue",
+    "#7a4fa6": "purple",
+    "#2b2925": "black"
+  },
+  "drawings": [
+    { "id": "heart", "name": "Heart", "file": "heart.png", "legend": { "H": "red" } },
+    {
+      "id": "butterfly",
+      "name": "Butterfly",
+      "file": "butterfly.png",
+      "legend": { "O": "orange", "Y": "yellow", "B": "brown" }
+    },
+    {
+      "id": "maple-leaf",
+      "name": "Maple Leaf",
+      "file": "maple-leaf.png",
+      "legend": { "R": "red", "B": "brown" }
+    },
+    {
+      "id": "acorn",
+      "name": "Acorn",
+      "file": "acorn.png",
+      "legend": { "B": "brown", "O": "orange", "G": "green" }
+    }
+  ]
+}

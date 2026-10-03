@@ -20,6 +20,8 @@ is next, and what done means) before changing anything.
   generator, the tiers, the solver or the league.
 - `pnpm lint`, `pnpm format:check`, `pnpm typecheck` — the same gates as CI and the pre-commit hook.
 - `pnpm dev` — the app at http://localhost:5173 (`/dev.html` opens any puzzle by seed).
+- `pnpm drawings` — converts the PNG art in `art/drawings/` to `packages/engine/src/drawings/art.ts`;
+  never edit that file by hand. `pnpm drawings:check` (CI) fails when the two differ.
 - `pnpm test:e2e` — Playwright on the production build, phone and desktop profiles. In cloud
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 

@@ -21,6 +21,8 @@
     "test:watch": "vitest --project \"!calibration\"",
     "test:calibration": "vitest run --project calibration",
     "test:e2e": "pnpm --filter @arrows/game test:e2e",
+    "drawings": "pnpm --filter @arrows/tools drawings",
+    "drawings:check": "pnpm --filter @arrows/tools drawings:check",
     "prepare": "husky"
   },
   "devDependencies": {
