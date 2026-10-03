@@ -158,8 +158,12 @@ is the event's name ("Autumn event"), the title the next board's drawing, the pr
 segment per board (won ones in `hint`), and the note "2 of 6 boards · 48 days left" ("Last day",
 or "Ended Mon 30 Nov" after it). It opens the next board while the event runs; once every board
 is won the title is the badge ("Badge earned", the badge icon in `hint`), and the card opens
-nothing. The menu button opens the puzzle picker until there is a menu. The level strip is not
-tappable: Play opens the current level.
+nothing. The level strip is not tappable: Play opens the current level.
+
+As built in T9, the menu button opens **Settings**, a bottom sheet like the others: "Settings"
+in serif, a list on `background` with a row per switch (Sound; Haptics in the iOS app only),
+each a label and a pill switch (`chanceLost` off, `primary` on, a `surfaceRaised` knob), then
+"Done" as the primary button and "Puzzle picker" as the text button.
 
 ### Daily challenge
 
@@ -213,13 +217,11 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
   the design.
 - Drawing contrast: orange (2.57:1) and yellow (2.13:1) arrows are below 3:1 on the paper
   background. A darker pair would read better on event boards; owner and design to decide.
-- Hint on drawings: the hint colour against the orange of the drawings is 1.20:1, so with reduced
-  motion (no pulse) a hinted orange arrow barely stands out on the butterfly. A hint treatment that
-  does not rely on colour alone (a halo, a thicker stroke) is worth designing.
-- Blocked tap on red drawings: `blocked` against the drawing red is 1.11:1, so on the maple leaf
-  (three of the six Autumn boards) a blocked arrow's flash barely shows; with reduced motion
-  there is no bump either, and only the chance lost in the header tells. Like the hint, it needs
-  a treatment that does not rely on colour alone, or another red for the leaf.
+- Hint and blocked tap on drawings: the hint colour against the drawings' orange is 1.20:1, and
+  `blocked` against their red 1.11:1. Since T9 a hinted, blocked or blocking arrow is also drawn
+  wider (`board.emphasisWidth`, 0.2 of a cell against 0.12), so it shows by shape on any
+  drawing and with reduced motion; a designed treatment (a halo, another red for the leaf) can
+  replace it.
 - Drawing art: drawings are PNGs in `art/drawings/`, one pixel per cell, in the exact palette
   colours (`art/drawings/drawings.json`); `pnpm drawings` converts them. The maple leaf and the
   acorn of the Autumn event are session art to replace with designed ones.
@@ -228,7 +230,9 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
 - Chance direction: the chances point right, like the board's heads. Pointing them up was
   suggested, so that two intact ones next to a timer do not read as a fast-forward button. It is
   one theme value (`chanceDirection: 'up'`) if the owner prefers it.
-- Character avatars: the design uses initials on colour; illustrated avatars stay for later.
-- Home menu: the design shows a menu button but no menu. Until one is designed it opens the
-  puzzle picker (`dev.html`), also in release builds; hiding it there is one line if the owner
-  prefers.
+- Character avatars: the design uses initials on colour; illustrated avatars, league badges, the
+  event art and the app icon are T9's assets still to come from Claude Design.
+- Settings: designed in the session from the sheet's parts (T9); the puzzle picker stays in it,
+  also in release builds, and hiding it there is one line if the owner prefers.
+- Portuguese: the layouts hold the Portuguese strings, which run up to a third longer (checked
+  at 320 px); the tier badge "Muito difícil" is the longest.

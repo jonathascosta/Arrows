@@ -148,12 +148,12 @@ daily, opens the calendar.
 | `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
 | `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD, the lost sheet and the score screen; plays the rewarded ad before a hint and the interstitial before the score                                                                                                                                                                       |
 | `ads/`                   | `AdProvider` (`showInterstitial`, `showRewarded`), `NO_ADS` for the web, `DebugAds` (the test card), `AdMobAds` (iOS) and `adsFor`, which gives the test card when the `arrows.ads` setting asks for it                                                                                                                                                            |
-| `platform/`              | `Platform` (the store, the ads, the haptics): `webPlatform`, and `native.ts`, loaded only in the iOS app, with Capacitor's plugins; `Haptics` and its cues                                                                                                                                                                                                         |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore`, `browserStore()` and `PreferencesStore` (iOS); `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day) and `EventStore` (boards won per event) on top of it                                   |
+| `platform/`              | `Platform` (the store, the ads, the haptics): `webPlatform`, and `native.ts`, loaded only in the iOS app, with Capacitor's plugins; `cues.ts` (the five cues, `CuePlayer`, `cuePlayer`, which plays sounds and haptics as the settings allow), `sounds.ts` (`WebAudioSounds`, the cues synthesised with Web Audio), `textSize.ts` (the phone's text size)          |
+| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore`, `browserStore()` and `PreferencesStore` (iOS); `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won), `LeagueStore` (the player's league and day), `EventStore` (boards won per event) and `SettingsStore` (sound, haptics) on top of it |
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
-| `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), DOM helpers                                                                                                                                                                                                 |
+| `ui/`                    | HUD (top bar and tool bar, stacked when a title does not fit), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), `SettingsSheet`, DOM helpers                                                                                                                                             |
 | `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
-| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                                           |
+| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`, in English and Brazilian Portuguese; the locale (`localeFor`, `setLocale`), plurals (`tn`), league and drawing names, number words, ordinals and dates in the player's language                                                                                                                          |
 
 ### Progress and navigation
 
@@ -284,6 +284,47 @@ was under the fingers goes under their midpoint, at the starting scale times the
 and the result is clamped once. Computing it step by step instead lets edge clamping move the
 board away from the fingers.
 
+### Languages, sound and settings
+
+`main.ts` picks the language before anything draws: `localeFor(navigator.languages)` takes the
+first preferred language whose base is Portuguese or English, else English, and sets it in
+`strings.ts` and on `<html lang>`. Both tables have the same keys, with the same
+placeholders, and a unit test holds them to it. Everything that shows a name, a number in words,
+an ordinal or a date goes through `strings.ts`, so the screens never format text themselves.
+League names and drawing names have their own keys; the characters' names stay as they are.
+`Info.plist` lists both languages, so iOS shows the app in Portuguese where the phone is.
+
+The five cues (`platform/cues.ts`: an arrow leaving, a blocked tap, a win, a loss, a promotion)
+go through one `CuePlayer` that `App` builds from the sounds, the platform's haptics (none on the
+web) and `SettingsStore`, read at each cue so a switch takes effect at once. `WebAudioSounds`
+synthesises each cue from a few oscillator tones; it opens its `AudioContext` on the first cue
+and resumes it at each one (a browser lets it start only after a tap), and stays silent if Web
+Audio is missing or fails. The play screen
+plays the board's cues, and `App` the promotion, when the league's summary of a promoted day
+shows (on the home screen or the league screen). The Settings sheet (`ui/settings.ts`) opens
+from the home screen's menu button: a switch per setting (haptics only in the app), Done and the
+puzzle picker.
+
+### Accessibility
+
+Every control has a name in the player's language, and the screens are tested with Lighthouse
+(`pnpm test:a11y`, `apps/game/a11y/`): Playwright starts the production build in Chromium with
+a debugging port, and Lighthouse, connected to it through `puppeteer-core`, takes an
+accessibility snapshot of each screen and its sheets in turn (home, Settings, the day's summary,
+the calendar, the league and its rules, a board, the lost sheet, the score screen, the puzzle
+picker, and the home screen in Portuguese). Each must score 90 or more; the one audit they all fail is
+`user-scalable=no` in the viewport, kept because the board has its own pinch zoom, which the
+page's zoom would fight, and the text screens follow the phone's text size instead.
+
+The text size follows Dynamic Type: `platform/textSize.ts` measures WebKit's
+`-apple-system-body` font (17 px at the default size), and `main.ts` sets the ratio, from 0.85
+to 1.5, as `--text-scale` at start and whenever the app comes back to the front. The root font
+size is scaled by it, and the screens are sized in `rem`, except the play screen, which keeps
+100 % while no sheet covers it (`html[data-screen='play']:not([data-covered])`): its bars must
+leave the board its room. The HUD stacks its title above the tier when either is cut. Reduced
+motion skips the board's animations, as before; the hinted arrow and blocked taps are marked by
+a wider stroke as well as by colour.
+
 ### iOS
 
 The iOS app is the web build in Capacitor 8 (`apps/game/capacitor.config.ts`,
@@ -301,7 +342,8 @@ app it imports `platform/native.ts`, a chunk of its own, so the web never loads 
 app starts (the game reads its records synchronously; writes go to memory at once and are
 saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads
 (each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine
-(`impact` light, `notification` warning, success, error). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
+(`impact` light, `notification` warning, success, error, and a heavy impact then success for a
+promotion). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
 
 `AdMobAds` loads each kind of ad ahead and shows it when its moment comes. The plugin's show
@@ -358,6 +400,8 @@ creates the App Store provisioning profile itself.
 | Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
 | Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`  |
 | Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
+| Both languages have every string     | `strings.test.ts`: the same keys and placeholders, no English words left in pt     |
+| Lighthouse accessibility 90 or more  | `pnpm test:a11y` (`apps/game/a11y/lighthouse.spec.ts`) in the e2e CI job           |
 
 ## Testing
 
@@ -368,6 +412,8 @@ creates the App Store provisioning profile itself.
   test generate the same puzzle from the same seed, so a test knows which arrows are free or
   blocked without the page exposing it. Claude Code cloud sessions use the Chromium at
   `/opt/pw-browsers/chromium` and must not run `playwright install`; CI installs its own.
+- `pnpm test:a11y`: Lighthouse's accessibility audit of every screen of the production build,
+  in the same CI job as the end-to-end tests.
 
 Tests are next to the code (`*.test.ts`), calibration suites are `*.calibration.test.ts`, and the
 app's end-to-end specs are in `apps/game/e2e/`.

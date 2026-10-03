@@ -2,7 +2,7 @@ import { createGame, freeArrows, generateLevel, head, tap } from '@arrows/engine
 import type { Puzzle } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdProvider } from '../ads/ads.ts';
-import type { HapticCue } from '../platform/haptics.ts';
+import type { Cue } from '../platform/cues.ts';
 import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
@@ -237,6 +237,8 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.hint .tool-label')?.textContent).toBe('Hint');
     await vi.advanceTimersByTimeAsync(1000);
     expect(play.dataset.faded).toBe('true');
+    // Under the sheet the page's type follows the phone's text size again.
+    expect(document.documentElement.hasAttribute('data-covered')).toBe(true);
 
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.hidden).toBe(false);
@@ -268,6 +270,7 @@ describe('PlayScreen', () => {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
     }
     expect(document.activeElement).toBe(root.querySelector('.stage'));
+    expect(document.documentElement.hasAttribute('data-covered')).toBe(false);
   });
 
   it('plays a quick double tap on an arrow without resetting the zoom', async () => {
@@ -306,6 +309,7 @@ describe('PlayScreen', () => {
     const score = root.querySelector<HTMLElement>('.score-screen')!;
     expect(score.hidden).toBe(false);
     expect(score.getAttribute('role')).toBe('dialog');
+    expect(document.documentElement.hasAttribute('data-covered')).toBe(true);
     expect(score.querySelector('.score-heading')?.textContent).toBe('Level 1 · Easy');
     expect(score.querySelector('.score-heading')?.getAttribute('data-tier')).toBe('easy');
     expect(score.querySelector('h2')?.textContent).toBe('Solved');
@@ -694,7 +698,7 @@ describe('PlayScreen', () => {
   });
 
   it('plays a haptic cue for what each tap did', async () => {
-    const cues: HapticCue[] = [];
+    const cues: Cue[] = [];
     const root = document.createElement('div');
     document.body.replaceChildren(root);
     const screen = new PlayScreen(root, {
@@ -703,7 +707,7 @@ describe('PlayScreen', () => {
       reducedMotion: () => true,
       navigate: () => undefined,
       homeHref: './',
-      haptics: { play: (cue) => cues.push(cue) },
+      cues: { play: (cue) => cues.push(cue) },
     });
     screen.open({ kind: 'level', level: 1 });
     const { puzzle } = generateLevel(1);
@@ -713,7 +717,7 @@ describe('PlayScreen', () => {
     stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 3, clientX: 1, clientY: 1 }));
     expect(cues).toEqual([]);
     await solveByTaps(root, puzzle);
-    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): HapticCue => 'remove');
+    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): Cue => 'remove');
     expect(cues).toEqual([...removes, 'win']);
     cues.length = 0;
     screen.open({ kind: 'level', level: 1 });
@@ -745,7 +749,7 @@ describe('PlayScreen', () => {
   });
 
   it('plays no haptic cue for a tap the board does not take', async () => {
-    const cues: HapticCue[] = [];
+    const cues: Cue[] = [];
     const ads = new FakeAds();
     const root = document.createElement('div');
     document.body.replaceChildren(root);
@@ -756,7 +760,7 @@ describe('PlayScreen', () => {
       navigate: () => undefined,
       homeHref: './',
       ads,
-      haptics: { play: (cue) => cues.push(cue) },
+      cues: { play: (cue) => cues.push(cue) },
     });
     screen.open({ kind: 'level', level: 1 });
     const { puzzle } = generateLevel(1);

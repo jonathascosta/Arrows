@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ADS_KEY, NO_ADS } from '../ads/ads.ts';
 import { DebugAds } from '../ads/debug.ts';
-import { NO_HAPTICS } from './haptics.ts';
 import { webPlatform } from './platform.ts';
 
 describe('webPlatform', () => {
@@ -14,8 +13,7 @@ describe('webPlatform', () => {
     platform.store.setItem('arrows.test', 'kept');
     expect(localStorage.getItem('arrows.test')).toBe('kept');
     expect(platform.ads).toBe(NO_ADS);
-    expect(platform.haptics).toBe(NO_HAPTICS);
-    expect(() => platform.haptics.play('win')).not.toThrow();
+    expect(platform.haptics).toBeNull();
   });
 
   it('shows the test ads when the puzzle picker turned them on', () => {

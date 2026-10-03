@@ -213,6 +213,31 @@ the drawing boards and one event; the championship table reuses the league code.
 - Drawings are pixel art, one pixel per cell, drawn in the drawing palette (DESIGN.md) and
   converted to boards by a tool; the art lives in the repository as PNG.
 
+## Languages
+
+- English and Portuguese (Brazilian Portuguese). The game speaks the device's language when it is
+  one of the two, English otherwise; there is no setting.
+- Everything the player reads is translated, dates, ordinals ("8º") and the chances in words
+  included, except the brand (Arrows) and the characters' names in the league, which are names
+  ("Wonderful Butterfly").
+
+## Sound, haptics and settings
+
+- Short sounds for the moments the haptics mark: an arrow leaving, a blocked tap, a board won, a
+  board lost, and a promotion in the league, which also has its haptic. The sounds are made by
+  the game (no recordings), quiet, and follow the phone's silent switch in the app.
+- The home screen's menu opens Settings: Sound and Haptics switches (Haptics only in the app),
+  both on at first, and the puzzle picker. The choices stay on the device.
+
+## Accessibility
+
+- Every control has a name for VoiceOver, and what changes on the board is announced (a blocked
+  tap, a hint, the arrows left).
+- Reduced motion turns the animations off: arrows leave at once, no pulse, no slide-in.
+- The text screens (home, calendar, league, the sheets, the score) follow the phone's text size,
+  up to one and a half times; the board's screen keeps its size, so the board keeps its room.
+- Lighthouse's accessibility score is above 90 on every screen of the web build.
+
 ## Monetization
 
 - Interstitial ad between winning a board and its score screen, once per board won. Nowhere
@@ -241,8 +266,8 @@ interface so the simulated and the real providers are interchangeable.
 
 ## Not in v1
 
-Themes, a currency, remove-ads purchase, backend, iPad layout, Android, Game Center,
-localization beyond English (strings are externalized from day one so Portuguese is cheap).
+Themes, a currency, remove-ads purchase, backend, iPad layout, Android, Game Center, languages
+beyond English and Portuguese.
 
 ## Milestones
 
@@ -289,6 +314,12 @@ localization beyond English (strings are externalized from day one so Portuguese
   the id); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
   skipped, so the board never waits more than four seconds on the network; with the real network, no ad still means no
   hint, as T7 decided; a placeholder icon.
+
+- Languages, sound and settings (session decisions in T9, open to the owner) (2026-10-03):
+  Portuguese is Brazil's (the bigger market), from the device's language with no setting; the
+  characters' names stay in English, since they are names; sounds are synthesised by the game
+  until a designer makes real ones; the home menu becomes Settings (Sound, Haptics, the puzzle
+  picker); text screens follow the phone's text size up to 1.5 times.
 
 ## Open questions
 

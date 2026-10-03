@@ -8,7 +8,7 @@ import {
 import type { Analysis, Puzzle, Tier } from '@arrows/engine';
 import type { PuzzleRef } from './route.ts';
 import { findEvent } from './events/catalog.ts';
-import { formatDateKey, t } from './strings.ts';
+import { drawingTitle, formatDateKey, t } from './strings.ts';
 
 export interface LoadedPuzzle {
   readonly ref: PuzzleRef;
@@ -33,7 +33,7 @@ function drawingBoard(
     tier,
     rayMode: 'bounds',
   });
-  return { puzzle, analysis, tier, title: drawing.name };
+  return { puzzle, analysis, tier, title: drawingTitle(drawing.id, drawing.name) };
 }
 
 /** Generates the puzzle a reference names. Same reference, same puzzle, on every device. */

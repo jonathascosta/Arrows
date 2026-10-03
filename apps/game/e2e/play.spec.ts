@@ -122,6 +122,15 @@ test('the grid toggles and the hint button lights one arrow', async ({ page, tou
   await expect(page.locator('.grid')).toHaveAttribute('visibility', 'visible');
   await press(page.locator('.toolbar .hint'), touch);
   await expect(page.locator('.arrow.hinted')).toHaveCount(1);
+  // Wider as well as orange, so it shows on any drawing, pulse or not.
+  const width = (selector: string): Promise<number> =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).strokeWidth));
+  expect(await width('.arrow.hinted .body')).toBeGreaterThan(
+    (await width('.arrow:not(.hinted) .body')) * 1.5,
+  );
 });
 
 test('the losing tap flashes red, and the board fades only under the sheet', async ({

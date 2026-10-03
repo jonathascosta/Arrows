@@ -79,6 +79,18 @@ export class Hud {
     this.title.textContent = title;
     this.tier.textContent = tierLabel;
     this.tier.dataset.tier = tier;
+    this.fitTitle();
+  }
+
+  /**
+   * Puts the chances and the timer on a row of their own when the title or its
+   * line would be cut next to them; measured again on resize and once the
+   * fonts are in.
+   */
+  fitTitle(): void {
+    this.topbar.classList.remove('stacked');
+    const cut = (element: HTMLElement): boolean => element.scrollWidth > element.clientWidth + 1;
+    this.topbar.classList.toggle('stacked', cut(this.title) || cut(this.tier));
   }
 
   setChances(left: number, total: number): void {

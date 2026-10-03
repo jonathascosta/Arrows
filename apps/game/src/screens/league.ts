@@ -1,6 +1,6 @@
 import { LEAGUES } from '@arrows/engine';
 import type { DaySummary, LeagueProvider, LeagueRow, LeagueView } from '../league/provider.ts';
-import { formatCountdown, formatDayShort, ordinal, t, tn } from '../strings.ts';
+import { formatCountdown, formatDayShort, leagueLabel, ordinal, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
 import { Overlay } from '../ui/overlay.ts';
@@ -8,6 +8,8 @@ import { Overlay } from '../ui/overlay.ts';
 export interface LeagueScreenOptions {
   readonly theme: Theme;
   readonly league: LeagueProvider;
+  /** Hears the day's summary as it shows (the promotion cue). */
+  readonly onSummary?: (summary: DaySummary) => void;
   /** The wall clock, for the day, the time of day and the countdown. */
   readonly clock: () => Date;
   readonly homeHref: string;
@@ -18,7 +20,7 @@ export const LEAGUE_TICK_MS = 30_000;
 
 /** The sentence a day's summary sheet says (docs/PRODUCT.md, Daily league). */
 export function summaryText(summary: DaySummary): string {
-  const league = LEAGUES[summary.league]!;
+  const league = leagueLabel(LEAGUES[summary.league]!);
   const params = {
     rank: ordinal(summary.rank),
     league,
@@ -27,9 +29,15 @@ export function summaryText(summary: DaySummary): string {
   };
   switch (summary.outcome) {
     case 'promoted':
-      return t('league.summary.promoted', { ...params, next: LEAGUES[summary.league + 1]! });
+      return t('league.summary.promoted', {
+        ...params,
+        next: leagueLabel(LEAGUES[summary.league + 1]!),
+      });
     case 'relegated':
-      return t('league.summary.relegated', { ...params, next: LEAGUES[summary.league - 1]! });
+      return t('league.summary.relegated', {
+        ...params,
+        next: leagueLabel(LEAGUES[summary.league - 1]!),
+      });
     case 'stayed':
       return t('league.summary.stayed', params);
   }
@@ -37,12 +45,15 @@ export function summaryText(summary: DaySummary): string {
 
 /** The rules paragraph under the league name: who moves where tonight. */
 function rulesText(view: LeagueView): string {
+  const league = leagueLabel(view.name);
+  const up = view.up === null ? null : leagueLabel(view.up);
+  const down = view.down === null ? null : leagueLabel(view.down);
   const moves =
-    view.up !== null && view.down !== null
-      ? t('league.rules.both', { up: view.up, down: view.down })
-      : view.up !== null
-        ? t('league.rules.bottom', { up: view.up, league: view.name })
-        : t('league.rules.top', { down: view.down ?? '', league: view.name });
+    up !== null && down !== null
+      ? t('league.rules.both', { up, down })
+      : up !== null
+        ? t('league.rules.bottom', { up, league })
+        : t('league.rules.top', { down: down ?? '', league });
   return `${moves} ${t('league.characters')}`;
 }
 
@@ -149,11 +160,11 @@ export class LeagueScreen {
     const doc = this.element.ownerDocument;
     this.element.dataset.league = view.name;
     this.element.dataset.day = view.day;
-    this.name.textContent = view.name;
+    this.name.textContent = leagueLabel(view.name);
     this.reset.textContent = t('league.resets', { time: formatCountdown(view.msUntilReset) });
     this.rules.textContent = rulesText(view);
     this.join.hidden = view.joined;
-    this.table.setAttribute('aria-label', t('league.table', { league: view.name }));
+    this.table.setAttribute('aria-label', t('league.table', { league: leagueLabel(view.name) }));
 
     const items: HTMLElement[] = [];
     for (const row of view.rows) {
@@ -181,6 +192,7 @@ export class LeagueScreen {
     const summary = this.options.league.summary(now);
     if (summary !== null && !this.overlay.visible) {
       this.options.league.dismissSummary();
+      this.options.onSummary?.(summary);
       this.showSheet({
         kind: 'summary',
         title: t('league.summaryTitle'),

@@ -41,6 +41,12 @@ export interface ThemeShadows {
 /** Arrow geometry, in cell units (a cell is 1 by 1). */
 export interface BoardStyle {
   readonly strokeWidth: number;
+  /**
+   * The stroke of an arrow that is hinted, blocked or blocking: wider, so it
+   * stands out by shape as well as by colour (on an orange or a red drawing the
+   * colours alone barely differ).
+   */
+  readonly emphasisWidth: number;
   /** How far the tail reaches back from its cell centre. */
   readonly tailReach: number;
   /** Arrowhead tip, measured from the head cell centre. */
@@ -121,6 +127,8 @@ export function themeProperties(theme: Theme): Record<string, string> {
     properties[`--avatar-${i}`] = value;
   });
   properties['--shadow-raised'] = theme.shadows.raised;
+  // Board units: 1 px in the board's SVG is one cell.
+  properties['--board-emphasis-width'] = `${theme.board.emphasisWidth}px`;
   properties['--font-title'] = theme.fonts.title;
   properties['--font-ui'] = theme.fonts.ui;
   return properties;

@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  capitalize,
+  drawingTitle,
   formatDateKey,
   formatDayLong,
   formatDayShort,
@@ -7,8 +9,14 @@ import {
   formatDuration,
   formatMonth,
   formatMonthShort,
+  formatMonthTitle,
+  getLocale,
+  leagueLabel,
+  localeFor,
   ordinal,
+  setLocale,
   spellOut,
+  STRING_KEYS,
   t,
   tn,
   weekdayNames,
@@ -114,5 +122,83 @@ describe('formatCountdown', () => {
     expect(formatCountdown(12 * 60_000)).toBe('12m');
     expect(formatCountdown(5_000)).toBe('1m');
     expect(formatCountdown(0)).toBe('1m');
+  });
+});
+
+describe('Portuguese', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it('follows the first of the device’s languages that the game speaks', () => {
+    expect(localeFor(['pt-BR'])).toBe('pt');
+    expect(localeFor(['pt-PT', 'en'])).toBe('pt');
+    expect(localeFor(['fr-FR', 'pt'])).toBe('pt');
+    expect(localeFor(['de', 'en-GB', 'pt'])).toBe('en');
+    expect(localeFor(['ja'])).toBe('en');
+    expect(localeFor([])).toBe('en');
+  });
+
+  it('has every string, with the English placeholders and nothing left in English', () => {
+    const placeholders = (text: string): string[] =>
+      [...text.matchAll(/\{\w+\}/g)].map(String).sort();
+    const english: Record<string, string> = {};
+    const portuguese: Record<string, string> = {};
+    for (const key of STRING_KEYS) {
+      setLocale('en');
+      english[key] = t(key);
+      setLocale('pt');
+      portuguese[key] = t(key);
+    }
+    for (const key of STRING_KEYS) {
+      expect(placeholders(portuguese[key]!), key).toEqual(placeholders(english[key]!));
+    }
+    // Words that only English uses: a missed translation would show one.
+    // ("chances" is Portuguese too; placeholders are names, not words.)
+    const untranslated = STRING_KEYS.filter((key) =>
+      /\b(the|and|of|board|level|league|day|win|won|points?)\b/i.test(
+        portuguese[key]!.replace(/\{\w+\}/g, ''),
+      ),
+    );
+    expect(untranslated).toEqual([]);
+  });
+
+  it('counts, names days and months, and ranks the Brazilian way', () => {
+    setLocale('pt');
+    expect(getLocale()).toBe('pt');
+    expect(tn('league.points', 1)).toBe('1 ponto');
+    expect(tn('league.points', 38)).toBe('38 pontos');
+    expect(tn('status.blocked', 1)).toBe('Bloqueada. Resta 1 chance.');
+    expect(t('lost.body', { total: spellOut(3) })).toBe(
+      'Tentar de novo recomeça o mesmo quebra-cabeça, com três chances novas e o tempo zerado.',
+    );
+    expect(spellOut(1)).toBe('uma');
+    expect(spellOut(2)).toBe('duas');
+    expect(formatDayShort('2026-10-03')).toBe('sáb 3 out');
+    expect(capitalize(formatDayShort('2026-10-03'))).toBe('Sáb 3 out');
+    expect(formatDayLong('2026-10-05')).toBe('segunda-feira, 5 de outubro');
+    expect(formatDateKey('2026-10-02')).toBe('2 out 2026');
+    expect(formatMonth('2026-10')).toBe('outubro de 2026');
+    expect(formatMonthTitle('2026-10')).toBe('Outubro de 2026');
+    expect(formatMonthShort('2026-09', 2026)).toBe('set');
+    expect(formatMonthShort('2025-12', 2026)).toBe('dez 2025');
+    expect(weekdayNames().map((name) => name.narrow)).toEqual(['S', 'T', 'Q', 'Q', 'S', 'S', 'D']);
+    expect(weekdayNames()[0]!.long).toBe('segunda-feira');
+    expect([1, 2, 8, 21].map(ordinal)).toEqual(['1º', '2º', '8º', '21º']);
+    expect(leagueLabel('Gold')).toBe('Ouro');
+    expect(drawingTitle('maple-leaf', 'Maple leaf')).toBe('Folha de bordo');
+    // A drawing the strings do not know keeps the art's own name.
+    expect(drawingTitle('surfboard', 'Surfboard')).toBe('Surfboard');
+    expect(
+      t('won.league', { points: tn('league.points', 38), league: 'Ouro', rank: ordinal(8) }),
+    ).toBe('+38 pontos na liga Ouro · agora em 8º.');
+  });
+
+  it('keeps English the same as before', () => {
+    expect(getLocale()).toBe('en');
+    expect(leagueLabel('Gold')).toBe('Gold');
+    expect(drawingTitle('maple-leaf', 'Maple leaf')).toBe('Maple leaf');
+    expect(formatMonthTitle('2026-10')).toBe('October 2026');
+    expect(capitalize(formatDayShort('2026-10-03'))).toBe('Sat 3 Oct');
   });
 });

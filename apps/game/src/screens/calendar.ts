@@ -5,7 +5,14 @@ import { monthModel, trophies } from '../daily/month.ts';
 import type { DayCell } from '../daily/month.ts';
 import { tierLabel } from '../puzzles.ts';
 import { puzzleHref } from '../route.ts';
-import { formatDayLong, formatMonth, formatMonthShort, t, weekdayNames } from '../strings.ts';
+import {
+  formatDayLong,
+  formatMonth,
+  formatMonthShort,
+  formatMonthTitle,
+  t,
+  weekdayNames,
+} from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
 
@@ -108,7 +115,7 @@ export class CalendarScreen {
     const header = el(doc, 'div', { class: 'month-head' }, [
       previous,
       el(doc, 'div', { class: 'month-title' }, [
-        el(doc, 'h2', { id: 'month-title' }, [formatMonth(model.month)]),
+        el(doc, 'h2', { id: 'month-title' }, [formatMonthTitle(model.month)]),
         el(doc, 'p', { class: 'month-stars' }, [
           t('calendar.stars', { n: model.stars, total: model.total }),
         ]),
@@ -141,7 +148,7 @@ export class CalendarScreen {
     // The pressed button may have just become disabled at either end: then the other one.
     if (focus !== undefined) {
       this.status.textContent = t('calendar.moved', {
-        month: formatMonth(model.month),
+        month: formatMonthTitle(model.month),
         n: model.stars,
         total: model.total,
       });
@@ -163,9 +170,9 @@ export class CalendarScreen {
       ]);
       // Screen readers read the hidden sentence; the card's short text is for sight only.
       const label = trophy.complete
-        ? t('calendar.trophy', { month: formatMonth(trophy.month) })
+        ? t('calendar.trophy', { month: formatMonthTitle(trophy.month) })
         : t('calendar.missedLabel', {
-            month: formatMonth(trophy.month),
+            month: formatMonthTitle(trophy.month),
             n: trophy.stars,
             total: trophy.total,
           });

@@ -26,6 +26,8 @@ is next, and what done means) before changing anything.
   iOS build itself runs only on macOS (the `iOS` workflow); TestFlight uploads run by hand.
 - `pnpm test:e2e` — Playwright on the production build, phone and desktop profiles. In cloud
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
+- `pnpm test:a11y` — Lighthouse accessibility (90 or more) on every screen of the production build,
+  with the same Chromium. Run after changing a screen.
 
 ## Rules
 

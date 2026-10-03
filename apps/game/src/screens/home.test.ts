@@ -6,8 +6,9 @@ import { loadPuzzle } from '../puzzles.ts';
 import type { Progress } from '../persistence/progress.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
 import { AUTUMN_2026 } from '../events/catalog.ts';
+import type { CueSettings } from '../platform/cues.ts';
 import { HomeScreen } from './home.ts';
-import type { HomeEvent } from './home.ts';
+import type { HomeEvent, HomeScreenOptions } from './home.ts';
 
 /** The Autumn event on 3 October with boards 1 and 2 won. */
 const AUTUMN: HomeEvent = {
@@ -17,9 +18,30 @@ const AUTUMN: HomeEvent = {
   daysLeft: 59,
 };
 
+/** Settings kept in a plain object, with every change recorded. */
+function settingsControl(hapticsAvailable = false): {
+  control: HomeScreenOptions['settings'];
+  changes: Partial<CueSettings>[];
+} {
+  const values: CueSettings = { sound: true, haptics: true };
+  const changes: Partial<CueSettings>[] = [];
+  return {
+    changes,
+    control: {
+      read: () => values,
+      change: (change) => {
+        changes.push(change);
+        Object.assign(values, change);
+      },
+      hapticsAvailable,
+    },
+  };
+}
+
 function mount(
   progress: Partial<Progress> = {},
   event: HomeEvent | null = AUTUMN,
+  settings = settingsControl(),
 ): { root: HTMLElement; screen: HomeScreen } {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
@@ -34,12 +56,13 @@ function mount(
     today: '2026-10-03',
     pickerHref: 'dev.html',
     reducedMotion: () => true,
+    settings: settings.control,
   });
   return { root, screen };
 }
 
 describe('HomeScreen', () => {
-  it('shows the wordmark, the streak and the puzzle picker', () => {
+  it('shows the wordmark, the streak and the settings button', () => {
     const { root } = mount({ streak: 6 });
     expect(root.querySelector('h1')?.textContent).toBe('Arrows');
     expect(document.title).toBe('Arrows');
@@ -51,9 +74,55 @@ describe('HomeScreen', () => {
       'Streak 6',
     );
     expect(streak.hasAttribute('aria-label')).toBe(false);
-    const menu = root.querySelector('a.menu')!;
-    expect(menu.getAttribute('href')).toBe('dev.html');
-    expect(menu.getAttribute('aria-label')).toBe('Puzzle picker');
+    const menu = root.querySelector('button.menu')!;
+    expect(menu.getAttribute('aria-label')).toBe('Settings');
+    expect(menu.getAttribute('aria-haspopup')).toBe('dialog');
+  });
+
+  it('opens Settings from the menu: switches, Done, and the puzzle picker', () => {
+    const settings = settingsControl(true);
+    const { root } = mount({}, AUTUMN, settings);
+    const menu = root.querySelector<HTMLButtonElement>('button.menu')!;
+    menu.click();
+    const sheet = root.querySelector<HTMLElement>('[data-overlay="settings"]')!;
+    expect(sheet.getAttribute('role')).toBe('dialog');
+    expect(sheet.querySelector('h2')?.textContent).toBe('Settings');
+    const switches = [...sheet.querySelectorAll<HTMLButtonElement>('[role="switch"]')];
+    expect(
+      switches.map((button) => [button.textContent, button.getAttribute('aria-checked')]),
+    ).toEqual([
+      ['Sound', 'true'],
+      ['Haptics', 'true'],
+    ]);
+    expect(document.activeElement).toBe(switches[0]);
+    // The page behind is out of reach while the sheet shows.
+    expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(true);
+    switches[0]!.click();
+    expect(switches[0]!.getAttribute('aria-checked')).toBe('false');
+    switches[1]!.click();
+    expect(settings.changes).toEqual([{ sound: false }, { haptics: false }]);
+    expect(sheet.querySelector('a')?.getAttribute('href')).toBe('dev.html');
+    expect(sheet.querySelector('a')?.textContent).toBe('Puzzle picker');
+    sheet.querySelector<HTMLButtonElement>('.button.primary')!.click();
+    expect(root.querySelector('[data-overlay="settings"]')).toBeNull();
+    expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(false);
+    expect(document.activeElement).toBe(menu);
+    // Opened again, it shows what was saved; Escape closes it.
+    menu.click();
+    const again = root.querySelector<HTMLElement>('[data-overlay="settings"]')!;
+    expect(
+      [...again.querySelectorAll('[role="switch"]')].map((b) => b.getAttribute('aria-checked')),
+    ).toEqual(['false', 'false']);
+    again.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(root.querySelector('[data-overlay="settings"]')).toBeNull();
+  });
+
+  it('shows no haptics switch where there are no haptics (the web)', () => {
+    const { root } = mount();
+    root.querySelector<HTMLButtonElement>('button.menu')!.click();
+    expect(
+      [...root.querySelectorAll('[role="switch"]')].map((button) => button.textContent),
+    ).toEqual(['Sound']);
   });
 
   it('shows the current level, its tier and the strip around it, and plays it', () => {
@@ -198,6 +267,7 @@ describe('HomeScreen', () => {
       today: '2026-10-03',
       pickerHref: 'dev.html',
       reducedMotion: () => true,
+      settings: settingsControl().control,
     });
     expect(root.querySelector('a.league .card-title')?.textContent).toBe('Bronze · 1st');
     expect(root.querySelector('a.league .card-note')?.textContent).toBe('Resets in 7h\u00a048m');
