@@ -2,6 +2,7 @@ import { createGame, freeArrows, generateLevel, head, tap } from '@arrows/engine
 import type { Puzzle } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdProvider } from '../ads/ads.ts';
+import type { HapticCue } from '../platform/haptics.ts';
 import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
@@ -690,6 +691,35 @@ describe('PlayScreen', () => {
     // Once it has closed, the new board plays.
     tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
     expect(play.dataset.arrowsLeft).toBe(String(puzzle.arrows.length - 1));
+  });
+
+  it('plays a haptic cue for what each tap did', async () => {
+    const cues: HapticCue[] = [];
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const screen = new PlayScreen(root, {
+      theme: DEFAULT_THEME,
+      now: () => 0,
+      reducedMotion: () => true,
+      navigate: () => undefined,
+      homeHref: './',
+      haptics: { play: (cue) => cues.push(cue) },
+    });
+    screen.open({ kind: 'level', level: 1 });
+    const { puzzle } = generateLevel(1);
+    // A tap on empty space is nothing.
+    const stage = root.querySelector<HTMLElement>('.stage')!;
+    stage.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 3, clientX: 1, clientY: 1 }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 3, clientX: 1, clientY: 1 }));
+    expect(cues).toEqual([]);
+    await solveByTaps(root, puzzle);
+    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): HapticCue => 'remove');
+    expect(cues).toEqual([...removes, 'win']);
+    cues.length = 0;
+    screen.open({ kind: 'level', level: 1 });
+    loseLevelOne(root);
+    expect(cues).toEqual(['block', 'block', 'lose']);
+    screen.destroy();
   });
 
   it('takes an ad that fails as no reward, and goes on to the score screen', async () => {

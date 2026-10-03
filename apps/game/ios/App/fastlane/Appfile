@@ -1,0 +1,3 @@
+# The app as App Store Connect knows it (apps/game/capacitor.config.ts).
+app_identifier("com.jonathascosta.arrows")
+team_id(ENV["APPLE_TEAM_ID"])

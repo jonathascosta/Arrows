@@ -2,6 +2,7 @@ import { head } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
 import { NO_ADS } from '../ads/ads.ts';
 import type { AdProvider } from '../ads/ads.ts';
+import type { Haptics } from '../platform/haptics.ts';
 import { cellCenter, boardBounds } from '../board/geometry.ts';
 import type { GestureAction } from '../board/gestures.ts';
 import { GestureTracker } from '../board/gestures.ts';
@@ -104,6 +105,8 @@ export interface PlayScreenOptions {
   readonly next?: (ref: PuzzleRef) => NextBoard | null;
   /** The interstitial before the score screen and the rewarded ad before a hint; none when left out. */
   readonly ads?: AdProvider;
+  /** What a tap did, felt on the phone; nothing when left out. */
+  readonly haptics?: Haptics;
 }
 
 /** Why the timer is held: the page is hidden, or an ad is playing. */
@@ -556,8 +559,11 @@ export class PlayScreen {
         void this.renderer.remove(result.arrowId, result.rayLength);
         this.refresh();
         if (session.state.status === 'won') {
+          this.options.haptics?.play('win');
           this.report('won');
           void this.finish('won');
+        } else {
+          this.options.haptics?.play('remove');
         }
         return;
       case 'blocked':
@@ -567,8 +573,11 @@ export class PlayScreen {
         this.refresh();
         this.announce(tn('status.blocked', session.state.lives));
         if (session.state.status === 'lost') {
+          this.options.haptics?.play('lose');
           this.report('lost');
           void this.finish('lost');
+        } else {
+          this.options.haptics?.play('block');
         }
         return;
     }

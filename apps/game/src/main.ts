@@ -1,13 +1,13 @@
 import '@fontsource/instrument-serif/latin-400.css';
 import '@fontsource-variable/geist/wght.css';
 import './styles.css';
-import { adsFor } from './ads/ads.ts';
+import { Capacitor } from '@capacitor/core';
 import { App } from './app.ts';
 import { DAILY_KEY } from './persistence/daily.ts';
 import { EVENTS_KEY } from './persistence/events.ts';
 import { LEAGUE_KEY } from './persistence/league.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
-import { browserStore } from './persistence/store.ts';
+import { webPlatform } from './platform/platform.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 
@@ -18,10 +18,14 @@ if (root === null) throw new Error('index.html has no #app element');
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-const store = browserStore();
+// The iOS app keeps records in Preferences and shows AdMob ads; its module loads only there.
+const platform = Capacitor.isNativePlatform()
+  ? await (await import('./platform/native.ts')).nativePlatform(document)
+  : webPlatform(document);
+
 const app = new App(root, {
   theme: DEFAULT_THEME,
-  store,
+  store: platform.store,
   now: () => performance.now(),
   reducedMotion: () => reducedMotion.matches,
   clock: () => new Date(),
@@ -30,7 +34,8 @@ const app = new App(root, {
   replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
   pickerHref: 'dev.html',
   // No ads on the web; the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
-  ads: adsFor(store, document),
+  ads: platform.ads,
+  haptics: platform.haptics,
 });
 
 app.show(location.search);

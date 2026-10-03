@@ -216,6 +216,10 @@ API within the budget in the product document, Android, iPad.
 | T5   | done  | [#6](https://github.com/jonathascosta/Arrows/pull/6) |
 | T6   | done  | [#7](https://github.com/jonathascosta/Arrows/pull/7) |
 | T7   | done  | [#8](https://github.com/jonathascosta/Arrows/pull/8) |
-| T8   | open  |                                                      |
+| T8   | owner | [#9](https://github.com/jonathascosta/Arrows/pull/9) |
 | T9   | open  |                                                      |
 | T10  | open  |                                                      |
+
+T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an
+iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts (the secrets
+and steps are in [ARCHITECTURE.md](ARCHITECTURE.md), iOS).

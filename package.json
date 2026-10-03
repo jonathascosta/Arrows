@@ -23,6 +23,7 @@
     "test:e2e": "pnpm --filter @arrows/game test:e2e",
     "drawings": "pnpm --filter @arrows/tools drawings",
     "drawings:check": "pnpm --filter @arrows/tools drawings:check",
+    "ios:sync": "pnpm --filter @arrows/game build && pnpm --filter @arrows/game exec cap sync ios",
     "prepare": "husky"
   },
   "devDependencies": {

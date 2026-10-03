@@ -22,7 +22,7 @@ export const NO_ADS: AdProvider = {
 /** The setting that turns the test ads on (the puzzle picker sets it). */
 export const ADS_KEY = 'arrows.ads';
 
-/** The test ads when the setting asks for them, no ads otherwise. */
-export function adsFor(store: KeyValueStore, doc: Document): AdProvider {
-  return store.getItem(ADS_KEY) === 'test' ? new DebugAds(doc) : NO_ADS;
+/** The test ads when the setting asks for them; otherwise the platform's ads, none on the web. */
+export function adsFor(store: KeyValueStore, doc: Document, ads: AdProvider = NO_ADS): AdProvider {
+  return store.getItem(ADS_KEY) === 'test' ? new DebugAds(doc) : ads;
 }

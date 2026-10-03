@@ -19,6 +19,17 @@ describe('adsFor', () => {
     store.setItem(ADS_KEY, 'test');
     expect(adsFor(store, document)).toBeInstanceOf(DebugAds);
   });
+
+  it('gives the platform’s ads when the test ads are off', () => {
+    const store = new MemoryStore();
+    const network = {
+      showInterstitial: () => Promise.resolve(),
+      showRewarded: () => Promise.resolve(true),
+    };
+    expect(adsFor(store, document, network)).toBe(network);
+    store.setItem(ADS_KEY, 'test');
+    expect(adsFor(store, document, network)).toBeInstanceOf(DebugAds);
+  });
 });
 
 describe('DebugAds', () => {

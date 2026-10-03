@@ -1,5 +1,6 @@
 import { scoreBoard } from '@arrows/engine';
 import type { AdProvider } from './ads/ads.ts';
+import type { Haptics } from './platform/haptics.ts';
 import type { DateKey, MonthKey } from './daily/days.ts';
 import { isPlayableDay, localDateKey, monthOf } from './daily/days.ts';
 import { clampMonth } from './daily/month.ts';
@@ -42,6 +43,8 @@ export interface AppOptions {
   readonly pickerHref: string;
   /** The interstitial and the rewarded ad (docs/PRODUCT.md, Monetization); none when left out. */
   readonly ads?: AdProvider;
+  /** The phone's haptics on a board (docs/PRODUCT.md, iOS); none when left out. */
+  readonly haptics?: Haptics;
 }
 
 /** A selector that finds a control again after its screen is drawn anew, or null. */
@@ -265,6 +268,7 @@ export class App {
             exitFor: (puzzle) => this.exitFor(puzzle),
             next: (puzzle) => this.nextFor(puzzle),
             ...(this.options.ads !== undefined ? { ads: this.options.ads } : {}),
+            ...(this.options.haptics !== undefined ? { haptics: this.options.haptics } : {}),
           }),
       );
       this.play = play;
