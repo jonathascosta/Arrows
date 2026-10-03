@@ -6,7 +6,7 @@ import { DEFAULT_THEME } from './default.ts';
 import { applyTheme, arrowColors, themeProperties } from './theme.ts';
 
 describe('theme', () => {
-  it('exposes every colour, tier, avatar, shadow and font as a CSS custom property', () => {
+  it('exposes every colour, tier, avatar, shadow, font and the emphasis stroke as CSS properties', () => {
     const properties = themeProperties(DEFAULT_THEME);
     expect(properties['--color-background']).toBe(DEFAULT_THEME.colors.background);
     expect(properties['--color-surface-raised']).toBe(DEFAULT_THEME.colors.surfaceRaised);
@@ -17,11 +17,12 @@ describe('theme', () => {
     expect(properties['--font-title']).toBe(DEFAULT_THEME.fonts.title);
     expect(properties['--font-ui']).toBe(DEFAULT_THEME.fonts.ui);
     expect(properties['--avatar-0']).toBe(DEFAULT_THEME.avatars[0]);
+    expect(properties['--board-emphasis-width']).toBe(`${DEFAULT_THEME.board.emphasisWidth}px`);
     expect(Object.keys(properties)).toHaveLength(
       Object.keys(DEFAULT_THEME.colors).length +
         Object.keys(DEFAULT_THEME.tiers).length +
         DEFAULT_THEME.avatars.length +
-        3,
+        4,
     );
   });
 

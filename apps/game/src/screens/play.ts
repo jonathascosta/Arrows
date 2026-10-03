@@ -1,8 +1,8 @@
 import { head } from '@arrows/engine';
-import type { Tier } from '@arrows/engine';
+import type { LeagueName, Tier } from '@arrows/engine';
 import { NO_ADS } from '../ads/ads.ts';
 import type { AdProvider } from '../ads/ads.ts';
-import type { Haptics } from '../platform/haptics.ts';
+import type { CuePlayer } from '../platform/cues.ts';
 import { cellCenter, boardBounds } from '../board/geometry.ts';
 import type { GestureAction } from '../board/gestures.ts';
 import { GestureTracker } from '../board/gestures.ts';
@@ -24,9 +24,10 @@ import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
 import { monthOf } from '../daily/days.ts';
 import {
-  formatDayShort,
+  formatDayInText,
   formatDuration,
   formatMonth,
+  leagueLabel,
   ordinal,
   spellOut,
   t,
@@ -68,7 +69,11 @@ export interface ResultNote {
    * League points this board earned, and the player's league and rank after it;
    * left out, with a score, when the board already counted today.
    */
-  readonly league?: { readonly points: number; readonly league: string; readonly rank: number };
+  readonly league?: {
+    readonly points: number;
+    readonly league: LeagueName;
+    readonly rank: number;
+  };
   /** An event board's first win: where it stands, and the badge when it completed the event. */
   readonly event?: { readonly board: number; readonly total: number; readonly badge?: string };
 }
@@ -105,8 +110,8 @@ export interface PlayScreenOptions {
   readonly next?: (ref: PuzzleRef) => NextBoard | null;
   /** The interstitial before the score screen and the rewarded ad before a hint; none when left out. */
   readonly ads?: AdProvider;
-  /** What a tap did, felt on the phone; nothing when left out. */
-  readonly haptics?: Haptics;
+  /** What a tap did, heard and felt (sounds, haptics); nothing when left out. */
+  readonly cues?: CuePlayer;
 }
 
 /** Why the timer is held: the page is hidden, or an ad is playing. */
@@ -168,6 +173,13 @@ export class PlayScreen {
     root.replaceChildren(this.element);
     this.view = createViewport(1, 1, boardBounds(1, 1, 0));
     this.listen();
+    // The title is measured in its own font; the board fits the stage left over.
+    // (jsdom has no font loading.)
+    if ('fonts' in doc) {
+      void doc.fonts.ready.then(() => {
+        if (this.element.isConnected) this.fit();
+      });
+    }
   }
 
   /** Shows a puzzle from the start. */
@@ -267,7 +279,7 @@ export class PlayScreen {
       lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
     }
     if (note.star !== undefined && ref.kind === 'daily') {
-      lines.push(t('won.star', { day: formatDayShort(ref.dateKey) }));
+      lines.push(t('won.star', { day: formatDayInText(ref.dateKey) }));
       if (note.star === 'month') {
         lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
       }
@@ -282,7 +294,7 @@ export class PlayScreen {
       note.league !== undefined
         ? t('won.league', {
             points: tn('league.points', note.league.points),
-            league: note.league.league,
+            league: leagueLabel(note.league.league),
             rank: ordinal(note.league.rank),
           })
         : note.score !== undefined
@@ -567,11 +579,11 @@ export class PlayScreen {
         void this.renderer.remove(result.arrowId, result.rayLength);
         this.refresh();
         if (session.state.status === 'won') {
-          this.options.haptics?.play('win');
+          this.options.cues?.play('win');
           this.report('won');
           void this.finish('won');
         } else {
-          this.options.haptics?.play('remove');
+          this.options.cues?.play('remove');
         }
         return;
       case 'blocked':
@@ -581,11 +593,11 @@ export class PlayScreen {
         this.refresh();
         this.announce(tn('status.blocked', session.state.lives));
         if (session.state.status === 'lost') {
-          this.options.haptics?.play('lose');
+          this.options.cues?.play('lose');
           this.report('lost');
           void this.finish('lost');
         } else {
-          this.options.haptics?.play('block');
+          this.options.cues?.play('block');
         }
         return;
     }
@@ -647,6 +659,7 @@ export class PlayScreen {
 
   /** Fits the board to the stage, resetting the zoom. */
   private fit(): void {
+    this.hud.fitTitle();
     const puzzle = this.session?.puzzle;
     if (puzzle === undefined) return;
     const rect = this.stage.getBoundingClientRect();

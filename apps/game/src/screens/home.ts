@@ -11,11 +11,21 @@ import type { EventState, GameEvent } from '../events/catalog.ts';
 import type { EventProgress } from '../persistence/events.ts';
 import type { PuzzleRef } from '../route.ts';
 import type { LeagueView } from '../league/provider.ts';
+import type { CueSettings } from '../platform/cues.ts';
 import { calendarHref, LEAGUE_HREF, puzzleHref } from '../route.ts';
-import { formatCountdown, formatDayShort, ordinal, t } from '../strings.ts';
+import {
+  capitalize,
+  formatCountdown,
+  formatDayInText,
+  formatDayShort,
+  leagueLabel,
+  ordinal,
+  t,
+} from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
 import { Overlay } from '../ui/overlay.ts';
+import { SettingsSheet } from '../ui/settings.ts';
 import type { OverlayContent } from '../ui/overlay.ts';
 
 export interface HomeScreenOptions {
@@ -31,6 +41,12 @@ export interface HomeScreenOptions {
   readonly today: DateKey;
   readonly pickerHref: string;
   readonly reducedMotion: () => boolean;
+  /** The player's Settings, which the menu opens. */
+  readonly settings: {
+    readonly read: () => CueSettings;
+    readonly change: (change: Partial<CueSettings>) => void;
+    readonly hapticsAvailable: boolean;
+  };
 }
 
 /** The event on the home screen and how far the player got in it. */
@@ -49,6 +65,7 @@ const THUMB_SIZE = 104;
  */
 export class HomeScreen {
   readonly element: HTMLElement;
+  private settings: SettingsSheet | null = null;
 
   constructor(root: HTMLElement, options: HomeScreenOptions) {
     const doc = root.ownerDocument;
@@ -66,12 +83,7 @@ export class HomeScreen {
           el(doc, 'span', { class: 'sr-only' }, [t('home.streakLabel', { n: progress.streak })]),
           el(doc, 'span', { 'aria-hidden': 'true' }, [t('home.streak', { n: progress.streak })]),
         ]),
-        el(
-          doc,
-          'a',
-          { class: 'round-button menu', href: options.pickerHref, 'aria-label': t('home.menu') },
-          [iconSpan(doc, theme.icons.menu, 'icon')],
-        ),
+        this.menuButton(doc, options),
       ]),
     ]);
 
@@ -128,7 +140,7 @@ export class HomeScreen {
     const stars = { n: month.stars, total: month.total };
     const daily = el(doc, 'a', { class: 'card mode-card daily', href: calendarHref() }, [
       el(doc, 'span', { class: 'card-label' }, [t('home.daily')]),
-      el(doc, 'span', { class: 'card-title small' }, [formatDayShort(options.today)]),
+      el(doc, 'span', { class: 'card-title small' }, [capitalize(formatDayShort(options.today))]),
       el(doc, 'span', { class: 'card-note daily-stars' }, [
         iconSpan(doc, theme.icons.star, 'icon star'),
         el(doc, 'span', { class: 'sr-only' }, [t('home.dailyStarsLabel', stars)]),
@@ -141,8 +153,11 @@ export class HomeScreen {
       el(doc, 'span', { class: 'card-label' }, [t('home.league')]),
       el(doc, 'span', { class: 'card-title small' }, [
         league.joined
-          ? t('home.leagueRank', { league: league.name, rank: ordinal(league.player.rank) })
-          : league.name,
+          ? t('home.leagueRank', {
+              league: leagueLabel(league.name),
+              rank: ordinal(league.player.rank),
+            })
+          : leagueLabel(league.name),
       ]),
       el(doc, 'span', { class: 'card-note' }, [
         league.joined
@@ -163,6 +178,7 @@ export class HomeScreen {
   }
 
   destroy(): void {
+    this.settings?.remove();
     this.element.remove();
   }
 
@@ -190,7 +206,7 @@ export class HomeScreen {
     const boards = t('home.eventBoards', { n: progress.won.length, total: progress.total });
     const when =
       state === 'ended'
-        ? t('home.eventEnded', { date: formatDayShort(event.end) })
+        ? t('home.eventEnded', { date: formatDayInText(event.end) })
         : daysLeft === 1
           ? t('home.eventLastDay')
           : t('home.eventDaysLeft', { n: daysLeft });
@@ -219,6 +235,41 @@ export class HomeScreen {
     return open
       ? el(doc, 'a', { class: 'card event-card', href: puzzleHref(ref) }, [thumb, text])
       : el(doc, 'div', { class: 'card event-card', 'data-state': state }, [thumb, text]);
+  }
+
+  /** The menu button, which opens Settings over the home screen. */
+  private menuButton(doc: Document, options: HomeScreenOptions): HTMLButtonElement {
+    const button = el(
+      doc,
+      'button',
+      {
+        class: 'round-button menu',
+        type: 'button',
+        'aria-label': t('home.menu'),
+        'aria-haspopup': 'dialog',
+      },
+      [iconSpan(doc, options.theme.icons.menu, 'icon')],
+    );
+    button.addEventListener('click', () => {
+      const page = [...this.element.children];
+      const sheet = new SettingsSheet(doc, {
+        settings: options.settings.read(),
+        hapticsAvailable: options.settings.hapticsAvailable,
+        pickerHref: options.pickerHref,
+        onChange: options.settings.change,
+        onClose: () => {
+          sheet.remove();
+          this.settings = null;
+          for (const part of page) part.toggleAttribute('inert', false);
+          button.focus();
+        },
+      });
+      this.settings = sheet;
+      for (const part of page) part.toggleAttribute('inert', true);
+      this.element.append(sheet.element);
+      sheet.focus();
+    });
+    return button;
   }
 
   /** A sheet over the home screen, such as the league's summary of the last day played. */

@@ -6,7 +6,7 @@ import { AdMobAds, TEST_AD_UNITS } from '../ads/admob.ts';
 import { adsFor } from '../ads/ads.ts';
 import { PreferencesStore } from '../persistence/preferences.ts';
 import { browserStore } from '../persistence/store.ts';
-import type { HapticCue, Haptics } from './haptics.ts';
+import type { Cue, CuePlayer } from './cues.ts';
 import type { Platform } from './platform.ts';
 
 /**
@@ -19,15 +19,22 @@ function report(error: unknown): void {
   console.warn('Arrows:', error);
 }
 
-/** The cues on the Taptic Engine: a light tick, a warning, success and error. */
-const CUES: Record<HapticCue, () => Promise<void>> = {
+/**
+ * The cues on the Taptic Engine: a light tick, a warning, success and error;
+ * a promotion is a heavy tap and success.
+ */
+const CUES: Record<Cue, () => Promise<void>> = {
   remove: () => DeviceHaptics.impact({ style: ImpactStyle.Light }),
   block: () => DeviceHaptics.notification({ type: NotificationType.Warning }),
   win: () => DeviceHaptics.notification({ type: NotificationType.Success }),
   lose: () => DeviceHaptics.notification({ type: NotificationType.Error }),
+  promote: () =>
+    DeviceHaptics.impact({ style: ImpactStyle.Heavy }).then(() =>
+      DeviceHaptics.notification({ type: NotificationType.Success }),
+    ),
 };
 
-const haptics: Haptics = {
+const haptics: CuePlayer = {
   play: (cue) => void CUES[cue]().catch(report),
 };
 

@@ -71,6 +71,10 @@ const PAIRS: [string, string, string, number][] = [
   ['score card label', colors.textMuted, colors.surfaceRaised, 4.5],
   ['score figure', colors.title, colors.surfaceRaised, 4.5],
   ['league dot', colors.hint, colors.background, 3],
+  // Settings: each switch's parts against the list, off and on.
+  ['switch outline and knob when off', colors.textMuted, colors.background, 3],
+  ['switch track when on', colors.primary, colors.background, 3],
+  ['switch knob when on', colors.surfaceRaised, colors.primary, 3],
   // Test ads: light text on the dark card, its buttons inverted, the focus ring.
   ['test ad text', colors.onPrimary, colors.primary, 4.5],
   ['test ad button label', colors.primary, colors.onPrimary, 4.5],

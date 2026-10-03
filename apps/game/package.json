@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test -c playwright.a11y.config.ts"
   },
   "dependencies": {
     "@arrows/engine": "workspace:*",
@@ -28,6 +29,8 @@
     "@capacitor/cli": "^8.5.2",
     "@playwright/test": "^1.63.0",
     "jsdom": "^29.1.1",
+    "lighthouse": "^13.5.0",
+    "puppeteer-core": "^25.12.0",
     "vite": "^8.3.2"
   }
 }

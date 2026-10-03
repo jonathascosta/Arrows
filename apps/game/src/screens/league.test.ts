@@ -106,6 +106,8 @@ describe('LeagueScreen', () => {
       character.querySelector<HTMLElement>('.avatar')!.style.getPropertyValue('--avatar'),
     ).toMatch(/^var\(--avatar-\d\)$/);
     expect(character.querySelector('.tag')?.textContent).toBe('character');
+    // The names are English in either language.
+    expect(character.querySelector('.row-name')?.getAttribute('lang')).toBe('en');
 
     // Before a board is won today the player has no place: last, no rank, no move.
     const player = root.querySelector<HTMLElement>('.league-row[data-kind="player"]')!;
@@ -114,6 +116,7 @@ describe('LeagueScreen', () => {
     expect(player.querySelector('.rank')?.textContent).toBe('–');
     expect(player.getAttribute('aria-current')).toBe('true');
     expect(player.querySelector('.row-name')?.textContent).toBe('You');
+    expect(player.querySelector('.row-name')?.hasAttribute('lang')).toBe(false);
     expect(player.querySelector('.tag')).toBeNull();
     expect(player.querySelector('.sr-only')?.textContent).toBe(
       'You, not in today’s table until you win a board',
@@ -142,7 +145,7 @@ describe('LeagueScreen', () => {
     expect(player.getAttribute('data-rank')).toBe('1');
     expect(player.querySelector('.rank')?.textContent).toBe('1');
     expect(player.querySelector('.sr-only')?.textContent).toMatch(
-      /^1st, You, \d+ points, moves up$/,
+      /^1st, You, [\d,]+ points, moves up$/,
     );
   });
 
@@ -175,7 +178,7 @@ describe('LeagueScreen', () => {
     expect(sheet.dataset.overlay).toBe('summary');
     expect(sheet.querySelector('h2')?.textContent).toBe('While you were away');
     expect(sheet.querySelector('p')?.textContent).toMatch(
-      /^You finished 1st in Bronze on Wed 14 Oct, with \d+ points, and moved up to Silver\.$/,
+      /^You finished 1st in Bronze on Wed 14 Oct, with [\d,]+ points, and moved up to Silver\.$/,
     );
     // Shown is seen, before Continue.
     expect(provider.summary(clock.now)).toBeNull();

@@ -1,6 +1,10 @@
+import type { LeagueName } from '@arrows/engine';
+
 /**
- * Every player-facing string, by key, so a second language is a second table.
- * Placeholders are `{name}`.
+ * Every player-facing string, by key, in English and in Portuguese (Brazil's):
+ * docs/PRODUCT.md, Languages. Placeholders are `{name}`. The English table is
+ * the list of keys; the Portuguese one must have every key, and the same
+ * placeholders.
  */
 const en = {
   'app.name': 'Arrows',
@@ -18,7 +22,7 @@ const en = {
   'home.play': 'Play',
   'home.streak': 'Streak {n}',
   'home.streakLabel': 'Win streak: {n}',
-  'home.menu': 'Puzzle picker',
+  'home.menu': 'Settings',
   'home.path': 'Level path',
   'home.done': 'Level {n}, done',
   'home.current': 'Level {n}, next to play',
@@ -38,6 +42,10 @@ const en = {
   'event.autumn2026.short': 'Autumn',
   'event.autumn2026.badge': 'Autumn 2026 badge',
   'event.boardOf': '{event} · {n} of {total}',
+  'drawing.heart': 'Heart',
+  'drawing.butterfly': 'Butterfly',
+  'drawing.maple-leaf': 'Maple leaf',
+  'drawing.acorn': 'Acorn',
   'calendar.title': 'Daily challenge',
   'calendar.previous': 'Previous month',
   'calendar.next': 'Next month',
@@ -57,6 +65,13 @@ const en = {
   'calendar.weekday': 'Weekday',
   'calendar.weekend': 'Weekend',
   'league.title': 'Daily league',
+  'league.name.Bronze': 'Bronze',
+  'league.name.Silver': 'Silver',
+  'league.name.Gold': 'Gold',
+  'league.name.Platinum': 'Platinum',
+  'league.name.Diamond': 'Diamond',
+  'league.name.Master': 'Master',
+  'league.name.Legend': 'Legend',
   'league.info': 'How the league works',
   'league.resets': 'Resets in {time}',
   'league.rules.both': 'Top 10 move up to {up}, bottom 10 move down to {down}.',
@@ -97,6 +112,7 @@ const en = {
   'tools.adNote': '(plays an ad)',
   'board.label.one': 'Board, 1 arrow left. Pinch or scroll to zoom, drag to move.',
   'board.label.other': 'Board, {n} arrows left. Pinch or scroll to zoom, drag to move.',
+  'status.blocked.zero': 'Blocked. No chances left.',
   'status.blocked.one': 'Blocked. 1 chance left.',
   'status.blocked.other': 'Blocked. {n} chances left.',
   'status.hint': 'Try the highlighted arrow.',
@@ -131,86 +147,360 @@ const en = {
   'ads.test.close': 'Close ad',
   'ads.test.finish': 'Watch to the end',
   'ads.test.skip': 'Close without the reward',
+  'settings.title': 'Settings',
+  'settings.sound': 'Sound',
+  'settings.haptics': 'Haptics',
+  'settings.picker': 'Puzzle picker',
+  'settings.done': 'Done',
 } as const;
 
 export type StringKey = keyof typeof en;
 
-/** Keys that come in `.one` and `.other` forms, chosen by count. */
-type PluralBase<K> = K extends `${infer Base}.other` ? Base : never;
-export type PluralKey = PluralBase<StringKey>;
+/** Every key, in the English table's order. */
+export const STRING_KEYS = Object.keys(en) as StringKey[];
 
-const plurals = new Intl.PluralRules('en');
+/** Brazilian Portuguese. Every English key, with the same placeholders (strings.test.ts). */
+const pt: Readonly<Record<StringKey, string>> = {
+  'app.name': 'Arrows',
+  'title.level': 'Nível {n}',
+  'title.daily': 'Desafio · {date}',
+  'tier.easy': 'Fácil',
+  'tier.medium': 'Médio',
+  'tier.hard': 'Difícil',
+  'tier.superHard': 'Muito difícil',
+  'nav.back': 'Voltar ao início',
+  'nav.home': 'Início',
+  'nav.backCalendar': 'Voltar ao calendário',
+  'nav.calendar': 'Calendário',
+  'home.levels': 'Níveis',
+  'home.play': 'Jogar',
+  'home.streak': 'Sequência {n}',
+  'home.streakLabel': 'Sequência de vitórias: {n}',
+  'home.menu': 'Ajustes',
+  'home.path': 'Caminho dos níveis',
+  'home.done': 'Nível {n}, concluído',
+  'home.current': 'Nível {n}, o próximo a jogar',
+  'home.ahead': 'Nível {n}, mais adiante',
+  'home.daily': 'Desafio diário',
+  'home.dailyStars': '{n} de {total}',
+  'home.dailyStarsLabel': '{n} de {total} estrelas neste mês',
+  'home.league': 'Liga',
+  'home.leagueRank': '{league} · {rank}',
+  'home.leagueJoin': 'Vença um tabuleiro para entrar hoje',
+  'home.eventBoards': '{n} de {total} tabuleiros',
+  'home.eventDaysLeft': 'faltam {n} dias',
+  'home.eventLastDay': 'Último dia',
+  'home.eventEnded': 'Terminou em {date}',
+  'home.eventBadge': 'Medalha conquistada',
+  'event.autumn2026': 'Evento de outono',
+  'event.autumn2026.short': 'Outono',
+  'event.autumn2026.badge': 'medalha de outono 2026',
+  'event.boardOf': '{event} · {n} de {total}',
+  'drawing.heart': 'Coração',
+  'drawing.butterfly': 'Borboleta',
+  'drawing.maple-leaf': 'Folha de bordo',
+  'drawing.acorn': 'Bolota',
+  'calendar.title': 'Desafio diário',
+  'calendar.previous': 'Mês anterior',
+  'calendar.next': 'Próximo mês',
+  'calendar.stars': '{n} de {total} estrelas',
+  'calendar.moved': '{month}, {n} de {total} estrelas',
+  'calendar.days': 'Dias de {month}',
+  'calendar.today': 'hoje',
+  'calendar.done': 'estrela conquistada',
+  'calendar.locked': 'bloqueado',
+  'calendar.trophies': 'Troféus',
+  'calendar.noTrophies': 'Vença todos os dias de um mês para ganhar o troféu dele.',
+  'calendar.trophy': '{month}: troféu, todos os dias vencidos',
+  'calendar.missed': '{n} de {total}',
+  'calendar.missedLabel': '{month}: {n} de {total} dias vencidos',
+  'calendar.play': 'Jogar o desafio de hoje',
+  'calendar.board': 'Tabuleiro {kind} · {tier} · {width} × {height}',
+  'calendar.weekday': 'de dia útil',
+  'calendar.weekend': 'de fim de semana',
+  'league.title': 'Liga diária',
+  'league.name.Bronze': 'Bronze',
+  'league.name.Silver': 'Prata',
+  'league.name.Gold': 'Ouro',
+  'league.name.Platinum': 'Platina',
+  'league.name.Diamond': 'Diamante',
+  'league.name.Master': 'Mestre',
+  'league.name.Legend': 'Lenda',
+  'league.info': 'Como a liga funciona',
+  'league.resets': 'Recomeça em {time}',
+  'league.rules.both': 'Os 10 primeiros sobem para {up}, os 10 últimos descem para {down}.',
+  'league.rules.bottom': 'Os 10 primeiros sobem para {up}. Ninguém desce de {league}.',
+  'league.rules.top': 'Os 10 últimos descem para {down}. {league} é a liga mais alta.',
+  'league.characters': 'Você joga contra os personagens do jogo até a liga ter jogadores.',
+  'league.join': 'Vença um tabuleiro hoje para entrar na tabela.',
+  'league.table': 'Tabela da liga {league}',
+  'league.you': 'Você',
+  'league.notJoined': 'fora da tabela de hoje até vencer um tabuleiro',
+  'league.character': 'personagem',
+  'league.points.one': '1 ponto',
+  'league.points.other': '{n} pontos',
+  'league.movesUp': 'sobe',
+  'league.movesDown': 'desce',
+  'league.aboveUp': 'Os de cima sobem',
+  'league.belowDown': 'Os de baixo descem',
+  'league.howTitle': 'Como a liga funciona',
+  'league.howBody':
+    'Cada tabuleiro que você vencer hoje dá pontos: mais para tabuleiros mais difíceis e maiores, para um tempo rápido e nenhuma chance perdida, e um bônus nos tabuleiros de evento. Cada tabuleiro conta uma vez por dia. À meia-noite os 10 primeiros sobem de liga e os 10 últimos descem; um dia sem vitória deixa você na mesma liga. Até a liga ter jogadores, os outros 29 são personagens do jogo, simulados no seu telefone e marcados como “personagem”.',
+  'league.gotIt': 'Entendi',
+  'league.summaryTitle': 'Enquanto você esteve fora',
+  'league.summary.promoted':
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e subiu para {next}.',
+  'league.summary.stayed':
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e continua nela.',
+  'league.summary.relegated':
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e desceu para {next}.',
+  'league.continue': 'Continuar',
+  'league.see': 'Ver a liga',
+  'hud.chances': '{n} de {total} chances restantes',
+  'hud.timer': 'Tempo {time}',
+  'tools.grid': 'Grade',
+  'tools.hint': 'Dica',
+  'tools.hintShown': 'Dica ativa',
+  'tools.hintLoading': 'Carregando anúncio…',
+  'tools.ad': 'AD',
+  'tools.adNote': '(mostra um anúncio)',
+  'board.label.one':
+    'Tabuleiro, 1 flecha restante. Use dois dedos ou a roda do mouse para dar zoom; arraste para mover.',
+  'board.label.other':
+    'Tabuleiro, {n} flechas restantes. Use dois dedos ou a roda do mouse para dar zoom; arraste para mover.',
+  'status.blocked.zero': 'Bloqueada. Nenhuma chance restante.',
+  'status.blocked.one': 'Bloqueada. Resta 1 chance.',
+  'status.blocked.other': 'Bloqueada. Restam {n} chances.',
+  'status.hint': 'Tente a flecha destacada.',
+  'status.noHint': 'Nenhuma flecha livre agora.',
+  'status.noReward': 'Sem dica: o anúncio foi fechado antes do fim.',
+  'status.noAd': 'Sem dica: nenhum anúncio pôde ser exibido.',
+  'won.title': 'Resolvido',
+  'won.heading': '{title} · {subtitle}',
+  'won.time': 'Tempo',
+  'won.chancesLost': 'Chances perdidas',
+  'won.chancesLostOf': '{n} de {total}',
+  'won.score': 'Pontuação',
+  'won.firstTry': 'De primeira. Sequência de vitórias: {n}.',
+  'won.streakOver': 'Não foi de primeira, então a sequência recomeça.',
+  'won.newBest': 'novo recorde',
+  'won.best': 'recorde {time}',
+  'won.star': 'Uma estrela para o dia {day}.',
+  'won.trophy': 'Todos os dias de {month} vencidos: um troféu!',
+  'won.league': '+{points} na liga {league} · agora em {rank}.',
+  'won.leagueCounted': 'Já contou para a liga de hoje.',
+  'won.next': 'Próximo nível',
+  'won.nextBoard': 'Próximo tabuleiro',
+  'won.eventBoard': 'Tabuleiro {n} de {total} concluído.',
+  'won.eventComplete': 'Todos os tabuleiros vencidos: a {badge} é sua!',
+  'won.again': 'Jogar de novo',
+  'lost.title': 'Sem chances',
+  'lost.body':
+    'Tentar de novo recomeça o mesmo quebra-cabeça, com {total} chances novas e o tempo zerado.',
+  'lost.retry': 'Tentar de novo',
+  'ads.test.title': 'Anúncio de teste',
+  'ads.test.interstitial':
+    'Um anúncio intersticial apareceria aqui, entre o tabuleiro e a pontuação.',
+  'ads.test.rewarded': 'Um anúncio premiado apareceria aqui. Assistido até o fim, ele dá a dica.',
+  'ads.test.close': 'Fechar anúncio',
+  'ads.test.finish': 'Assistir até o fim',
+  'ads.test.skip': 'Fechar sem a recompensa',
+  'settings.title': 'Ajustes',
+  'settings.sound': 'Som',
+  'settings.haptics': 'Vibração',
+  'settings.picker': 'Escolher quebra-cabeça',
+  'settings.done': 'Pronto',
+};
+
+/** The languages the game speaks (docs/PRODUCT.md, Languages). */
+export type Locale = 'en' | 'pt';
+
+const TABLES: Readonly<Record<Locale, Readonly<Record<StringKey, string>>>> = { en, pt };
+
+/** Each locale as a BCP 47 tag: the page's `lang`. */
+export const LOCALE_TAGS: Readonly<Record<Locale, string>> = { en: 'en', pt: 'pt-BR' };
+
+let current: Locale = 'en';
+
+/** The language the strings below speak from now on. */
+export function setLocale(locale: Locale): void {
+  current = locale;
+}
+
+export function getLocale(): Locale {
+  return current;
+}
+
+/** The first of the device's languages that the game speaks, English when none is. */
+export function localeFor(languages: readonly string[]): Locale {
+  for (const language of languages) {
+    const base = language.toLowerCase().split('-')[0];
+    if (base === 'pt' || base === 'en') return base;
+  }
+  return 'en';
+}
+
+/** Whether a key exists, for keys built from data (a drawing's id). */
+export function hasString(key: string): key is StringKey {
+  return key in en;
+}
 
 export function t(key: StringKey, params: Readonly<Record<string, string | number>> = {}): string {
-  return en[key].replace(/\{(\w+)\}/g, (match, name: string) =>
+  return TABLES[current][key].replace(/\{(\w+)\}/g, (match, name: string) =>
     name in params ? String(params[name]) : match,
   );
 }
 
-/** A string that depends on a count: `{n}` is the count, the form follows English plural rules. */
+/**
+ * A string that depends on a count: `{n}` is the count, with its thousands
+ * marked. One takes the `.one` form, any other count `.other`, as both
+ * languages do for whole numbers; zero takes `.zero` where a key has one.
+ */
 export function tn(
   key: PluralKey,
   n: number,
   params: Readonly<Record<string, string | number>> = {},
 ): string {
-  const form = plurals.select(n) === 'one' ? 'one' : 'other';
-  return t(`${key}.${form}`, { ...params, n });
+  const zero = `${key}.zero`;
+  const form =
+    n === 0 && hasString(zero) ? zero : (`${key}.${Math.abs(n) === 1 ? 'one' : 'other'}` as const);
+  return t(form, { ...params, n: formatNumber(n) });
 }
 
-const SMALL_NUMBERS = [
-  'zero',
-  'one',
-  'two',
-  'three',
-  'four',
-  'five',
-  'six',
-  'seven',
-  'eight',
-  'nine',
-  'ten',
-];
+/** A whole number with its thousands marked: `12,345`, or `12.345` in Portuguese. */
+export function formatNumber(n: number): string {
+  const digits = String(Math.abs(Math.trunc(n))).replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    current === 'pt' ? '.' : ',',
+  );
+  return n < 0 ? `-${digits}` : digits;
+}
 
-/** Small counts in words, as running text prefers ("three fresh chances"); digits from 11. */
+/** Keys that come in `.one` and `.other` forms, chosen by count. */
+type PluralBase<K> = K extends `${infer Base}.other` ? Base : never;
+export type PluralKey = PluralBase<StringKey>;
+
+/** A league's name in the player's language. */
+export function leagueLabel(name: LeagueName): string {
+  return t(`league.name.${name}`);
+}
+
+/** A drawing's title: translated when the strings know it, the art's own name otherwise. */
+export function drawingTitle(id: string, name: string): string {
+  const key = `drawing.${id}`;
+  return hasString(key) ? t(key) : name;
+}
+
+/** The first letter in capitals, for a date that starts a line ("Sáb 3 out"). */
+export function capitalize(text: string): string {
+  return text.charAt(0).toLocaleUpperCase(LOCALE_TAGS[current]) + text.slice(1);
+}
+
+/**
+ * Small counts in words, as running text prefers ("three fresh chances"),
+ * digits from 11. The Portuguese words are feminine: they count chances.
+ */
+const SMALL_NUMBERS: Readonly<Record<Locale, readonly string[]>> = {
+  en: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'],
+  pt: ['zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'],
+};
+
 export function spellOut(n: number): string {
-  return SMALL_NUMBERS[n] ?? String(n);
+  return SMALL_NUMBERS[current][n] ?? String(n);
 }
 
 // Day and month names come from tables, not Intl: engines disagree on details
-// such as "Sep" or "Sept" and the comma after a weekday, and a second language
-// is a second table.
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-] as const;
-/** Sunday first, as `Date.getUTCDay` counts. */
-const WEEKDAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-] as const;
+// such as "Sep" or "Sept" and the comma after a weekday.
+interface Names {
+  readonly months: readonly string[];
+  /** Sunday first, as `Date.getUTCDay` counts. */
+  readonly weekdays: readonly string[];
+  readonly shortMonths: readonly string[];
+  readonly shortWeekdays: readonly string[];
+}
 
-const short = (name: string): string => name.slice(0, 3);
+const NAMES: Readonly<Record<Locale, Names>> = {
+  en: {
+    months: [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ],
+    weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    shortMonths: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ],
+    shortWeekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  },
+  pt: {
+    months: [
+      'janeiro',
+      'fevereiro',
+      'março',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro',
+    ],
+    weekdays: [
+      'domingo',
+      'segunda-feira',
+      'terça-feira',
+      'quarta-feira',
+      'quinta-feira',
+      'sexta-feira',
+      'sábado',
+    ],
+    shortMonths: [
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
+    ],
+    shortWeekdays: ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'],
+  },
+};
 
 interface DayParts {
   readonly year: number;
-  readonly month: string;
+  /** 0 for January. */
+  readonly month: number;
   readonly day: number;
-  readonly weekday: string;
+  /** 0 for Sunday. */
+  readonly weekday: number;
 }
 
 function dayParts(dateKey: string): DayParts {
@@ -218,50 +508,76 @@ function dayParts(dateKey: string): DayParts {
   const date = new Date(Date.UTC(year, month - 1, day));
   return {
     year: date.getUTCFullYear(),
-    month: MONTHS[date.getUTCMonth()]!,
+    month: date.getUTCMonth(),
     day: date.getUTCDate(),
-    weekday: WEEKDAYS[date.getUTCDay()]!,
+    weekday: date.getUTCDay(),
   };
 }
 
-/** `2026-10-03` as `Sat 3 Oct`, the way the home screen names a day. */
+/** `2026-10-03` as `Sat 3 Oct` or `sáb 3 out`, on the home card. */
 export function formatDayShort(dateKey: string): string {
   const { weekday, day, month } = dayParts(dateKey);
-  return `${short(weekday)} ${day} ${short(month)}`;
+  const names = NAMES[current];
+  return `${names.shortWeekdays[weekday]!} ${day} ${names.shortMonths[month]!}`;
 }
 
-/** `2026-10-03` as `Saturday 3 October`, for screen readers on the calendar. */
+/**
+ * `2026-10-03` inside a sentence: `Sat 3 Oct`, or `3 de outubro` in Portuguese,
+ * which does not abbreviate a date in running text.
+ */
+export function formatDayInText(dateKey: string): string {
+  if (current !== 'pt') return formatDayShort(dateKey);
+  const { day, month } = dayParts(dateKey);
+  return `${day} de ${NAMES.pt.months[month]!}`;
+}
+
+/** `2026-10-03` as `Saturday 3 October` or `sábado, 3 de outubro`, for screen readers. */
 export function formatDayLong(dateKey: string): string {
   const { weekday, day, month } = dayParts(dateKey);
-  return `${weekday} ${day} ${month}`;
+  const names = NAMES[current];
+  return current === 'pt'
+    ? `${names.weekdays[weekday]!}, ${day} de ${names.months[month]!}`
+    : `${names.weekdays[weekday]!} ${day} ${names.months[month]!}`;
 }
 
-/** `2026-10-02` as `Oct 2, 2026`, in a daily board's title. */
+/** `2026-10-02` as `Oct 2, 2026` or `2 out 2026`, in a daily board's title. */
 export function formatDateKey(dateKey: string): string {
   const { year, day, month } = dayParts(dateKey);
-  return `${short(month)} ${day}, ${year}`;
+  const name = NAMES[current].shortMonths[month]!;
+  return current === 'pt' ? `${day} ${name} ${year}` : `${name} ${day}, ${year}`;
 }
 
-/** `2026-10` as `October 2026`. */
+/** `2026-10` as `October 2026` or `outubro de 2026`, in running text. */
 export function formatMonth(month: string): string {
   const parts = dayParts(`${month}-01`);
-  return `${parts.month} ${parts.year}`;
+  const name = NAMES[current].months[parts.month]!;
+  return current === 'pt' ? `${name} de ${parts.year}` : `${name} ${parts.year}`;
 }
 
-/** `2026-09` as `Sep`, or `Sep 2025` when `currentYear` is another year. */
+/** A month heading a screen or a line: `October 2026`, `Outubro de 2026`. */
+export function formatMonthTitle(month: string): string {
+  return capitalize(formatMonth(month));
+}
+
+/** `2026-09` as `Sep` (`set`), or `Sep 2025` when `currentYear` is another year. */
 export function formatMonthShort(month: string, currentYear: number): string {
   const parts = dayParts(`${month}-01`);
-  const name = short(parts.month);
+  const name = NAMES[current].shortMonths[parts.month]!;
   return parts.year === currentYear ? name : `${name} ${parts.year}`;
 }
 
-/** The calendar's weekday heads from Monday: narrow (`M`) and long (`Monday`). */
+/** The calendar's weekday heads from Monday: narrow (`M`, `S`) and long (`Monday`, `segunda-feira`). */
 export function weekdayNames(): { narrow: string; long: string }[] {
-  return [...WEEKDAYS.slice(1), WEEKDAYS[0]].map((long) => ({ narrow: long.slice(0, 1), long }));
+  const { weekdays } = NAMES[current];
+  return [...weekdays.slice(1), weekdays[0]!].map((long) => ({
+    narrow: long.slice(0, 1).toLocaleUpperCase(LOCALE_TAGS[current]),
+    long,
+  }));
 }
 
-/** `1st`, `2nd`, `3rd`, `4th`, `11th`, `21st`: a rank in the league table. */
+/** A rank in the league table: `1st`, `2nd`, `11th`, `21st`; `1º` in Portuguese. */
 export function ordinal(n: number): string {
+  if (current === 'pt') return `${n}º`;
   const tens = n % 100;
   if (tens >= 11 && tens <= 13) return `${n}th`;
   return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;

@@ -206,20 +206,27 @@ API within the budget in the product document, Android, iPad.
 
 ## Status
 
-| Task | State | Pull request                                         |
-| :--- | :---- | :--------------------------------------------------- |
-| T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1) |
-| T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2) |
-| T2b  | done  | [#3](https://github.com/jonathascosta/Arrows/pull/3) |
-| T3   | done  | [#4](https://github.com/jonathascosta/Arrows/pull/4) |
-| T4   | done  | [#5](https://github.com/jonathascosta/Arrows/pull/5) |
-| T5   | done  | [#6](https://github.com/jonathascosta/Arrows/pull/6) |
-| T6   | done  | [#7](https://github.com/jonathascosta/Arrows/pull/7) |
-| T7   | done  | [#8](https://github.com/jonathascosta/Arrows/pull/8) |
-| T8   | owner | [#9](https://github.com/jonathascosta/Arrows/pull/9) |
-| T9   | open  |                                                      |
-| T10  | open  |                                                      |
+| Task | State | Pull request                                           |
+| :--- | :---- | :----------------------------------------------------- |
+| T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1)   |
+| T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2)   |
+| T2b  | done  | [#3](https://github.com/jonathascosta/Arrows/pull/3)   |
+| T3   | done  | [#4](https://github.com/jonathascosta/Arrows/pull/4)   |
+| T4   | done  | [#5](https://github.com/jonathascosta/Arrows/pull/5)   |
+| T5   | done  | [#6](https://github.com/jonathascosta/Arrows/pull/6)   |
+| T6   | done  | [#7](https://github.com/jonathascosta/Arrows/pull/7)   |
+| T7   | done  | [#8](https://github.com/jonathascosta/Arrows/pull/8)   |
+| T8   | owner | [#9](https://github.com/jonathascosta/Arrows/pull/9)   |
+| T9   | owner | [#10](https://github.com/jonathascosta/Arrows/pull/10) |
+| T10  | open  |                                                        |
 
 T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an
 iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts (the secrets
 and steps are in [ARCHITECTURE.md](ARCHITECTURE.md), iOS).
+
+T9 is built: Portuguese, the sounds and the promotion cue, Settings, the text size, the emphasis
+strokes, text screens that fit a 320 px phone at every text size, and Lighthouse
+accessibility of 93 or more on every screen in both languages (`pnpm test:a11y`). The
+assets still to come from Claude Design (character avatars, league badges, event art, the app
+icon) wait on the owner; the screens keep the initials, plain badges and the board thumbnail
+until then.

@@ -50,6 +50,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @arrows/game exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      # Lighthouse's accessibility audit on every screen (docs/PRODUCT.md, Accessibility).
+      - run: pnpm test:a11y
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

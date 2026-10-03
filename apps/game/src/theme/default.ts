@@ -58,6 +58,7 @@ export const DEFAULT_THEME: Theme = {
   },
   board: {
     strokeWidth: 0.12,
+    emphasisWidth: 0.2,
     tailReach: 0.38,
     headTip: 0.42,
     headDepth: 0.42,

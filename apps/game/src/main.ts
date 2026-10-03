@@ -8,10 +8,26 @@ import { EVENTS_KEY } from './persistence/events.ts';
 import { LEAGUE_KEY } from './persistence/league.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
 import { webPlatform } from './platform/platform.ts';
+import { WebAudioSounds } from './platform/sounds.ts';
+import { applyTextScale, preferredTextScale } from './platform/textSize.ts';
+import { LOCALE_TAGS, localeFor, setLocale } from './strings.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 
+// The device's language, when the game speaks it (docs/PRODUCT.md, Languages);
+// before anything is drawn or named. Old web views have only `language`.
+const languages = (navigator.languages as readonly string[] | undefined) ?? [navigator.language];
+const locale = localeFor(languages);
+setLocale(locale);
+document.documentElement.lang = LOCALE_TAGS[locale];
+
 applyTheme(DEFAULT_THEME, document.documentElement);
+// The phone's text size, again whenever the player comes back (it may have changed).
+applyTextScale(document, preferredTextScale(document));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible')
+    applyTextScale(document, preferredTextScale(document));
+});
 
 const root = document.getElementById('app');
 if (root === null) throw new Error('index.html has no #app element');
@@ -36,6 +52,7 @@ const app = new App(root, {
   // No ads on the web; the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
   ads: platform.ads,
   haptics: platform.haptics,
+  sounds: new WebAudioSounds(),
 });
 
 app.show(location.search);
@@ -45,6 +62,7 @@ window.addEventListener('popstate', () => app.show(location.search));
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) app.refresh();
 });
+// Settings need no refresh: the cues read them each time they play.
 window.addEventListener('storage', (event) => {
   const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY, EVENTS_KEY];
   if (event.key === null || keys.includes(event.key)) app.refresh();

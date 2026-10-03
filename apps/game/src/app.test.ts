@@ -2,6 +2,9 @@ import { createGame, freeArrows, head, scoreBoard, tap } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdProvider } from './ads/ads.ts';
 import { App } from './app.ts';
+import type { AppOptions } from './app.ts';
+import type { Cue } from './platform/cues.ts';
+import { SETTINGS_KEY } from './persistence/settings.ts';
 import { cellCenter } from './board/geometry.ts';
 import { DAILY_KEY, DailyStore } from './persistence/daily.ts';
 import { EVENTS_KEY } from './persistence/events.ts';
@@ -80,7 +83,7 @@ function scorePart(root: HTMLElement, part: string): string | null {
   return element.textContent;
 }
 
-const LEAGUE_LINE = /^\+\d+ points in Bronze league · now \d+(st|nd|rd|th)\.$/;
+const LEAGUE_LINE = /^\+[\d,]+ points in Bronze league · now \d+(st|nd|rd|th)\.$/;
 
 /** Taps an arrow that is blocked at the start until the board is lost. */
 async function loseBoard(root: HTMLElement, ref: PuzzleRef): Promise<void> {
@@ -115,6 +118,7 @@ function mount(
   store = new MemoryStore(),
   today: string | (() => Date) = '2026-10-03',
   ads?: AdProvider,
+  more: Partial<AppOptions> = {},
 ): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
@@ -130,6 +134,7 @@ function mount(
     replaceUrl: (url) => replaced.push(url),
     pickerHref: 'dev.html',
     ...(ads !== undefined ? { ads } : {}),
+    ...more,
   });
   return { app, root, store, urls, replaced };
 }
@@ -486,7 +491,7 @@ describe('App', () => {
     const sheet = root.querySelector<HTMLElement>('.overlay[data-overlay="summary"]')!;
     expect(sheet.querySelector('h2')?.textContent).toBe('While you were away');
     expect(sheet.querySelector('p')?.textContent).toMatch(
-      /^You finished 1st in Bronze on Fri 2 Oct, with \d+ points, and moved up to Silver\.$/,
+      /^You finished 1st in Bronze on Fri 2 Oct, with [\d,]+ points, and moved up to Silver\.$/,
     );
     expect(sheet.querySelector('a')?.getAttribute('href')).toBe('./?league');
     expect(root.querySelector('a.league .card-title')?.textContent).toBe('Silver');
@@ -497,6 +502,43 @@ describe('App', () => {
     app.show('?league');
     expect(root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
     expect(root.querySelector('.league-name')?.textContent).toBe('Silver');
+  });
+
+  it('cheers a promotion, and plays every cue as the settings allow', async () => {
+    const store = new MemoryStore();
+    new SimulatedLeagueProvider(store, 'You').record(
+      {
+        key: 'level:900',
+        tier: 'superHard',
+        cellCount: 2000,
+        timeSeconds: 1,
+        chancesLost: 0,
+        event: false,
+      },
+      noon('2026-10-02'),
+    );
+    const heard: Cue[] = [];
+    const felt: Cue[] = [];
+    const { app, root } = mount(store, '2026-10-03', undefined, {
+      sounds: { play: (cue) => heard.push(cue) },
+      haptics: { play: (cue) => felt.push(cue) },
+    });
+    app.show('');
+    expect(heard).toEqual(['promote']);
+    expect(felt).toEqual(['promote']);
+    root.querySelector<HTMLButtonElement>('.overlay button')!.click();
+
+    // Sound off in Settings: the board's cues are only felt.
+    root.querySelector<HTMLButtonElement>('button.menu')!.click();
+    root.querySelector<HTMLButtonElement>('[data-setting="sound"]')!.click();
+    expect(JSON.parse(store.getItem(SETTINGS_KEY)!)).toMatchObject({ sound: false });
+    app.show('?level=1');
+    heard.length = 0;
+    felt.length = 0;
+    await solve(root, { kind: 'level', level: 1 });
+    expect(heard).toEqual([]);
+    expect(felt.at(-1)).toBe('win');
+    expect(felt.filter((cue) => cue === 'remove')).toHaveLength(felt.length - 1);
   });
 
   it('shows the summary once, wherever it shows first', () => {
@@ -521,10 +563,14 @@ describe('App', () => {
     expect(first.root.querySelector('.overlay[data-overlay="summary"]')).not.toBeNull();
     first.app.show('?league');
     expect(first.root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
-    // In the league, then back to the home screen without Continue.
-    const second = mount(yesterday(), '2026-10-03');
+    // In the league, then back to the home screen without Continue; the promotion is cheered there.
+    const heard: Cue[] = [];
+    const second = mount(yesterday(), '2026-10-03', undefined, {
+      sounds: { play: (cue) => heard.push(cue) },
+    });
     second.app.show('?league');
     expect(second.root.querySelector('.overlay')?.getAttribute('data-overlay')).toBe('summary');
+    expect(heard).toEqual(['promote']);
     second.app.show('');
     expect(second.root.querySelector('.overlay')).toBeNull();
   });

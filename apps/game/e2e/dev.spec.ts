@@ -26,9 +26,28 @@ test('the dev page opens any level, day or drawing by its seed', async ({ page, 
   await expect(page.locator('.dev-preview .ascii')).not.toBeEmpty();
 });
 
-test('the home menu opens the puzzle picker', async ({ page, touch }) => {
+test('the home menu opens Settings, which lead to the puzzle picker', async ({ page, touch }) => {
   await page.goto('./');
-  await press(page.getByRole('link', { name: 'Puzzle picker' }), touch);
+  await press(page.getByRole('button', { name: 'Settings' }), touch);
+  const sheet = page.getByRole('dialog', { name: 'Settings' });
+  await expect(sheet.getByRole('switch', { name: 'Sound' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  // The web has no haptics.
+  await expect(sheet.getByRole('switch')).toHaveCount(1);
+  await press(sheet.getByRole('switch', { name: 'Sound' }), touch);
+  await expect(sheet.getByRole('switch', { name: 'Sound' })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  );
+  await page.reload();
+  await press(page.getByRole('button', { name: 'Settings' }), touch);
+  await expect(sheet.getByRole('switch', { name: 'Sound' })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  );
+  await press(sheet.getByRole('link', { name: 'Puzzle picker' }), touch);
   await expect(page).toHaveURL(/dev\.html$/);
   await expect(page.locator('h1')).toHaveText('Arrows · puzzles');
 });

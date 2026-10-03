@@ -2,7 +2,7 @@ import { createGame, freeArrows, generateLevel, head, tap } from '@arrows/engine
 import type { Puzzle } from '@arrows/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdProvider } from '../ads/ads.ts';
-import type { HapticCue } from '../platform/haptics.ts';
+import type { Cue } from '../platform/cues.ts';
 import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
@@ -694,7 +694,7 @@ describe('PlayScreen', () => {
   });
 
   it('plays a haptic cue for what each tap did', async () => {
-    const cues: HapticCue[] = [];
+    const cues: Cue[] = [];
     const root = document.createElement('div');
     document.body.replaceChildren(root);
     const screen = new PlayScreen(root, {
@@ -703,7 +703,7 @@ describe('PlayScreen', () => {
       reducedMotion: () => true,
       navigate: () => undefined,
       homeHref: './',
-      haptics: { play: (cue) => cues.push(cue) },
+      cues: { play: (cue) => cues.push(cue) },
     });
     screen.open({ kind: 'level', level: 1 });
     const { puzzle } = generateLevel(1);
@@ -713,7 +713,7 @@ describe('PlayScreen', () => {
     stage.dispatchEvent(new PointerEvent('pointerup', { pointerId: 3, clientX: 1, clientY: 1 }));
     expect(cues).toEqual([]);
     await solveByTaps(root, puzzle);
-    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): HapticCue => 'remove');
+    const removes = Array.from({ length: puzzle.arrows.length - 1 }, (): Cue => 'remove');
     expect(cues).toEqual([...removes, 'win']);
     cues.length = 0;
     screen.open({ kind: 'level', level: 1 });
@@ -733,19 +733,24 @@ describe('PlayScreen', () => {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
     }
     expect(label.textContent).toBe('Loading ad…');
+    // The label says it is an ad: the AD marks make room for it.
+    const marks = [...hint.querySelectorAll<HTMLElement>('.sr-only, .ad-badge')];
+    expect(marks.map((mark) => mark.hidden)).toEqual([true, true]);
     await ads.close(false);
     for (const selector of ['.topbar', '.stage', '.toolbar']) {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
     }
     expect(label.textContent).toBe('Hint');
+    expect(marks.map((mark) => mark.hidden)).toEqual([false, false]);
     expect(document.activeElement).toBe(hint);
     await pressHint(root);
     await ads.close(true);
     expect(label.textContent).toBe('Hint shown');
+    expect(marks.map((mark) => mark.hidden)).toEqual([true, true]);
   });
 
   it('plays no haptic cue for a tap the board does not take', async () => {
-    const cues: HapticCue[] = [];
+    const cues: Cue[] = [];
     const ads = new FakeAds();
     const root = document.createElement('div');
     document.body.replaceChildren(root);
@@ -756,7 +761,7 @@ describe('PlayScreen', () => {
       navigate: () => undefined,
       homeHref: './',
       ads,
-      haptics: { play: (cue) => cues.push(cue) },
+      cues: { play: (cue) => cues.push(cue) },
     });
     screen.open({ kind: 'level', level: 1 });
     const { puzzle } = generateLevel(1);

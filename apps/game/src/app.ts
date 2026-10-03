@@ -1,6 +1,9 @@
 import { scoreBoard } from '@arrows/engine';
 import type { AdProvider } from './ads/ads.ts';
-import type { Haptics } from './platform/haptics.ts';
+import { cuePlayer, SILENT } from './platform/cues.ts';
+import type { CuePlayer } from './platform/cues.ts';
+import { SettingsStore } from './persistence/settings.ts';
+import type { DaySummary } from './league/provider.ts';
 import type { DateKey, MonthKey } from './daily/days.ts';
 import { isPlayableDay, localDateKey, monthOf } from './daily/days.ts';
 import { clampMonth } from './daily/month.ts';
@@ -43,8 +46,10 @@ export interface AppOptions {
   readonly pickerHref: string;
   /** The interstitial and the rewarded ad (docs/PRODUCT.md, Monetization); none when left out. */
   readonly ads?: AdProvider;
-  /** The phone's haptics on a board (docs/PRODUCT.md, iOS); none when left out. */
-  readonly haptics?: Haptics;
+  /** The phone's haptics (docs/PRODUCT.md, iOS); none when left out or null (the web). */
+  readonly haptics?: CuePlayer | null;
+  /** The game's sounds; none when left out. */
+  readonly sounds?: CuePlayer;
 }
 
 /** A selector that finds a control again after its screen is drawn anew, or null. */
@@ -73,6 +78,9 @@ export class App {
   private readonly daily: DailyStore;
   private readonly league: LeagueProvider;
   private readonly events: EventStore;
+  private readonly settings: SettingsStore;
+  /** Sounds and haptics, as the player's settings allow. */
+  private readonly cues: CuePlayer;
   private screen: Screen | null = null;
   private play: PlayScreen | null = null;
   /** What is showing, for `refresh`. */
@@ -85,6 +93,11 @@ export class App {
     this.daily = new DailyStore(options.store);
     this.league = new SimulatedLeagueProvider(options.store, t('league.you'));
     this.events = new EventStore(options.store);
+    this.settings = new SettingsStore(options.store);
+    this.cues = cuePlayer(options.sounds ?? SILENT, options.haptics ?? SILENT, () => {
+      const { sound, haptics } = this.settings.settings;
+      return { sound, haptics };
+    });
   }
 
   /** Today's date key on the device's clock. */
@@ -148,6 +161,11 @@ export class App {
           finishedDays: this.daily.finished(),
           today: this.today(),
           pickerHref: this.options.pickerHref,
+          settings: {
+            read: () => this.settings.settings,
+            change: (change) => this.settings.set(change),
+            hapticsAvailable: this.options.haptics !== undefined && this.options.haptics !== null,
+          },
           reducedMotion: this.options.reducedMotion,
         }),
     );
@@ -155,6 +173,7 @@ export class App {
     // seen, here as in the league: it never shows twice.
     const summary = this.league.summary(now);
     if (summary !== null) {
+      this.heard(summary);
       this.league.dismissSummary();
       home.showSheet({
         kind: 'summary',
@@ -174,6 +193,7 @@ export class App {
         new LeagueScreen(this.root, {
           theme: this.options.theme,
           league: this.league,
+          onSummary: (summary) => this.heard(summary),
           clock: this.options.clock,
           homeHref: HOME_HREF,
         }),
@@ -203,6 +223,11 @@ export class App {
           },
         }),
     );
+  }
+
+  /** A day's summary as it shows: a promotion is cheered (docs/PRODUCT.md, Sound). */
+  private heard(summary: DaySummary): void {
+    if (summary.outcome === 'promoted') this.cues.play('promote');
   }
 
   /** The event the home screen shows, with the player's progress in it. */
@@ -268,7 +293,7 @@ export class App {
             exitFor: (puzzle) => this.exitFor(puzzle),
             next: (puzzle) => this.nextFor(puzzle),
             ...(this.options.ads !== undefined ? { ads: this.options.ads } : {}),
-            ...(this.options.haptics !== undefined ? { haptics: this.options.haptics } : {}),
+            cues: this.cues,
           }),
       );
       this.play = play;
