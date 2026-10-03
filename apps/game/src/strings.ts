@@ -92,6 +92,7 @@ const en = {
   'tools.grid': 'Grid',
   'tools.hint': 'Hint',
   'tools.hintShown': 'Hint shown',
+  'tools.hintLoading': 'Loading ad…',
   'tools.ad': 'AD',
   'tools.adNote': '(plays an ad)',
   'board.label.one': 'Board, 1 arrow left. Pinch or scroll to zoom, drag to move.',

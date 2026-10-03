@@ -37,8 +37,10 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   web view's storage, which iOS may clear when space runs short.
 - Ads come from AdMob: the interstitial and the rewarded ad of [Monetization](#monetization).
   Each is loaded ahead so it shows at once; one that is not ready within a few seconds is gone
-  without (no interstitial, and no hint). Until the owner's AdMob units are set, the build shows
-  Google's test ads.
+  without (no interstitial, and no hint). While a hint's ad loads, the board waits and the Hint
+  button reads "Loading ad…". Until the owner's AdMob units are set, the build shows Google's
+  test ads. There is no consent prompt before T10, so in the EEA and the UK AdMob may serve
+  limited ads or none.
 - The app icon is the favicon's arrow on paper until Claude Design delivers one; the launch
   screen is plain paper.
 
@@ -282,11 +284,11 @@ localization beyond English (strings are externalized from day one so Portuguese
   (no ad to fill the slot) earns no reward, so no hint (many games grant it; T8 may revisit this
   with the real network); a board won again the same day shows its score with "Already counted in
   today's league." instead of points.
-
 - The iOS app (session decisions in T8, open to the owner) (2026-10-03): the name Arrows and the
   app id `com.jonathascosta.arrows` (confirm before the first TestFlight upload, which fixes
   the id); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
-  skipped, so the board never waits on the network; a placeholder icon.
+  skipped, so the board never waits on the network; with the real network, no ad still means no
+  hint, as T7 decided; a placeholder icon.
 
 ## Open questions
 

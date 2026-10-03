@@ -15,4 +15,3 @@ App/App/config.xml
 # fastlane's output on CI (App/build is ignored above)
 App/fastlane/report.xml
 App/fastlane/README.md
-App/distribution.p12

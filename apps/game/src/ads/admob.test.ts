@@ -24,25 +24,25 @@ async function settle(): Promise<void> {
 
 /** The AdMob plugin as the provider sees it: loads and shows that the test drives. */
 class FakeAdMob implements AdMobApi {
-  readonly prepared: { kind: string; adId: string; isTesting?: boolean }[] = [];
+  readonly prepared: { kind: string; adId: string }[] = [];
   readonly loads: ReturnType<typeof deferred<unknown>>[] = [];
   readonly shows: string[] = [];
   readonly listeners = new Map<string, Set<() => void>>();
   rewardedShow = deferred<unknown>();
   interstitialShow: Promise<void> = Promise.resolve();
 
-  private prepare(kind: string, options: { adId: string; isTesting?: boolean }): Promise<unknown> {
+  private prepare(kind: string, options: { adId: string }): Promise<unknown> {
     this.prepared.push({ kind, ...options });
     const load = deferred<unknown>();
     this.loads.push(load);
     return load.promise;
   }
 
-  prepareInterstitial(options: { adId: string; isTesting?: boolean }): Promise<unknown> {
+  prepareInterstitial(options: { adId: string }): Promise<unknown> {
     return this.prepare('interstitial', options);
   }
 
-  prepareRewardVideoAd(options: { adId: string; isTesting?: boolean }): Promise<unknown> {
+  prepareRewardVideoAd(options: { adId: string }): Promise<unknown> {
     return this.prepare('rewarded', options);
   }
 
@@ -100,25 +100,45 @@ describe('AdMobAds', () => {
     });
   });
 
-  it('loads both ads ahead, as test ads while the units are Google’s', () => {
+  it('loads both ads ahead with the units it is given, once the SDK has started', async () => {
     const api = new FakeAdMob();
-    new AdMobAds(api, { units: TEST_AD_UNITS }).preload();
+    const started = deferred<undefined>();
+    new AdMobAds(api, { units: TEST_AD_UNITS, started: started.promise }).preload();
+    await settle();
+    expect(api.prepared).toEqual([]);
+    started.resolve(undefined);
+    await settle();
+    // Never the plugin's `isTesting`, which would swap in its own (partly Android) units.
     expect(api.prepared).toEqual([
-      { kind: 'interstitial', adId: TEST_AD_UNITS.interstitial, isTesting: true },
-      { kind: 'rewarded', adId: TEST_AD_UNITS.rewarded, isTesting: true },
+      { kind: 'interstitial', adId: TEST_AD_UNITS.interstitial },
+      { kind: 'rewarded', adId: TEST_AD_UNITS.rewarded },
     ]);
     const own = new FakeAdMob();
     new AdMobAds(own, { units: { interstitial: 'mine/1', rewarded: 'mine/2' } }).preload();
-    expect(own.prepared.map((load) => [load.adId, load.isTesting])).toEqual([
-      ['mine/1', false],
-      ['mine/2', false],
-    ]);
+    await settle();
+    expect(own.prepared.map((load) => load.adId)).toEqual(['mine/1', 'mine/2']);
+  });
+
+  it('loads nothing when the SDK did not start', async () => {
+    const errors: unknown[] = [];
+    const api = new FakeAdMob();
+    const ads = new AdMobAds(api, {
+      units: TEST_AD_UNITS,
+      started: Promise.reject(new Error('no SDK')),
+      onError: (error) => errors.push(error),
+    });
+    await expect(ads.showRewarded()).rejects.toThrow('No rewarded ad loaded');
+    await ads.showInterstitial();
+    expect(api.prepared).toEqual([]);
+    expect(api.shows).toEqual([]);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   it('shows the interstitial and resolves only when it is dismissed, then loads the next', async () => {
     const api = new FakeAdMob();
     const ads = new AdMobAds(api, { units: TEST_AD_UNITS });
     ads.preload();
+    await settle();
     api.loadAll();
     let closed = false;
     const shown = ads.showInterstitial().then(() => (closed = true));
@@ -143,6 +163,7 @@ describe('AdMobAds', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await shown;
     expect(api.shows).toEqual([]);
+    expect(api.prepared).toHaveLength(1);
     // Loaded meanwhile: the next board shows it, without a second load.
     api.loadAll();
     const next = ads.showInterstitial();
@@ -153,22 +174,46 @@ describe('AdMobAds', () => {
     expect(api.prepared.map((load) => load.kind)).toEqual(['interstitial', 'interstitial']);
   });
 
-  it('goes on after an interstitial that failed to load or to show', async () => {
+  it('tries a failed load once more within the same wait', async () => {
+    const errors: unknown[] = [];
+    const api = new FakeAdMob();
+    const ads = new AdMobAds(api, { units: TEST_AD_UNITS, onError: (e) => errors.push(e) });
+    ads.preload();
+    await settle();
+    // The ad loaded ahead found no fill; the hint asks for a new one and gets it.
+    api.loads.splice(0, 2).forEach((load) => load.reject(new Error('no fill')));
+    const hint = ads.showRewarded();
+    await settle();
+    api.loadAll();
+    await settle();
+    expect(api.shows).toEqual(['rewarded']);
+    api.emit(ADMOB_EVENTS.rewarded);
+    api.emit(ADMOB_EVENTS.rewardedDismissed);
+    await expect(hint).resolves.toBe(true);
+    expect(errors).toHaveLength(2);
+  });
+
+  it('goes on after an interstitial that failed to load twice, or failed to show', async () => {
     const errors: unknown[] = [];
     const api = new FakeAdMob();
     const ads = new AdMobAds(api, { units: TEST_AD_UNITS, onError: (e) => errors.push(e) });
     const first = ads.showInterstitial();
+    await settle();
     api.loads.shift()!.reject(new Error('no fill'));
+    await settle();
+    api.loads.shift()!.reject(new Error('no fill again'));
     await first;
     expect(api.shows).toEqual([]);
-    // A failed load is tried again next time.
+    expect(api.prepared).toHaveLength(2);
+    // The next board loads anew; this one is shown but fails to show.
     const second = ads.showInterstitial();
+    await settle();
     api.loadAll();
     await settle();
     api.emit(ADMOB_EVENTS.interstitialFailedToShow);
     await second;
     expect(api.shows).toEqual(['interstitial']);
-    expect(errors).toHaveLength(2);
+    expect(errors).toHaveLength(3);
     expect(api.listening).toBe(0);
   });
 
@@ -176,6 +221,7 @@ describe('AdMobAds', () => {
     const api = new FakeAdMob();
     const ads = new AdMobAds(api, { units: TEST_AD_UNITS });
     ads.preload();
+    await settle();
     api.loadAll();
 
     // Watched to the end: the reward comes, then the dismissal.
@@ -187,6 +233,7 @@ describe('AdMobAds', () => {
 
     // Closed early: dismissed without a reward, and the show call never answers.
     api.rewardedShow = deferred<unknown>();
+    await settle();
     api.loadAll();
     const skipped = ads.showRewarded();
     await settle();
@@ -195,6 +242,7 @@ describe('AdMobAds', () => {
 
     // The show call's own answer counts as the reward too.
     api.rewardedShow = deferred<unknown>();
+    await settle();
     api.loadAll();
     const answered = ads.showRewarded();
     await settle();
@@ -213,6 +261,7 @@ describe('AdMobAds', () => {
     await vi.advanceTimersByTimeAsync(1000);
     await expectation;
 
+    await settle();
     api.loadAll();
     const failing = ads.showRewarded();
     await settle();
@@ -220,6 +269,7 @@ describe('AdMobAds', () => {
     await expect(failing).rejects.toThrow('The rewarded ad failed to show');
 
     api.rewardedShow = deferred<unknown>();
+    await settle();
     api.loadAll();
     const refused = ads.showRewarded();
     await settle();

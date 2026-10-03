@@ -100,6 +100,11 @@ export class Hud {
     this.hintButton.disabled = !enabled;
   }
 
+  /** "Loading ad…" while a hint's rewarded ad is on its way; "Hint" again after. */
+  setHintLoading(loading: boolean): void {
+    this.hintLabel.textContent = t(loading ? 'tools.hintLoading' : 'tools.hint');
+  }
+
   /** "Hint shown", without the ad marks, while a hinted arrow is on the board. */
   setHintShown(shown: boolean): void {
     this.hintLabel.textContent = t(shown ? 'tools.hintShown' : 'tools.hint');

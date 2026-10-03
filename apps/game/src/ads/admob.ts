@@ -10,9 +10,9 @@ export interface ListenerHandle {
  * load an ad, show it, and hear how it ended.
  */
 export interface AdMobApi {
-  prepareInterstitial(options: { adId: string; isTesting?: boolean }): Promise<unknown>;
+  prepareInterstitial(options: { adId: string }): Promise<unknown>;
   showInterstitial(): Promise<void>;
-  prepareRewardVideoAd(options: { adId: string; isTesting?: boolean }): Promise<unknown>;
+  prepareRewardVideoAd(options: { adId: string }): Promise<unknown>;
   showRewardVideoAd(): Promise<unknown>;
   addListener(eventName: string, listener: () => void): Promise<ListenerHandle>;
 }
@@ -32,8 +32,10 @@ export interface AdUnits {
 }
 
 /**
- * Google's sample ad units for iOS, which always fill and never pay: the
- * build uses them until the owner's own units are passed at build time.
+ * Google's sample ad units for iOS, which always serve test ads and never pay:
+ * the build uses them until the owner's own units are passed at build time.
+ * They are requested like any unit: the plugin's `isTesting` would swap in its
+ * own sample units, and its interstitial one is Android's.
  */
 export const TEST_AD_UNITS: AdUnits = {
   interstitial: 'ca-app-pub-3940256099942544/4411468910',
@@ -42,6 +44,8 @@ export const TEST_AD_UNITS: AdUnits = {
 
 export interface AdMobOptions {
   readonly units: AdUnits;
+  /** Resolves when the SDK has started (`AdMob.initialize`): no ad loads before. */
+  readonly started?: Promise<unknown>;
   /** How long a hint or a score waits for an ad still loading before going without. */
   readonly waitMs?: number;
   readonly onError?: (error: unknown) => void;
@@ -52,17 +56,17 @@ type Kind = 'interstitial' | 'rewarded';
 const WAIT_MS = 4000;
 
 /**
- * Ads from AdMob (docs/ARCHITECTURE.md, Ads). Each kind of ad is loaded ahead,
+ * Ads from AdMob (docs/ARCHITECTURE.md, iOS). Each kind of ad is loaded ahead,
  * so it shows at once when its moment comes, and the next one loads as soon as
- * it closes. An ad still loading after `waitMs` is gone without: no
- * interstitial, and no hint. A load that fails is tried again the next time.
+ * it closes. An ad not loaded within `waitMs` is gone without: no interstitial,
+ * and no hint. A load that failed is tried again, within the same wait.
  */
 export class AdMobAds implements AdProvider {
   private readonly api: AdMobApi;
   private readonly units: AdUnits;
   private readonly waitMs: number;
   private readonly onError: (error: unknown) => void;
-  private readonly isTesting: boolean;
+  private readonly started: Promise<unknown>;
   private readonly loads: Record<Kind, Promise<boolean> | null> = {
     interstitial: null,
     rewarded: null,
@@ -73,9 +77,7 @@ export class AdMobAds implements AdProvider {
     this.units = options.units;
     this.waitMs = options.waitMs ?? WAIT_MS;
     this.onError = options.onError ?? (() => undefined);
-    this.isTesting =
-      options.units.interstitial === TEST_AD_UNITS.interstitial &&
-      options.units.rewarded === TEST_AD_UNITS.rewarded;
+    this.started = options.started ?? Promise.resolve();
   }
 
   /** Starts loading both ads, so the first hint and the first score need not wait. */
@@ -96,33 +98,44 @@ export class AdMobAds implements AdProvider {
   }
 
   private load(kind: Kind): void {
-    const options = { adId: this.units[kind], isTesting: this.isTesting };
-    const prepare =
-      kind === 'interstitial'
-        ? this.api.prepareInterstitial(options)
-        : this.api.prepareRewardVideoAd(options);
-    this.loads[kind] = prepare.then(
-      () => true,
-      (error: unknown) => {
-        this.onError(error);
-        return false;
-      },
-    );
+    const options = { adId: this.units[kind] };
+    // The SDK must have started first: before, the plugin's show calls would never answer.
+    this.loads[kind] = this.started
+      .then(() =>
+        kind === 'interstitial'
+          ? this.api.prepareInterstitial(options)
+          : this.api.prepareRewardVideoAd(options),
+      )
+      .then(
+        () => true,
+        (error: unknown) => {
+          this.onError(error);
+          return false;
+        },
+      );
   }
 
-  /** Whether an ad of this kind is loaded, waiting for it a little if it is still loading. */
+  /**
+   * Whether an ad of this kind is loaded, waiting up to `waitMs` for it. A load
+   * that failed (no fill, no network) is tried once more within that wait; one
+   * still loading when the wait ends is kept for the next time.
+   */
   private async ready(kind: Kind): Promise<boolean> {
-    if (this.loads[kind] === null) this.load(kind);
-    const load = this.loads[kind]!;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const late = new Promise<'late'>((resolve) => {
       timer = setTimeout(() => resolve('late'), this.waitMs);
     });
-    const loaded = await Promise.race([load, late]);
-    clearTimeout(timer);
-    // Still loading: it may be ready next time. Failed: load again next time.
-    if (loaded === false) this.loads[kind] = null;
-    return loaded === true;
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (this.loads[kind] === null) this.load(kind);
+        const loaded = await Promise.race([this.loads[kind]!, late]);
+        if (loaded !== false) return loaded === true;
+        this.loads[kind] = null;
+      }
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /**

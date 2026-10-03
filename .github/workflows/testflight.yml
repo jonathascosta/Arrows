@@ -10,8 +10,9 @@ name: TestFlight
 #   IOS_DISTRIBUTION_CERTIFICATE_P12      an Apple Distribution certificate with its key, base64
 #   IOS_DISTRIBUTION_CERTIFICATE_PASSWORD the .p12's password
 #
-# and, once AdMob is set up, ADMOB_APP_ID, ADMOB_INTERSTITIAL_ID and ADMOB_REWARDED_ID;
-# without them the build shows Google's test ads.
+# and, once AdMob is set up, ADMOB_APP_ID, ADMOB_INTERSTITIAL_ID and ADMOB_REWARDED_ID,
+# all three or none: without them the build shows Google's test ads. It uploads only
+# what is on main.
 on:
   workflow_dispatch:
 
@@ -25,6 +26,7 @@ concurrency:
 jobs:
   upload:
     name: Build, sign and upload to TestFlight
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-latest
     timeout-minutes: 60
     env:
@@ -37,8 +39,6 @@ jobs:
       ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
       VITE_ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
       VITE_ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
-      # Every upload needs a higher build number than the last.
-      BUILD_NUMBER: ${{ github.run_number }}
     steps:
       - name: Check the secrets
         run: |
@@ -52,6 +52,18 @@ jobs:
             echo "::error::Missing repository secrets: ${missing[*]} (see docs/ARCHITECTURE.md, iOS)"
             exit 1
           fi
+          # Real ad units only serve under their own AdMob app: all three, or none.
+          admob=0
+          for value in "$ADMOB_APP_ID" "$VITE_ADMOB_INTERSTITIAL_ID" "$VITE_ADMOB_REWARDED_ID"; do
+            if [ -n "$value" ]; then admob=$((admob + 1)); fi
+          done
+          if [ "$admob" -ne 0 ] && [ "$admob" -ne 3 ]; then
+            echo "::error::Set ADMOB_APP_ID, ADMOB_INTERSTITIAL_ID and ADMOB_REWARDED_ID together, or none"
+            exit 1
+          fi
+      # Every upload needs a higher build number than the last, a re-run included.
+      - name: Number the build
+        run: echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
       - uses: maxim-lobanov/setup-xcode@v1
         with:

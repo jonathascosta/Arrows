@@ -722,6 +722,60 @@ describe('PlayScreen', () => {
     screen.destroy();
   });
 
+  it('covers the board while an ad loads or plays, and gives it back after', async () => {
+    const ads = new FakeAds();
+    const { root } = mount({ kind: 'level', level: 1 }, undefined, ads);
+    const hint = root.querySelector<HTMLButtonElement>('.hint')!;
+    const label = hint.querySelector('.tool-label')!;
+    hint.focus();
+    await pressHint(root);
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(true);
+    }
+    expect(label.textContent).toBe('Loading ad…');
+    await ads.close(false);
+    for (const selector of ['.topbar', '.stage', '.toolbar']) {
+      expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
+    }
+    expect(label.textContent).toBe('Hint');
+    expect(document.activeElement).toBe(hint);
+    await pressHint(root);
+    await ads.close(true);
+    expect(label.textContent).toBe('Hint shown');
+  });
+
+  it('plays no haptic cue for a tap the board does not take', async () => {
+    const cues: HapticCue[] = [];
+    const ads = new FakeAds();
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const screen = new PlayScreen(root, {
+      theme: DEFAULT_THEME,
+      now: () => 0,
+      reducedMotion: () => true,
+      navigate: () => undefined,
+      homeHref: './',
+      ads,
+      haptics: { play: (cue) => cues.push(cue) },
+    });
+    screen.open({ kind: 'level', level: 1 });
+    const { puzzle } = generateLevel(1);
+    const id = freeArrows(createGame(puzzle))[0]!;
+    // Under the rewarded ad.
+    await pressHint(root);
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    await ads.close(false);
+    expect(cues).toEqual([]);
+    // Under the score screen.
+    await solveByTaps(root, puzzle);
+    await vi.advanceTimersByTimeAsync(1000);
+    await ads.close();
+    cues.length = 0;
+    tapCell(root, head(puzzle.arrows[id]!).x, head(puzzle.arrows[id]!).y);
+    expect(cues).toEqual([]);
+    screen.destroy();
+  });
+
   it('takes an ad that fails as no reward, and goes on to the score screen', async () => {
     const failing: AdProvider = {
       showInterstitial: () => Promise.reject(new Error('no ad to show')),

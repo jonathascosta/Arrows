@@ -5,6 +5,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { AdMobAds, TEST_AD_UNITS } from '../ads/admob.ts';
 import { adsFor } from '../ads/ads.ts';
 import { PreferencesStore } from '../persistence/preferences.ts';
+import { browserStore } from '../persistence/store.ts';
 import type { HapticCue, Haptics } from './haptics.ts';
 import type { Platform } from './platform.ts';
 
@@ -45,10 +46,12 @@ export async function nativePlatform(doc: Document): Promise<Platform> {
   const store = await PreferencesStore.load(Preferences, report);
   // Dark text on the paper colour; the page itself keeps clear of the bar (safe-area insets).
   StatusBar.setStyle({ style: Style.Light }).catch(report);
-  const admob = new AdMobAds(AdMob, { units: UNITS, onError: report });
   // The ads load once the SDK has started; the game does not wait for it.
-  AdMob.initialize()
-    .then(() => admob.preload())
-    .catch(report);
-  return { store, ads: adsFor(store, doc, admob), haptics };
+  const started = AdMob.initialize();
+  started.catch(report);
+  const admob = new AdMobAds(AdMob, { units: UNITS, started, onError: report });
+  admob.preload();
+  // The test-ads switch is a setting of the puzzle picker, which keeps it in the web
+  // view's storage (dev.ts), not with the player's records.
+  return { store, ads: adsFor(browserStore(), doc, admob), haptics };
 }

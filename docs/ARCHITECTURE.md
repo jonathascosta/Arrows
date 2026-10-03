@@ -243,18 +243,19 @@ ended last: a thumbnail of the next board, a segment per board, and the days lef
 
 Ads sit behind `AdProvider` (`ads/ads.ts`): `showInterstitial()` resolves when the ad has
 closed, `showRewarded()` with whether the reward was earned. `App` takes one and hands it to the
-play screen; `main.ts` picks it with `adsFor`. The web build gets `NO_ADS`, which resolves at
-once and grants every reward, so nothing changes for a web player. The `arrows.ads` setting,
-which the puzzle picker turns on, swaps in `DebugAds`: a full-screen card appended to the body,
-with the rest of the page `inert` until it closes, counting what it showed in
-`data-interstitials` and `data-rewarded` for the end-to-end tests. The iOS build (T8) adds a
-provider for the ad network behind the same interface.
+play screen; the platform chooses it (`platform/`, see iOS). The web gets `NO_ADS`, which
+resolves at once and grants every reward, so nothing changes for a web player; the iOS app gets
+`AdMobAds`. On both, the `arrows.ads` setting, which the puzzle picker keeps in the web view's
+storage, swaps in `DebugAds` (`adsFor`): a full-screen card appended to the body, with the rest
+of the page `inert` until it closes, counting what it showed in `data-interstitials` and
+`data-rewarded` for the end-to-end tests.
 
 The play screen calls the provider in two places only. A hint asks for the rewarded ad first,
 unless a hinted arrow is still on the board, which is brought into view again for free; no
 reward, no hint. A won board, once its last arrow has left, asks for the interstitial, and the
-score screen follows when it closes. A lost board shows its sheet at once. While an ad plays the
-board takes no input and the timer is held, with the page being hidden as the other reason to
+score screen follows when it closes. A lost board shows its sheet at once. While an ad loads or
+plays the board and its bars are `inert` (Back cannot leave the ad to show over another screen),
+the Hint button reads "Loading ad…" for a hint's ad, and the timer is held, with the page being hidden as the other reason to
 hold it, so a hidden page during an ad does not restart the clock. An ad that fails (the promise
 rejects) counts as no reward, or as an interstitial already over. The board's result is
 recorded at the winning tap, before any ad, so leaving during the interstitial loses nothing.
@@ -298,8 +299,8 @@ system's.
 app it imports `platform/native.ts`, a chunk of its own, so the web never loads the plugins.
 `nativePlatform` reads every saved key from `Preferences` into a `PreferencesStore` before the
 app starts (the game reads its records synchronously; writes go to memory at once and are
-saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads,
-and maps the haptic cues to the Taptic Engine (`impact` light, `notification` warning, success,
+saved in order behind it), sets the status bar's dark text, starts AdMob and preloads both ads
+(each load waits for the SDK to have started), and maps the haptic cues to the Taptic Engine (`impact` light, `notification` warning, success,
 error). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
 
@@ -307,19 +308,24 @@ error). The page runs under the status bar and the home indicator (`contentInset
 calls do not say when an ad has gone, so it waits for the `Dismissed` or `FailedToShow` event,
 and counts the reward from the `Rewarded` event (or the rewarded show call answering, which it
 does only on a reward). An ad not loaded within four seconds is skipped: the interstitial
-resolves at once, the rewarded ad rejects, so the hint says no ad could be shown. A failed load
-is tried again next time; the next ad loads as soon as one closes. The ad units are Google's test
-units unless the web build was made with `VITE_ADMOB_INTERSTITIAL_ID` and
-`VITE_ADMOB_REWARDED_ID`.
+resolves at once, the rewarded ad rejects, so the hint says no ad could be shown. A load that
+failed (no fill, no network) is tried once more within those four seconds; one still loading
+when they end is kept for next time, and the next ad loads as soon as one closes. The ad units
+are Google's iOS sample units unless the web build was made with `VITE_ADMOB_INTERSTITIAL_ID`
+and `VITE_ADMOB_REWARDED_ID`; they are requested as they are, never with the plugin's
+`isTesting`, which swaps in the plugin's own sample units (its interstitial one is Android's).
+Before switching to real units, the owner registers the test iPhone as an AdMob test device, so
+tapping its own ads breaks no policy.
 
 Two workflows build it on GitHub's macOS runners with the latest stable Xcode:
 
 - `ios.yml` builds the app for the simulator without signing, on every push to `main` and on
   pull requests that touch the app, the engine or the lockfile.
-- `testflight.yml`, run by hand, signs the app for the App Store and uploads it to TestFlight
-  with fastlane (`apps/game/ios/App/fastlane/Fastfile`, lane `beta`). The build number is the
-  workflow's run number. It needs these repository secrets, and stops at once, naming the
-  missing ones, without them:
+- `testflight.yml`, run by hand on `main`, signs the app for the App Store and uploads it to
+  TestFlight with fastlane (`apps/game/ios/App/fastlane/Fastfile`, lane `beta`). The build number
+  is the run number times 100 plus the attempt, so a re-run still counts up. It needs these
+  repository secrets, and stops at once, naming the missing ones, without them; the three AdMob
+  ones go together or not at all, since real units serve only under their own AdMob app:
 
 | Secret                                  | What it is                                                             |
 | :-------------------------------------- | :--------------------------------------------------------------------- |
@@ -350,6 +356,7 @@ creates the App Store provisioning profile itself.
 | Level content does not drift         | Fingerprint pins in `levels.test.ts`                                               |
 | Drawings are what the art makes      | `pnpm drawings:check` in CI; `tools/drawings.test.ts` round-trips every PNG        |
 | Colours only in the theme            | ESLint `no-restricted-syntax` (`repo/theme-colours`); `styles.test.ts` for the CSS |
+| Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`  |
 | Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
 
 ## Testing
