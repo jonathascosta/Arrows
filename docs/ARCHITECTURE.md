@@ -495,7 +495,7 @@ the same pictures, byte for byte. `app-store-listing.yml`, run by hand, uploads 
 screenshots with fastlane (`deliver`, lane `listing`), with the App Store Connect API key of the
 TestFlight workflow. It uploads no build and submits nothing. The listing's support, marketing
 and privacy URLs point to the owner's site, jonathas.net, which hosts a copy of `privacy.html`
-(docs/STORE.md).
+([STORE.md](STORE.md)).
 
 ## Enforced rules
 

@@ -110,8 +110,9 @@ support by e-mail at jonathaspcosta@gmail.com, and the privacy policy at
 - Update `release_notes.txt` in both languages.
 - If a screen changed, run `pnpm store:screenshots` and commit the screenshots.
 - If no event runs when the version comes out (the Autumn event ends on 30 November 2026), drop
-  the seasonal events line from the descriptions, and the event board from the screenshots
-  (`apps/game/store/screenshots.spec.ts`), until the next event.
+  the seasonal events line from the descriptions and from the site's support pages
+  (jonathas.net, `src/pages/arrows.astro` and `arrows/pt.astro`), and the event board from the
+  screenshots (`apps/game/store/screenshots.spec.ts`), until the next event.
 - If what the app does with data changed, update `privacy.html` (its date too), the privacy
   manifest, the App Privacy answers and the site's copy of the policy (jonathas.net, step 2).
 - Run the `App Store listing` workflow, then the `TestFlight` one, then submit.

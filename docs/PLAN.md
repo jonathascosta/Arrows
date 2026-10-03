@@ -284,7 +284,7 @@ API within the budget in the product document, Android, iPad.
 | T13  | done  | [#18](https://github.com/jonathascosta/Arrows/pull/18) |
 | T14  | done  | [#20](https://github.com/jonathascosta/Arrows/pull/20) |
 | T15  | done  | [#19](https://github.com/jonathascosta/Arrows/pull/19) |
-| T16  | done  | this pull request                                      |
+| T16  | done  | [#21](https://github.com/jonathascosta/Arrows/pull/21) |
 
 T8 is built and its macOS build job is green; its other two criteria, a TestFlight build on an
 iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts (the secrets
