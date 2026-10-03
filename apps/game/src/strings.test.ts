@@ -3,9 +3,11 @@ import {
   formatDateKey,
   formatDayLong,
   formatDayShort,
+  formatCountdown,
   formatDuration,
   formatMonth,
   formatMonthShort,
+  ordinal,
   spellOut,
   t,
   tn,
@@ -80,5 +82,37 @@ describe('day and month names', () => {
     expect(weekdayNames().map((name) => name.narrow)).toEqual(['M', 'T', 'W', 'T', 'F', 'S', 'S']);
     expect(weekdayNames()[0]!.long).toBe('Monday');
     expect(weekdayNames()[6]!.long).toBe('Sunday');
+  });
+});
+
+describe('ordinal', () => {
+  it('names ranks in English', () => {
+    expect([1, 2, 3, 4, 10, 11, 12, 13, 21, 22, 23, 30, 101, 111].map(ordinal)).toEqual([
+      '1st',
+      '2nd',
+      '3rd',
+      '4th',
+      '10th',
+      '11th',
+      '12th',
+      '13th',
+      '21st',
+      '22nd',
+      '23rd',
+      '30th',
+      '101st',
+      '111th',
+    ]);
+  });
+});
+
+describe('formatCountdown', () => {
+  it('shows hours and minutes, rounding minutes up', () => {
+    // A no-break space keeps the time on one line.
+    expect(formatCountdown((7 * 60 + 47) * 60_000 + 30_000)).toBe('7h\u00a048m');
+    expect(formatCountdown(3_600_000)).toBe('1h\u00a00m');
+    expect(formatCountdown(12 * 60_000)).toBe('12m');
+    expect(formatCountdown(5_000)).toBe('1m');
+    expect(formatCountdown(0)).toBe('1m');
   });
 });

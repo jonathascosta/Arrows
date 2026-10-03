@@ -13,6 +13,7 @@ export type PuzzleRef =
 export type Route =
   | { readonly screen: 'home' }
   | { readonly screen: 'calendar'; readonly month: MonthKey | null }
+  | { readonly screen: 'league' }
   | { readonly screen: 'play'; readonly ref: PuzzleRef };
 
 /** The home screen: the page with nothing else in its address. */
@@ -23,8 +24,8 @@ function isTier(value: string | null): value is Tier {
 }
 
 /**
- * Reads `?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=hard` or
- * `?calendar[=YYYY-MM]`. Nothing, or anything invalid, is the home screen, so
+ * Reads `?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=hard`,
+ * `?calendar[=YYYY-MM]` or `?league`. Nothing, or anything invalid, is the home screen, so
  * a bad link never shows an error page. Whether a day can be opened yet is
  * the app's to decide.
  */
@@ -46,6 +47,7 @@ export function parseRoute(search: string): Route {
   if (params.has('level') && Number.isSafeInteger(level) && level >= 1) {
     return { screen: 'play', ref: { kind: 'level', level } };
   }
+  if (params.has('league')) return { screen: 'league' };
   const calendar = params.get('calendar');
   if (calendar !== null) {
     return { screen: 'calendar', month: isMonthKey(calendar) ? calendar : null };
@@ -60,6 +62,8 @@ export function routeSearch(route: Route): string {
       return '';
     case 'calendar':
       return route.month === null ? '?calendar' : `?calendar=${route.month}`;
+    case 'league':
+      return '?league';
     case 'play':
       return puzzleSearch(route.ref);
   }
@@ -87,4 +91,18 @@ export function puzzleHref(ref: PuzzleRef): string {
 
 export function calendarHref(month: MonthKey | null = null): string {
   return routeHref({ screen: 'calendar', month });
+}
+
+export const LEAGUE_HREF = './?league';
+
+/** The same board, the same key: `level:12`, `daily:2026-10-03`, `drawing:butterfly:hard`. */
+export function puzzleKey(ref: PuzzleRef): string {
+  switch (ref.kind) {
+    case 'level':
+      return `level:${ref.level}`;
+    case 'daily':
+      return `daily:${ref.dateKey}`;
+    case 'drawing':
+      return `drawing:${ref.drawingId}:${ref.tier}`;
+  }
 }

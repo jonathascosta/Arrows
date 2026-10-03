@@ -61,6 +61,8 @@ export interface ThemeIcons {
   readonly grid: string;
   readonly menu: string;
   readonly streak: string;
+  /** The league screen's rules button. */
+  readonly info: string;
   /** A day won: filled, in the star colour. */
   readonly star: string;
   readonly trophy: string;
@@ -87,6 +89,8 @@ export interface Theme {
   readonly tiers: Readonly<Record<Tier, string>>;
   /** Drawing palette names (from the drawing's legend) to colours. */
   readonly drawingPalette: Readonly<Record<string, string>>;
+  /** Avatar backgrounds of the league's characters, under initials in `onPrimary`. */
+  readonly avatars: readonly string[];
   readonly shadows: ThemeShadows;
   readonly board: BoardStyle;
   /** Which way the chance arrowheads point in the header. */
@@ -111,6 +115,9 @@ export function themeProperties(theme: Theme): Record<string, string> {
   for (const [tier, value] of Object.entries(theme.tiers)) {
     properties[`--tier-${kebab(tier)}`] = value;
   }
+  theme.avatars.forEach((value, i) => {
+    properties[`--avatar-${i}`] = value;
+  });
   properties['--shadow-raised'] = theme.shadows.raised;
   properties['--font-title'] = theme.fonts.title;
   properties['--font-ui'] = theme.fonts.ui;

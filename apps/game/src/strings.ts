@@ -27,8 +27,8 @@ const en = {
   'home.dailyStars': '{n} of {total}',
   'home.dailyStarsLabel': '{n} of {total} stars this month',
   'home.league': 'League',
-  'home.leagueTitle': 'Bronze',
-  'home.leagueNote': 'Opens soon',
+  'home.leagueRank': '{league} · {rank}',
+  'home.leagueJoin': 'Win a board to join today',
   'home.event': 'Event',
   'home.eventNote': 'A drawing board',
   'calendar.title': 'Daily challenge',
@@ -49,6 +49,37 @@ const en = {
   'calendar.board': '{kind} board · {tier} · {width} × {height}',
   'calendar.weekday': 'Weekday',
   'calendar.weekend': 'Weekend',
+  'league.title': 'Daily league',
+  'league.info': 'How the league works',
+  'league.resets': 'Resets in {time}',
+  'league.rules.both': 'Top 10 move up to {up}, bottom 10 move down to {down}.',
+  'league.rules.bottom': 'Top 10 move up to {up}. Nobody moves down from {league}.',
+  'league.rules.top': 'Bottom 10 move down to {down}. {league} is the top league.',
+  'league.characters': 'You’re playing against the game’s characters until the league has players.',
+  'league.join': 'Win a board today to join the table.',
+  'league.table': '{league} table',
+  'league.you': 'You',
+  'league.notJoined': 'not in today’s table until you win a board',
+  'league.character': 'character',
+  'league.points.one': '1 point',
+  'league.points.other': '{n} points',
+  'league.movesUp': 'moves up',
+  'league.movesDown': 'moves down',
+  'league.aboveUp': 'Above moves up',
+  'league.belowDown': 'Below moves down',
+  'league.howTitle': 'How the league works',
+  'league.howBody':
+    'Every board you win today earns points: more for harder and bigger boards, a fast time and no chances lost, and a bonus on event boards. Each board counts once a day. At midnight the top 10 move up a league and the bottom 10 move down; a day without a board won leaves your league as it is. Until the league has players, the other 29 are the game’s characters, simulated on your phone and marked “character”.',
+  'league.gotIt': 'Got it',
+  'league.summaryTitle': 'While you were away',
+  'league.summary.promoted':
+    'You finished {rank} in {league} on {day}, with {points}, and moved up to {next}.',
+  'league.summary.stayed':
+    'You finished {rank} in {league} on {day}, with {points}, and stay in {league}.',
+  'league.summary.relegated':
+    'You finished {rank} in {league} on {day}, with {points}, and moved down to {next}.',
+  'league.continue': 'Continue',
+  'league.see': 'See the league',
   'hud.chances': '{n} of {total} chances left',
   'hud.timer': 'Time {time}',
   'tools.grid': 'Grid',
@@ -70,6 +101,7 @@ const en = {
   'won.best': 'Best {time}.',
   'won.star': 'A star for {day}.',
   'won.trophy': 'Every day of {month} won: a trophy!',
+  'won.league': '+{points} in {league} league · now {rank}.',
   'won.next': 'Next level',
   'won.again': 'Play again',
   'lost.title': 'Out of chances',
@@ -202,6 +234,21 @@ export function formatMonthShort(month: string, currentYear: number): string {
 /** The calendar's weekday heads from Monday: narrow (`M`) and long (`Monday`). */
 export function weekdayNames(): { narrow: string; long: string }[] {
   return [...WEEKDAYS.slice(1), WEEKDAYS[0]].map((long) => ({ narrow: long.slice(0, 1), long }));
+}
+
+/** `1st`, `2nd`, `3rd`, `4th`, `11th`, `21st`: a rank in the league table. */
+export function ordinal(n: number): string {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+}
+
+/** Time left as `7h 48m` (one unbreakable piece), or `12m` within the hour; minutes round up, so never `0m`. */
+export function formatCountdown(ms: number): string {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  const hours = Math.floor(minutes / 60);
+  // A no-break space: the time never splits across lines.
+  return hours > 0 ? `${hours}h\u00a0${minutes % 60}m` : `${minutes}m`;
 }
 
 /** Milliseconds as `mm:ss`, or `h:mm:ss` from an hour on. */

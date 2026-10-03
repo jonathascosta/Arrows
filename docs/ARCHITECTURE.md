@@ -106,34 +106,36 @@ product document sets.
 
 ## App
 
-`apps/game` is a Vite app in vanilla TypeScript and DOM, with no UI framework. `index.html`
-plays the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`), shows
-the daily calendar (`?calendar`, or `?calendar=YYYY-MM` for a month), or the home screen when the
-URL names nothing (or something invalid); `dev.html` opens any puzzle by seed and shows what the
-solver measured, and the home screen's menu button leads to it. Its Preview shows any day, but
-its Play link follows the game's rules: a day ahead of today, or before the first daily, opens
-the calendar.
+`apps/game` is a Vite app in vanilla TypeScript and DOM, with no UI framework. `index.html` plays
+the puzzle named by the URL (`?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=t`), shows the daily
+calendar (`?calendar`, or `?calendar=YYYY-MM` for a month), the daily league (`?league`), or the
+home screen when the URL names nothing (or something invalid); `dev.html` opens any puzzle by seed
+and shows what the solver measured, and the home screen's menu button leads to it. Its Preview shows
+any day, but its Play link follows the game's rules: a day ahead of today, or before the first
+daily, opens the calendar.
 
 ### Module map
 
-| Module                   | Contents                                                                                                                                                                                                                                                                                                                                           |
-| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `theme/`                 | `Theme` (colours, tier colours, drawing palette, shadows, board geometry, chance direction, icons, fonts, motion) and `applyTheme`, which writes CSS custom properties; `default.ts` is the Paper theme of [DESIGN.md](DESIGN.md); `contrast.test.ts` holds every pairing the screens use to WCAG AA, with the drawing palette's known gaps listed |
-| `board/geometry.ts`      | Pure: arrow body and head shapes, exit track, grid lines, board bounds, in cell units                                                                                                                                                                                                                                                              |
-| `board/viewport.ts`      | Pure: zoom and pan as data (fit, clamp, `zoomAt`, `pinchView`, `panBy`, `cellAt`, `ensureVisible`)                                                                                                                                                                                                                                                 |
-| `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                          |
-| `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                  |
-| `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                         |
-| `app.ts`                 | The shell: shows the screen an address names, records level and daily results in their stores, pushes the next level onto the history, and opens the calendar instead of a day that cannot be opened yet                                                                                                                                           |
-| `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                 |
-| `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                               |
-| `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                |
-| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                                                                                                                                                                                           |
-| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path) and `DailyStore` (days won) on top of it                                                                                                                               |
-| `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                         |
-| `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                      |
-| `route.ts`, `puzzles.ts` | URL to route (home, calendar, puzzle), reference to generated puzzle                                                                                                                                                                                                                                                                               |
-| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                           |
+| Module                   | Contents                                                                                                                                                                                                                                                                                                                                                           |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theme/`                 | `Theme` (colours, tier colours, drawing palette, avatar colours, shadows, board geometry, chance direction, icons, fonts, motion) and `applyTheme`, which writes CSS custom properties; `default.ts` is the Paper theme of [DESIGN.md](DESIGN.md); `contrast.test.ts` holds every pairing the screens use to WCAG AA, with the drawing palette's known gaps listed |
+| `board/geometry.ts`      | Pure: arrow body and head shapes, exit track, grid lines, board bounds, in cell units                                                                                                                                                                                                                                                                              |
+| `board/viewport.ts`      | Pure: zoom and pan as data (fit, clamp, `zoomAt`, `pinchView`, `panBy`, `cellAt`, `ensureVisible`)                                                                                                                                                                                                                                                                 |
+| `board/gestures.ts`      | Pure: pointer events in, `tap`, `pan`, `pinch` and `pinchEnd` actions out                                                                                                                                                                                                                                                                                          |
+| `board/renderer.ts`      | SVG drawing: one `<g data-arrow>` per arrow, exit and bump animations, hint, grid                                                                                                                                                                                                                                                                                  |
+| `game/`                  | `PlaySession` (engine state, timer, hints) and `Stopwatch`                                                                                                                                                                                                                                                                                                         |
+| `app.ts`                 | The shell: shows the screen an address names, records level, daily and league results in their stores, pushes the next level onto the history, opens the calendar instead of a day that cannot be opened yet, and shows the league's summary of the last day played once                                                                                           |
+| `screens/home.ts`        | The home screen: wordmark, streak chip, the Levels card with its strip and Play, the Daily, League and Event cards                                                                                                                                                                                                                                                 |
+| `screens/calendar.ts`    | The daily calendar: a month in weeks from Monday with stars, today and locked days, month buttons that redraw in place, the trophies row, Play today                                                                                                                                                                                                               |
+| `screens/league.ts`      | The daily league: the league's name and countdown, the rules, the table of 30 with avatars, tags and the dividers where moves happen; the rules and the day's summary in sheets; a 30 s clock that moves the table and settles the day at midnight                                                                                                                 |
+| `league/`                | `LeagueProvider`, what the screens need of a league; `SimulatedLeagueProvider`, the league against the game's characters on the device (engine `generateSeason`, `standings`, `resolveDay`, `scoreBoard`)                                                                                                                                                          |
+| `daily/`                 | Pure: `days.ts` (local day key, month arithmetic, `DAILY_FIRST_DAY`, which days can be opened) and `month.ts` (the month model, the trophies row, a complete month)                                                                                                                                                                                                |
+| `screens/play.ts`        | The play screen: wires input to the session and results to the renderer, HUD and overlay                                                                                                                                                                                                                                                                           |
+| `persistence/`           | `KeyValueStore` with `WebStore` (localStorage, never throws), `MemoryStore` and `browserStore()`; `RecordSlot`, one versioned JSON record; `ProgressStore` (the level path), `DailyStore` (days won) and `LeagueStore` (the player's league and day) on top of it                                                                                                  |
+| `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
+| `ui/`                    | HUD (top bar and tool bar), `Chances` (the arrowhead lives and their breaking animation), the end-of-board sheet, DOM helpers                                                                                                                                                                                                                                      |
+| `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle                                                                                                                                                                                                                         |
+| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`                                                                                                                                                                                                                                                                                                           |
 
 ### Progress and navigation
 
@@ -162,19 +164,48 @@ lost while it was open. Only `App` writes the records: levels move the path and 
 replay of a level already won only keeps its best time, a won daily earns its star, and events
 are not stored yet.
 
-Links on the home screen and the back button load the page anew, so each adds a history entry;
-"Next level" pushes the new address onto the history, and `popstate` shows what the address
-names. The calendar's month buttons redraw it in place and replace the address, so Back still
-leads home. A daily's back button and its sheets lead to its month in the calendar. An address
-naming a day ahead of today, or before the first daily, opens the calendar instead and replaces
-the address. When the browser restores a page from its back-forward cache (`pageshow` with
-`persisted`), or another tab saves progress (`storage`), `App.refresh` draws the home screen or
-the calendar again if one is showing, and puts focus back on the same control; a board in play is
-left as it is. The calendar says a new month through a live region, since focus stays on the
-month button.
+Links on the home screen and the back button load the page anew, so each adds a history entry; "Next
+level" pushes the new address onto the history, and `popstate` shows what the address names. The
+calendar's month buttons redraw it in place and replace the address, so Back still leads home. A
+daily's back button and its sheets lead to its month in the calendar. An address naming a day ahead
+of today, or before the first daily, opens the calendar instead and replaces the address. When the
+browser restores a page from its back-forward cache (`pageshow` with `persisted`), or another tab
+saves progress (`storage`), `App.refresh` draws the home screen, the calendar or the league again if
+one is showing, and puts focus back on the same control; a board in play is left as it is. The
+calendar says a new month through a live region, since focus stays on the month button.
 
-The day is the device's local date (`localDateKey`), read when a screen is drawn; date names come
-from tables in `strings.ts` rather than `Intl`, whose output differs between engines.
+The day is the device's local date (`localDateKey`), read from the app's `clock` when a screen is
+drawn; date names come from tables in `strings.ts` rather than `Intl`, whose output differs
+between engines.
+
+### Daily league
+
+`SimulatedLeagueProvider` keeps only the player's own state, under `arrows.league` with
+`version: 1`: the league, the day the points belong to, the points, the keys of the boards that
+earned them (`puzzleKey`: each board counts once a day), and the summary of the last day settled
+until it is seen. The 29 characters are never stored: `generateSeason(league, day)` makes them
+again, and `standings` places them at the local time of day, so the table moves while the app is
+open (the league screen redraws every 30 s) and while it is closed.
+
+Every call reads the state and first brings it to today. The first call on a new day settles the
+last day played with its final table (`standings` at the end of the day, `resolveDay`,
+`nextLeague`) and keeps its summary; a day without a board won changes nothing, and neither do
+the days missed between, so several missed days settle once. A stored day after today (a clock
+set back) is dropped unsettled. The summary shows once, on the home screen or the league,
+whichever comes first.
+
+Until a board is won today the player is not in the day's table: the view lists them last,
+without a move, below characters still at 0 (the engine's `standings` would give them the tie).
+
+Two limits are accepted. The home screen does not tick: its League card shows the countdown as it
+was when drawn, and the day settles on the next screen drawn (the league screen ticks every
+30 s). Where the clocks go back at midnight (Santiago, Asunción, Havana), the local date goes back
+an hour: a board won in that hour reads as a clock set back and is dropped, and the repeated
+day can settle twice. The day key may move to a fixed time zone later (docs/PRODUCT.md).
+
+The win sheet's league line comes from `App.record`: every board won is scored with
+`scoreBoard` (tier, cells, time, chances lost, and the event bonus for drawings). A server-backed
+provider can replace the simulated one behind `LeagueProvider` when real players join.
 
 ### Rendering and input
 

@@ -69,3 +69,14 @@ export function isPlayableDay(dateKey: DateKey, today: DateKey): boolean {
   // Date keys compare as strings in calendar order.
   return isDateKey(dateKey) && dateKey >= DAILY_FIRST_DAY && dateKey <= today;
 }
+
+/** Seconds since local midnight on the device's clock. */
+export function secondsOfDay(date: Date): number {
+  return date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
+}
+
+/** Milliseconds until the next local midnight, on days of 23 or 25 hours too. */
+export function msUntilMidnight(date: Date): number {
+  const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  return next.getTime() - date.getTime();
+}

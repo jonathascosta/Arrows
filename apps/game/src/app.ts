@@ -1,13 +1,23 @@
 import type { DateKey, MonthKey } from './daily/days.ts';
-import { isPlayableDay, monthOf } from './daily/days.ts';
+import { isPlayableDay, localDateKey, monthOf } from './daily/days.ts';
 import { clampMonth } from './daily/month.ts';
 import { DailyStore } from './persistence/daily.ts';
 import { ProgressStore } from './persistence/progress.ts';
 import type { KeyValueStore } from './persistence/store.ts';
 import type { PuzzleRef, Route } from './route.ts';
-import { calendarHref, HOME_HREF, parseRoute, routeSearch } from './route.ts';
+import {
+  calendarHref,
+  HOME_HREF,
+  LEAGUE_HREF,
+  parseRoute,
+  puzzleKey,
+  routeSearch,
+} from './route.ts';
 import { CalendarScreen } from './screens/calendar.ts';
 import { HomeScreen } from './screens/home.ts';
+import { LeagueScreen, summaryText } from './screens/league.ts';
+import type { LeagueProvider } from './league/provider.ts';
+import { SimulatedLeagueProvider } from './league/simulated.ts';
 import { PlayScreen } from './screens/play.ts';
 import type { BoardResult, Exit, ResultNote } from './screens/play.ts';
 import { t } from './strings.ts';
@@ -18,8 +28,8 @@ export interface AppOptions {
   readonly store: KeyValueStore;
   readonly now: () => number;
   readonly reducedMotion: () => boolean;
-  /** Today's date key in the device's local time. */
-  readonly today: () => DateKey;
+  /** The wall clock: the local day, the league's time of day and its countdown. */
+  readonly clock: () => Date;
   /** Pushes an address onto the browser history (no reload). */
   readonly pushUrl: (url: string) => void;
   /** Replaces the current address (no reload, no new history entry). */
@@ -51,6 +61,7 @@ export class App {
   private readonly options: AppOptions;
   private readonly progress: ProgressStore;
   private readonly daily: DailyStore;
+  private readonly league: LeagueProvider;
   private screen: Screen | null = null;
   private play: PlayScreen | null = null;
   /** What is showing, for `refresh`. */
@@ -61,6 +72,12 @@ export class App {
     this.options = options;
     this.progress = new ProgressStore(options.store);
     this.daily = new DailyStore(options.store);
+    this.league = new SimulatedLeagueProvider(options.store, t('league.you'));
+  }
+
+  /** Today's date key on the device's clock. */
+  private today(): DateKey {
+    return localDateKey(this.options.clock());
   }
 
   /** Shows what an address names: a puzzle, the daily calendar, or the home screen. */
@@ -73,6 +90,9 @@ export class App {
       case 'calendar':
         this.showCalendar(route.month);
         return;
+      case 'league':
+        this.showLeague();
+        return;
       case 'play':
         this.showPuzzle(route.ref);
         return;
@@ -80,8 +100,8 @@ export class App {
   }
 
   /**
-   * Draws the home screen or the calendar again from storage, when one is
-   * showing: after the browser restores the page from its back-forward cache,
+   * Draws the home screen, the calendar or the league again from storage, when
+   * one is showing: after the browser restores the page from its back-forward cache,
    * or when another tab has saved progress. A board in play is left as it is.
    */
   refresh(): void {
@@ -89,6 +109,7 @@ export class App {
     // The screen is drawn anew: keep focus on the same control, as far as it still exists.
     const focused = focusSelector(this.root.ownerDocument.activeElement, this.root);
     if (this.route.screen === 'home') this.showHome();
+    else if (this.route.screen === 'league') this.showLeague();
     else this.showCalendar(this.route.month);
     if (focused !== null) this.root.querySelector<HTMLElement>(focused)?.focus();
   }
@@ -104,21 +125,50 @@ export class App {
 
   private showHome(): void {
     this.route = { screen: 'home' };
-    this.swap(
+    const now = this.options.clock();
+    const home = this.swap(
       () =>
         new HomeScreen(this.root, {
           theme: this.options.theme,
           progress: this.progress.progress,
+          league: this.league.view(now),
           finishedDays: this.daily.finished(),
-          today: this.options.today(),
+          today: this.today(),
           pickerHref: this.options.pickerHref,
           reducedMotion: this.options.reducedMotion,
+        }),
+    );
+    // The first screen of a new day says how the last day played ended. Shown is
+    // seen, here as in the league: it never shows twice.
+    const summary = this.league.summary(now);
+    if (summary !== null) {
+      this.league.dismissSummary();
+      home.showSheet({
+        kind: 'summary',
+        title: t('league.summaryTitle'),
+        body: summaryText(summary),
+        action: t('league.continue'),
+        onAction: () => undefined,
+        secondary: { label: t('league.see'), href: LEAGUE_HREF },
+      });
+    }
+  }
+
+  private showLeague(): void {
+    this.route = { screen: 'league' };
+    this.swap(
+      () =>
+        new LeagueScreen(this.root, {
+          theme: this.options.theme,
+          league: this.league,
+          clock: this.options.clock,
+          homeHref: HOME_HREF,
         }),
     );
   }
 
   private showCalendar(month: MonthKey | null): void {
-    const today = this.options.today();
+    const today = this.today();
     const shown = clampMonth(month ?? monthOf(today), today);
     // A month outside the calendar shows the nearest one, and the address says so.
     if (month !== null && month !== shown) {
@@ -144,8 +194,8 @@ export class App {
 
   private showPuzzle(ref: PuzzleRef): void {
     // Future days, and days before the first daily, cannot be opened (docs/PRODUCT.md).
-    if (ref.kind === 'daily' && !isPlayableDay(ref.dateKey, this.options.today())) {
-      const month = clampMonth(monthOf(ref.dateKey), this.options.today());
+    if (ref.kind === 'daily' && !isPlayableDay(ref.dateKey, this.today())) {
+      const month = clampMonth(monthOf(ref.dateKey), this.today());
       this.options.replaceUrl(routeSearch({ screen: 'calendar', month }));
       this.showCalendar(month);
       return;
@@ -187,13 +237,33 @@ export class App {
   /**
    * Levels move the path and the streak; a replay of a level already won only
    * keeps its best time. A won daily earns its star; a lost one is not stored.
-   * Event boards are not stored yet (docs/PRODUCT.md).
+   * Event boards are not stored yet (docs/PRODUCT.md). Every board won also
+   * earns league points.
    */
   private record(result: BoardResult): ResultNote | undefined {
+    const note = this.recordPuzzle(result);
+    if (result.outcome !== 'won') return note;
+    // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
+    const award = this.league.record(
+      {
+        key: puzzleKey(result.ref),
+        tier: result.tier,
+        cellCount: result.cellCount,
+        timeSeconds: result.elapsedMs / 1000,
+        chancesLost: result.chancesLost,
+        event: result.ref.kind === 'drawing',
+      },
+      this.options.clock(),
+    );
+    if (award === null) return note;
+    return { ...note, league: award };
+  }
+
+  private recordPuzzle(result: BoardResult): ResultNote | undefined {
     const { ref } = result;
     if (ref.kind === 'daily') {
       if (result.outcome === 'lost') return undefined;
-      const win = this.daily.recordWin(ref.dateKey, result.elapsedMs, this.options.today());
+      const win = this.daily.recordWin(ref.dateKey, result.elapsedMs, this.today());
       if (!win.replay) return { star: win.monthComplete ? 'month' : 'day' };
       return { bestMs: win.bestMs, newBest: win.newBest };
     }

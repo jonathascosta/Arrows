@@ -5,6 +5,7 @@ import { cellCenter } from './board/geometry.ts';
 import { DAILY_KEY, DailyStore } from './persistence/daily.ts';
 import { PROGRESS_KEY, ProgressStore } from './persistence/progress.ts';
 import { MemoryStore } from './persistence/store.ts';
+import { SimulatedLeagueProvider } from './league/simulated.ts';
 import { loadPuzzle } from './puzzles.ts';
 import type { PuzzleRef } from './route.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
@@ -84,6 +85,12 @@ interface Harness {
   replaced: string[];
 }
 
+/** Local noon on a day: the app's wall clock in these tests. */
+function noon(day: string): Date {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y!, m! - 1, d, 12, 0);
+}
+
 function mount(store = new MemoryStore(), today = '2026-10-03'): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
@@ -94,7 +101,7 @@ function mount(store = new MemoryStore(), today = '2026-10-03'): Harness {
     store,
     now: () => 0,
     reducedMotion: () => true,
-    today: () => today,
+    clock: () => noon(today),
     pushUrl: (url) => urls.push(url),
     replaceUrl: (url) => replaced.push(url),
     pickerHref: 'dev.html',
@@ -141,7 +148,10 @@ describe('App', () => {
     await solve(root, { kind: 'level', level: 1 });
     const sheet = root.querySelector('.overlay[data-overlay="won"] p')!;
     // A first win: no earlier best time to show.
-    expect(sheet.textContent).toBe('00:00 · 3 of 3 chances left. First try. Win streak is now 1.');
+    // The streak, then the league's points for the board.
+    expect(sheet.textContent).toMatch(
+      /^00:00 · 3 of 3 chances left\. First try\. Win streak is now 1\. \+\d+ points in Bronze league · now \d+(st|nd|rd|th)\.$/,
+    );
 
     // A reload: a new app on the same storage.
     const reloaded = mount(store);
@@ -219,8 +229,8 @@ describe('App', () => {
     const daily: PuzzleRef = { kind: 'daily', dateKey: '2026-10-03' };
     app.show('?daily=2026-10-03');
     await solve(root, daily);
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left. A star for Sat 3 Oct.',
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toMatch(
+      /^00:00 · 3 of 3 chances left\. A star for Sat 3 Oct\. \+\d+ points in Bronze league/,
     );
     app.show('?daily=2026-10-02');
     await loseBoard(root, { kind: 'daily', dateKey: '2026-10-02' });
@@ -275,8 +285,8 @@ describe('App', () => {
     const { app, root } = mount(store);
     app.show('?daily=2026-09-30');
     await solve(root, { kind: 'daily', dateKey: '2026-09-30' });
-    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toBe(
-      '00:00 · 3 of 3 chances left. A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
+    expect(root.querySelector('.overlay[data-overlay="won"] p')?.textContent).toContain(
+      'A star for Wed 30 Sep. Every day of September 2026 won: a trophy!',
     );
     app.show('?calendar');
     expect(root.querySelector('.trophy.complete .sr-only')?.textContent).toBe(
@@ -378,5 +388,88 @@ describe('App', () => {
     app.show('?level=2');
     expect(root.querySelector('.topbar .back')?.getAttribute('href')).toBe('./');
     expect(root.querySelector('.topbar .back')?.getAttribute('aria-label')).toBe('Back to home');
+  });
+
+  it('shows the league, and counts a board once a day', async () => {
+    const { app, root } = mount();
+    app.show('?league');
+    expect(root.querySelector('.league-name')?.textContent).toBe('Bronze');
+    expect(root.querySelectorAll('.league-row')).toHaveLength(30);
+    expect(root.querySelector<HTMLElement>('.league-join')?.hidden).toBe(false);
+
+    app.show('?level=1');
+    await solve(root, { kind: 'level', level: 1 });
+    expect(root.querySelector('.overlay p')?.textContent).toMatch(/points in Bronze league/);
+    // The same board again the same day: no league line.
+    app.show('?level=1');
+    await solve(root, { kind: 'level', level: 1 });
+    expect(root.querySelector('.overlay p')?.textContent).not.toMatch(/league/);
+
+    app.show('?league');
+    expect(root.querySelector<HTMLElement>('.league-join')?.hidden).toBe(true);
+    app.show('');
+    expect(root.querySelector('a.league .card-title')?.textContent).toMatch(/^Bronze · \d+/);
+  });
+
+  it('says how yesterday ended on the first home screen of the day, once', () => {
+    const store = new MemoryStore();
+    // Yesterday: a winning day in Bronze.
+    new SimulatedLeagueProvider(store, 'You').record(
+      {
+        key: 'level:900',
+        tier: 'superHard',
+        cellCount: 2000,
+        timeSeconds: 1,
+        chancesLost: 0,
+        event: false,
+      },
+      noon('2026-10-02'),
+    );
+    const { app, root } = mount(store, '2026-10-03');
+    app.show('');
+    const sheet = root.querySelector<HTMLElement>('.overlay[data-overlay="summary"]')!;
+    expect(sheet.querySelector('h2')?.textContent).toBe('While you were away');
+    expect(sheet.querySelector('p')?.textContent).toMatch(
+      /^You finished 1st in Bronze on Fri 2 Oct, with \d+ points, and moved up to Silver\.$/,
+    );
+    expect(sheet.querySelector('a')?.getAttribute('href')).toBe('./?league');
+    expect(root.querySelector('a.league .card-title')?.textContent).toBe('Silver');
+    sheet.querySelector('button')!.click();
+    // Seen: neither the home screen nor the league shows it again.
+    app.show('');
+    expect(root.querySelector('.overlay')).toBeNull();
+    app.show('?league');
+    expect(root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
+    expect(root.querySelector('.league-name')?.textContent).toBe('Silver');
+  });
+
+  it('shows the summary once, wherever it shows first', () => {
+    const yesterday = (): MemoryStore => {
+      const store = new MemoryStore();
+      new SimulatedLeagueProvider(store, 'You').record(
+        {
+          key: 'level:900',
+          tier: 'superHard',
+          cellCount: 2000,
+          timeSeconds: 1,
+          chancesLost: 0,
+          event: false,
+        },
+        noon('2026-10-02'),
+      );
+      return store;
+    };
+    // On the home screen, then "See the league" without Continue.
+    const first = mount(yesterday(), '2026-10-03');
+    first.app.show('');
+    expect(first.root.querySelector('.overlay[data-overlay="summary"]')).not.toBeNull();
+    first.app.show('?league');
+    expect(first.root.querySelector<HTMLElement>('.overlay')?.hidden).toBe(true);
+    // In the league, then back to the home screen without Continue.
+    const second = mount(yesterday(), '2026-10-03');
+    second.app.show('?league');
+    expect(second.root.querySelector('.overlay')?.getAttribute('data-overlay')).toBe('summary');
+    second.app.show('');
+    expect(second.root.querySelector('.overlay')).toBeNull();
   });
 });

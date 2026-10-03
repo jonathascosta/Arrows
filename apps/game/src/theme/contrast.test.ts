@@ -53,6 +53,16 @@ const PAIRS: [string, string, string, number][] = [
   ['today outline on a day cell', colors.primary, colors.surface, 3],
   ['star on a won day', colors.hint, colors.surfaceRaised, 3],
   ['trophy on its card', colors.hint, colors.surfaceRaised, 3],
+  // League: initials on every avatar colour, the player's dark avatar, the tags.
+  ...DEFAULT_THEME.avatars.map((color, i): [string, string, string, number] => [
+    `initials on avatar ${i}`,
+    colors.onPrimary,
+    color,
+    4.5,
+  ]),
+  ['initials on the player’s avatar', colors.onPrimary, colors.primary, 4.5],
+  ['character tag on the page', colors.textMuted, colors.background, 4.5],
+  ['tag on the player’s raised row', colors.textMuted, colors.surfaceRaised, 4.5],
   ...Object.entries(tiers).flatMap(([tier, color]): [string, string, string, number][] => [
     [`${tier} tier badge on a card`, color, colors.surfaceRaised, 4.5],
     [`finished ${tier} level number`, colors.onPrimary, color, 4.5],

@@ -3,9 +3,9 @@ import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { App } from './app.ts';
 import { DAILY_KEY } from './persistence/daily.ts';
+import { LEAGUE_KEY } from './persistence/league.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
 import { browserStore } from './persistence/store.ts';
-import { localDateKey } from './daily/days.ts';
 import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 
@@ -21,7 +21,7 @@ const app = new App(root, {
   store: browserStore(),
   now: () => performance.now(),
   reducedMotion: () => reducedMotion.matches,
-  today: () => localDateKey(),
+  clock: () => new Date(),
   pushUrl: (url) => history.pushState(null, '', url),
   // An empty search would keep the current one: the home screen is './'.
   replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
@@ -36,5 +36,6 @@ window.addEventListener('pageshow', (event) => {
   if (event.persisted) app.refresh();
 });
 window.addEventListener('storage', (event) => {
-  if (event.key === null || event.key === PROGRESS_KEY || event.key === DAILY_KEY) app.refresh();
+  const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY];
+  if (event.key === null || keys.includes(event.key)) app.refresh();
 });

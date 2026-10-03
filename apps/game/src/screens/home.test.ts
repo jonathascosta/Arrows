@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { SimulatedLeagueProvider } from '../league/simulated.ts';
 import { INITIAL_PROGRESS } from '../persistence/progress.ts';
+import { MemoryStore } from '../persistence/store.ts';
 import { loadPuzzle } from '../puzzles.ts';
 import type { Progress } from '../persistence/progress.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
@@ -12,6 +14,9 @@ function mount(progress: Partial<Progress> = {}): { root: HTMLElement; screen: H
     theme: DEFAULT_THEME,
     progress: { ...INITIAL_PROGRESS, ...progress },
     finishedDays: new Set(['2026-10-01', '2026-10-02', '2026-09-30']),
+    league: new SimulatedLeagueProvider(new MemoryStore(), 'You').view(
+      new Date(2026, 9, 3, 16, 12),
+    ),
     today: '2026-10-03',
     pickerHref: 'dev.html',
     reducedMotion: () => true,
@@ -78,7 +83,7 @@ describe('HomeScreen', () => {
     expect(root.querySelector('.play-button')?.getAttribute('href')).toBe('./?level=1');
   });
 
-  it('opens the calendar and the event board, and holds the league until it exists', () => {
+  it('opens the calendar, the league and the event board', () => {
     const { root } = mount();
     // The Daily card opens the calendar, with this month's stars.
     const daily = root.querySelector('a.daily')!;
@@ -90,12 +95,11 @@ describe('HomeScreen', () => {
     expect(daily.querySelector('.daily-stars > [aria-hidden="true"]:not(.icon)')?.textContent).toBe(
       '2 of 31',
     );
-    // Not a link, and drawn as one that opens nothing yet.
-    const league = root.querySelector('.league')!;
-    expect(league.tagName).toBe('DIV');
-    expect(league.querySelector('a')).toBeNull();
-    expect(league.getAttribute('data-soon')).toBe('true');
-    expect(league.textContent).toContain('Opens soon');
+    // Before a board is won today: the league's name and how to join.
+    const league = root.querySelector('a.league')!;
+    expect(league.getAttribute('href')).toBe('./?league');
+    expect(league.querySelector('.card-title')?.textContent).toBe('Bronze');
+    expect(league.querySelector('.card-note')?.textContent).toBe('Win a board to join today');
     const event = root.querySelector('a.event-card')!;
     expect(EVENT_REF).toEqual({ kind: 'drawing', drawingId: 'butterfly', tier: 'hard' });
     expect(event.getAttribute('href')).toBe('./?drawing=butterfly&tier=hard');
@@ -111,5 +115,54 @@ describe('HomeScreen', () => {
     const { root, screen } = mount();
     screen.destroy();
     expect(root.childElementCount).toBe(0);
+  });
+
+  it('shows the rank and the countdown once a board is won today', () => {
+    const provider = new SimulatedLeagueProvider(new MemoryStore(), 'You');
+    const now = new Date(2026, 9, 3, 16, 12);
+    provider.record(
+      {
+        key: 'level:900',
+        tier: 'superHard',
+        cellCount: 2000,
+        timeSeconds: 1,
+        chancesLost: 0,
+        event: false,
+      },
+      now,
+    );
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    new HomeScreen(root, {
+      theme: DEFAULT_THEME,
+      progress: INITIAL_PROGRESS,
+      finishedDays: new Set(),
+      league: provider.view(now),
+      today: '2026-10-03',
+      pickerHref: 'dev.html',
+      reducedMotion: () => true,
+    });
+    expect(root.querySelector('a.league .card-title')?.textContent).toBe('Bronze · 1st');
+    expect(root.querySelector('a.league .card-note')?.textContent).toBe('Resets in 7h\u00a048m');
+  });
+
+  it('opens a sheet over the page and gives the page back when it closes', () => {
+    const { root, screen } = mount();
+    let continued = 0;
+    screen.showSheet({
+      kind: 'summary',
+      title: 'While you were away',
+      body: 'Something happened.',
+      action: 'Continue',
+      onAction: () => continued++,
+    });
+    const sheet = root.querySelector<HTMLElement>('.overlay.floating')!;
+    expect(sheet.hidden).toBe(false);
+    expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(true);
+    expect(document.activeElement).toBe(sheet.querySelector('button'));
+    sheet.querySelector('button')!.click();
+    expect(continued).toBe(1);
+    expect(root.querySelector('.overlay')).toBeNull();
+    expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(false);
   });
 });

@@ -29,34 +29,35 @@ their licence files are in those packages and go into the app's credits in T10.
 
 The theme object in `apps/game/src/theme/` carries these names and values.
 
-| Token           | Value     | Use                                                                            |
-| :-------------- | :-------- | :----------------------------------------------------------------------------- |
-| `background`    | `#F4F0E8` | Screens                                                                        |
-| `surface`       | `#E9E3D6` | Quiet surfaces: round back buttons, chips, day cells                           |
-| `surfaceRaised` | `#FCFAF6` | Cards, sheets, tool bar buttons, the player's league row                       |
-| `shadow`        | layered   | Soft layered shadow under raised surfaces (provisional values in `default.ts`) |
-| `text`          | `#2A2723` | Body text                                                                      |
-| `textMuted`     | `#6E675C` | Secondary text                                                                 |
-| `title`         | `#1E1B17` | Titles                                                                         |
-| `divider`       | `#DDD5C6` | Hairlines, card separators                                                     |
-| `stroke`        | `#2B2925` | Arrow bodies on plain boards                                                   |
-| `head`          | `#2B2925` | Arrowheads on plain boards                                                     |
-| `hint`          | `#C9741F` | Hinted arrow, stars, small accents                                             |
-| `grid`          | `#E8E1D3` | Cell grid under the board                                                      |
-| `chance`        | `#2B2925` | Intact chance                                                                  |
-| `chanceLost`    | `#D6CEBF` | Lost chance; the faded board after a loss                                      |
-| `blocked`       | `#B93D2A` | Blocked arrow flash, breaking chance                                           |
-| `primary`       | `#2B2925` | Primary buttons                                                                |
-| `onPrimary`     | `#FCFAF6` | Text on primary buttons                                                        |
-| `focus`         | `#C9741F` | Keyboard focus ring (not in the delivery; the hint colour, 3:1)                |
-| `tierEasy`      | `#3D784B` | Tier accents (design: `#3F7D4E`, darkened for 4.5:1)                           |
-| `tierMedium`    | `#3C6FA0` |                                                                                |
-| `tierHard`      | `#7A4FA6` |                                                                                |
-| `tierSuperHard` | `#A83E34` |                                                                                |
-| `drawing1`      | `#D9822B` | Event board palette: orange                                                    |
-| `drawing2`      | `#C9A227` | yellow                                                                         |
-| `drawing3`      | `#7A4E2D` | brown                                                                          |
-| `drawing4`      | `#4F8A5B` | green                                                                          |
+| Token           | Value                                                                 | Use                                                                                                                    |
+| :-------------- | :-------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| `background`    | `#F4F0E8`                                                             | Screens                                                                                                                |
+| `surface`       | `#E9E3D6`                                                             | Quiet surfaces: round back buttons, chips, day cells                                                                   |
+| `surfaceRaised` | `#FCFAF6`                                                             | Cards, sheets, tool bar buttons, the player's league row                                                               |
+| `shadow`        | layered                                                               | Soft layered shadow under raised surfaces (provisional values in `default.ts`)                                         |
+| `text`          | `#2A2723`                                                             | Body text                                                                                                              |
+| `textMuted`     | `#6E675C`                                                             | Secondary text                                                                                                         |
+| `title`         | `#1E1B17`                                                             | Titles                                                                                                                 |
+| `divider`       | `#DDD5C6`                                                             | Hairlines, card separators                                                                                             |
+| `stroke`        | `#2B2925`                                                             | Arrow bodies on plain boards                                                                                           |
+| `head`          | `#2B2925`                                                             | Arrowheads on plain boards                                                                                             |
+| `hint`          | `#C9741F`                                                             | Hinted arrow, stars, small accents                                                                                     |
+| `grid`          | `#E8E1D3`                                                             | Cell grid under the board                                                                                              |
+| `chance`        | `#2B2925`                                                             | Intact chance                                                                                                          |
+| `chanceLost`    | `#D6CEBF`                                                             | Lost chance; the faded board after a loss                                                                              |
+| `blocked`       | `#B93D2A`                                                             | Blocked arrow flash, breaking chance                                                                                   |
+| `primary`       | `#2B2925`                                                             | Primary buttons                                                                                                        |
+| `onPrimary`     | `#FCFAF6`                                                             | Text on primary buttons                                                                                                |
+| `focus`         | `#C9741F`                                                             | Keyboard focus ring (not in the delivery; the hint colour, 3:1)                                                        |
+| `tierEasy`      | `#3D784B`                                                             | Tier accents (design: `#3F7D4E`, darkened for 4.5:1)                                                                   |
+| `tierMedium`    | `#3C6FA0`                                                             |                                                                                                                        |
+| `tierHard`      | `#7A4FA6`                                                             |                                                                                                                        |
+| `tierSuperHard` | `#A83E34`                                                             |                                                                                                                        |
+| `drawing1`      | `#D9822B`                                                             | Event board palette: orange                                                                                            |
+| `drawing2`      | `#C9A227`                                                             | yellow                                                                                                                 |
+| `drawing3`      | `#7A4E2D`                                                             | brown                                                                                                                  |
+| `drawing4`      | `#4F8A5B`                                                             | green                                                                                                                  |
+| `avatars`       | `#3D784B` `#3C6FA0` `#7A4FA6` `#A83E34` `#7A4E2D` `#2F6F73` `#9A531F` | League avatars under initials in `onPrimary`: the tier colours, the drawings' brown, and a teal and a rust added in T5 |
 
 Every text pairing meets WCAG AA (4.5:1; 3:1 only for the large serif titles), and every icon,
 focus ring and arrow stroke on plain boards meets 3:1. `apps/game/src/theme/contrast.test.ts`
@@ -131,10 +132,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-Until the later tasks fill them, two cards are placeholders: League shows "Bronze · Opens soon"
-as an outline on the page instead of a raised card and does nothing (T5), and the event card
-opens the butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level
-strip is not tappable: Play opens the current level.
+Until T6 fills it, the event card is a placeholder: it opens the butterfly at Hard. The menu
+button opens the puzzle picker until there is a menu. The level strip is not tappable: Play
+opens the current level.
 
 ### Daily challenge
 
@@ -165,6 +165,18 @@ and shows the month's stars ("★ 10 of 31").
 - Rows: rank, a round avatar with initials on a palette colour, the name, a `character` tag, the
   score right-aligned. The player's row is raised, with a dark avatar and "You".
 - Labelled dividers after rank 10 ("ABOVE MOVES UP") and before rank 21 ("BELOW MOVES DOWN").
+
+As built in T5: the rows sit on the page, the player's raised on `surfaceRaised`; the avatar
+colours are the `avatars` tokens (the tier colours, the drawings' brown, a teal and a rust, each
+reaching 4.5:1 under initials in `onPrimary`), picked by the character's name; the player's
+avatar is `primary` with "Y". The tag is an outlined pill under the name, so a name keeps its
+width on a 320 px phone; names wrap rather than lose letters. Until a board is won today, the
+player's row is last, with "–" for a rank and no move. Bronze has no bottom divider and
+Legend no top one, and the rules paragraph says so. Before a board is won today, "Win a board
+today to join the table." shows under the rules. The info button opens the rules in a sheet; the
+day's summary ("While you were away") is a sheet too, on the home screen or here. The home
+screen's League card shows "Gold · 8th" and "Resets in 7h 48m" once a board is won today, and
+"Win a board to join today" before.
 
 ## Screenshots
 

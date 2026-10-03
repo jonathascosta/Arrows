@@ -50,6 +50,9 @@ export const DEFAULT_THEME: Theme = {
     purple: '#7a4fa6',
     black: '#2b2925',
   },
+  // Initials on colour (docs/DESIGN.md, Daily league): the tier colours, the drawings'
+  // brown, a teal and a rust, all dark enough for light initials.
+  avatars: ['#3d784b', '#3c6fa0', '#7a4fa6', '#a83e34', '#7a4e2d', '#2f6f73', '#9a531f'],
   shadows: {
     raised: '0 1px 2px rgba(43, 41, 37, 0.06), 0 6px 18px rgba(43, 41, 37, 0.08)',
   },
@@ -78,6 +81,7 @@ export const DEFAULT_THEME: Theme = {
     ),
     menu: icon('<path d="M4 7h16M4 12h16M4 17h16"/>'),
     streak: icon('<path d="M4 18L10 12l3.5 3.5L20 9"/><path d="M14.5 9H20v5.5"/>'),
+    info: icon('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.2"/>'),
     star: icon(
       '<path fill="currentColor" stroke-width="1.2" d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>',
     ),
