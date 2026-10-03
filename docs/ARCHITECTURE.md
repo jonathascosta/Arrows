@@ -434,6 +434,22 @@ Before the first run the owner registers the app id `net.jonathas.arrows` under
 Certificates, Identifiers & Profiles and creates the app in App Store Connect with it; the lane
 creates the App Store provisioning profile itself.
 
+The API key and the distribution certificate belong to the owner's Apple Developer team, not to
+this app. A team key with the App Manager role serves every app on the team, so the key Trilha
+(already on TestFlight) uploads with serves this one, and the games to come, too. The certificate
+is a new Apple Distribution certificate, made from a CSR for these workflows, whose private key
+the owner keeps (the `.p12`), so the games to come can sign with it too. Trilha signs with
+another certificate, which its build tool made through the API. Neither is revoked for another
+app's sake. Every game repository with these workflows holds the same values in the six required
+secrets; only the three AdMob ones are its own. When the certificate expires (after a year), the
+owner makes a new one ([STORE.md](STORE.md), step 5) and replaces
+`IOS_DISTRIBUTION_CERTIFICATE_P12` and its password in each of those repositories; the `beta`
+lane then makes a new profile by itself.
+
+The `beta` lane neither creates nor revokes certificates: it imports the one it is given into a
+temporary keychain, and creates or downloads only this app's profile. The `listing` lane (Store,
+below) uses the same key and writes only this app's listing (`app_identifier`).
+
 ### Store
 
 [STORE.md](STORE.md) lists what the App Store needs and the owner's steps. The listing's text,

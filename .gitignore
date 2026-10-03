@@ -21,3 +21,12 @@ playwright-report/
 
 # Worktrees of review agents and other Claude Code sessions
 .claude/worktrees/
+
+# Signing keys and certificates never belong in the repository (docs/STORE.md, step 5)
+*.p12
+*.p8
+*.key
+*.csr
+*.cer
+*.pem
+*.mobileprovision
