@@ -68,8 +68,11 @@ describe('headPoints', () => {
     expect(Math.abs(left!.x - right!.x)).toBeCloseTo(2 * style.headHalfWidth);
   });
 
-  it('keeps the tip inside the head cell even with the stroke around it', () => {
-    expect(style.headTip + style.strokeWidth / 2).toBeLessThan(0.5);
+  it('lands the tip and the end of the tail on the edge of the cell, a node of the grid', () => {
+    // The head is filled, not stroked: its tip is where it is drawn.
+    expect(style.headTip).toBe(0.5);
+    // The body's round cap reaches half a stroke past its last point.
+    expect(style.tailReach + style.strokeWidth / 2).toBeCloseTo(0.5);
   });
 
   it('covers the end of the body line', () => {
@@ -142,25 +145,30 @@ describe('exitTrack', () => {
 });
 
 describe('gridData and bounds', () => {
-  it('runs through the cell centres, one line per row and per column of a rectangle', () => {
-    // 2x1: one row, two columns, each across the board from edge to edge.
-    expect(gridData(rectangleMask(2, 1))).toBe('M0 0.5H2M0.5 0V1M1.5 0V1');
+  it('draws a line every half cell, through the centres and along the edges', () => {
+    // 2x1: three horizontal lines (top edge, centre, bottom edge), five vertical ones.
+    expect(gridData(rectangleMask(2, 1))).toBe(
+      'M0 0H2M0 0.5H2M0 1H2M0 0V1M0.5 0V1M1 0V1M1.5 0V1M2 0V1',
+    );
   });
 
-  it('runs where the arrows run', () => {
-    // A horizontal arrow's body and ray lie on its row's line, through the centres.
+  it('has a node at every corner, tip and tail end of an arrow', () => {
     const d = gridData(rectangleMask(3, 2));
+    // Centre lines (corners) and edge lines (tips and tails) both run the board's length.
     expect(d).toContain('M0 0.5H3');
-    expect(d).toContain('M0 1.5H3');
+    expect(d).toContain('M0 1H3');
     expect(d).toContain('M2.5 0V2');
+    expect(d).toContain('M3 0V2');
   });
 
   it('skips inactive cells of a drawing', () => {
-    expect(gridData(maskFromAscii(['A.', '..']))).toBe('M0 0.5H1M0.5 0V1');
+    expect(gridData(maskFromAscii(['A.', '..']))).toBe('M0 0H1M0 0.5H1M0 1H1M0 0V1M0.5 0V1M1 0V1');
   });
 
   it('breaks a line where a drawing has a gap', () => {
-    expect(gridData(maskFromAscii(['A.A']))).toBe('M0 0.5H1M2 0.5H3M0.5 0V1M2.5 0V1');
+    expect(gridData(maskFromAscii(['A.A']))).toBe(
+      'M0 0H1M2 0H3M0 0.5H1M2 0.5H3M0 1H1M2 1H3M0 0V1M0.5 0V1M1 0V1M2 0V1M2.5 0V1M3 0V1',
+    );
   });
 
   it('adds the margin around the board', () => {

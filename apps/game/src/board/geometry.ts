@@ -120,31 +120,46 @@ export function exitDuration(travel: number, motion: ThemeMotion): number {
 }
 
 /**
- * The grid: the lines the arrows run on, through the cells' centres, one per
- * row and per column across each run of active cells, from edge to edge. An
- * arrow's ray runs along one of them, so a player can follow it to the first
- * arrow in its way.
+ * The grid: lines every half cell, through the cells' centres and along their
+ * edges, across each run of active cells. Its nodes are where an arrow's
+ * corners (the centres), the tip of its head and the end of its tail (the
+ * edges) land, and an arrow's ray runs along one of its lines, so a player can
+ * follow it to the first arrow in its way.
  */
 export function gridData(mask: Mask): string {
   const active = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.active[y * mask.width + x] === 1;
+  // Line k (in half cells) crosses cell row/column j when it runs through its
+  // centre (k = 2j + 1) or along one of its edges (k = 2j or 2j + 2).
+  const crosses = (k: number, j: number): boolean =>
+    k === 2 * j + 1 || k === 2 * j || k === 2 * j + 2;
   const parts: string[] = [];
-  for (let y = 0; y < mask.height; y++) {
-    for (let x = 0; x < mask.width; x++) {
-      if (!active(x, y) || active(x - 1, y)) continue;
-      let end = x + 1;
-      while (active(end, y)) end++;
-      parts.push(`M${x} ${y + 0.5}H${end}`);
+  const runs = (
+    lines: number,
+    length: number,
+    on: (k: number, i: number) => boolean,
+    draw: (k: number, from: number, to: number) => string,
+  ): void => {
+    for (let k = 0; k <= lines; k++) {
+      for (let i = 0; i < length; i++) {
+        if (!on(k, i) || on(k, i - 1)) continue;
+        let end = i + 1;
+        while (on(k, end)) end++;
+        parts.push(draw(k, i, end));
+      }
     }
-  }
-  for (let x = 0; x < mask.width; x++) {
-    for (let y = 0; y < mask.height; y++) {
-      if (!active(x, y) || active(x, y - 1)) continue;
-      let end = y + 1;
-      while (active(x, end)) end++;
-      parts.push(`M${x + 0.5} ${y}V${end}`);
-    }
-  }
+  };
+  // Horizontal line k runs over column x when an active cell of that column touches it.
+  const rowsOn = (k: number, x: number): boolean =>
+    x >= 0 &&
+    x < mask.width &&
+    [Math.floor((k - 1) / 2), Math.floor(k / 2)].some((y) => crosses(k, y) && active(x, y));
+  const columnsOn = (k: number, y: number): boolean =>
+    y >= 0 &&
+    y < mask.height &&
+    [Math.floor((k - 1) / 2), Math.floor(k / 2)].some((x) => crosses(k, x) && active(x, y));
+  runs(2 * mask.height, mask.width, rowsOn, (k, from, to) => `M${from} ${k / 2}H${to}`);
+  runs(2 * mask.width, mask.height, columnsOn, (k, from, to) => `M${k / 2} ${from}V${to}`);
   return parts.join('');
 }
 

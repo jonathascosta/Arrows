@@ -72,10 +72,13 @@ palette and the hint and blocked states.
 
 ## Board
 
-Stroke `0.12` of a cell, round cap and round join, lines through cell centres. Arrowhead: a
-sharp-cornered triangle, tip `0.42` from the head cell's centre, length `0.42` (so its base sits
-on the centre), width `0.34`. The grid is a hairline in `grid` through the cell centres, the
-lines the arrows and their rays run on, across each run of active cells from edge to edge.
+Stroke `0.12` of a cell, round cap and round join, lines through cell centres. The tail's round
+end reaches the tail cell's edge (`0.44` behind its centre, plus half the stroke). Arrowhead: a
+sharp-cornered triangle, tip on the head cell's edge (`0.5` from its centre), length `0.42`,
+width `0.34`. The grid is a hairline in `grid`, a line every half cell, through the cell centres
+and along their edges, across each run of active cells: its nodes are where an arrow's corners
+(the centres), the tip of its head and the end of its tail (the edges) land, and its rays run
+along its lines.
 
 ## Chances
 

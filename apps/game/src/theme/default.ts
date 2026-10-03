@@ -59,8 +59,10 @@ export const DEFAULT_THEME: Theme = {
   board: {
     strokeWidth: 0.12,
     emphasisWidth: 0.2,
-    tailReach: 0.38,
-    headTip: 0.42,
+    // The tail's round end and the arrowhead's tip land on the cell's edge, a node of
+    // the grid, as the corners land on the centres (docs/DESIGN.md, Board).
+    tailReach: 0.44,
+    headTip: 0.5,
     headDepth: 0.42,
     headHalfWidth: 0.17,
     bodyEnd: 0.14,
