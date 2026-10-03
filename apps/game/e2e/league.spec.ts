@@ -141,6 +141,7 @@ test.describe('on a 320 px phone', () => {
       );
     expect(cut).toEqual([]);
     // Room for a name: the tag sits under it rather than beside it (it once left 41 px).
+    await expect(page.locator('.row-who')).toHaveCount(30);
     const narrowest = await page
       .locator('.row-who')
       .evaluateAll((cells) => Math.min(...cells.map((cell) => cell.clientWidth)));
