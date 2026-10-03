@@ -15,8 +15,9 @@ const config: CapacitorConfig = {
     // of them with the CSS safe-area insets, so the paper colour fills the screen.
     contentInset: 'never',
     backgroundColor: DEFAULT_THEME.colors.background,
-    // The text screens (Credits, the league, a calendar in large text) scroll the
-    // page, so the web view keeps its scrolling. Capacitor turns its bounce off,
+    // The text screens (home and the calendar on a small phone or in large text,
+    // the league, Credits, the privacy policy) scroll the page, so the web view
+    // keeps its scrolling. Capacitor turns its bounce off,
     // so the board's screen, which fits the window, never moves.
     scrollEnabled: true,
   },
