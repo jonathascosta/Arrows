@@ -185,7 +185,8 @@ the owner confirms the ads show in the test build.
   app icon; the open points of [DESIGN.md](DESIGN.md).
 - Sound effects and haptics for tap, blocked, win, lose, promotion.
 - Accessibility: VoiceOver labels for the HUD, reduced motion, dynamic type for text screens.
-- Localisation: English and Portuguese from `strings.ts`.
+- Localisation: English and Portuguese from `strings.ts`, including the number words of
+  `spellOut`, which are English-only for now.
 
 Acceptance: a reviewer compares every screen against the reference app and the design files;
 Lighthouse accessibility above 90 on every screen of the web build.

@@ -135,32 +135,44 @@ test('the losing tap flashes red, and the board fades only under the sheet', asy
   page,
   touch,
 }) => {
-  // Without transitions the computed colours are final at once.
+  // Without transitions the computed colours are final at once. The page clock
+  // is frozen, so the 280 ms flash cannot run out while the test reads it,
+  // however slow the machine; time moves only when the test says so.
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
   const { puzzle } = generateLevel(1);
   const free = new Set(freeArrows(createGame(puzzle)));
   const id = puzzle.arrows.find((arrow) => !free.has(arrow.id))!.id;
   await page.goto('./?level=1');
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
+  await page.clock.pauseAt(new Date('2030-01-01T00:00:00Z'));
   const colorOf = (selector: string) =>
     page.locator(selector).evaluate((element) => getComputedStyle(element).color);
-  const blocked = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--color-blocked').trim(),
-  );
-  const lost = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue('--color-chance-lost').trim(),
-  );
+  const tokens = await page.evaluate(() => {
+    const style = getComputedStyle(document.documentElement);
+    return {
+      blocked: style.getPropertyValue('--color-blocked').trim(),
+      lost: style.getPropertyValue('--color-chance-lost').trim(),
+    };
+  });
   const rgb = (hex: string) =>
     `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
 
   await tapArrow(page, touch, id);
+  await page.clock.runFor(1000);
   await tapArrow(page, touch, id);
+  await page.clock.runFor(1000);
   await expect(page.locator('.chances')).toHaveAttribute('data-chances', '1');
-  await tapArrow(page, touch, id);
-  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(blocked));
-  await expect(play(page)).not.toHaveAttribute('data-faded');
 
+  await tapArrow(page, touch, id);
+  // Time is frozen: the flash is on, and the sheet has not opened yet.
+  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(tokens.blocked));
+  await expect(play(page)).toHaveAttribute('data-status', 'lost');
+  await expect(play(page)).not.toHaveAttribute('data-faded');
+  await expect(page.locator('.overlay[data-overlay="lost"]')).toBeHidden();
+
+  await page.clock.runFor(1000);
   await expect(page.locator('.overlay[data-overlay="lost"]')).toBeVisible();
   await expect(play(page)).toHaveAttribute('data-faded', 'true');
-  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(lost));
+  expect(await colorOf(`[data-arrow="${id}"]`)).toBe(rgb(tokens.lost));
 });

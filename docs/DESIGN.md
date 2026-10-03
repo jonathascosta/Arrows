@@ -62,7 +62,8 @@ Every text pairing meets WCAG AA (4.5:1; 3:1 only for the large serif titles), a
 focus ring and arrow stroke on plain boards meets 3:1. `apps/game/src/theme/contrast.test.ts`
 checks each pairing the screens use. Only `tierEasy` needed a change for that. The drawing palette
 is the exception: `drawing1` (orange, 2.57:1) and `drawing2` (yellow, 2.13:1) stay below 3:1 on the
-background, as delivered; the test lists them as known gaps (see the open points).
+background, as delivered; the test lists them as known gaps (see the open points). A lost chance in
+`chanceLost` is deliberately faint (1.37:1): its split shape, not its colour, carries the state.
 
 Tier colour appears only as an accent: the tier label, the tier badge, the level strip. Never as
 the arrow stroke and never as a board tint, because the stroke colour already carries the drawing
