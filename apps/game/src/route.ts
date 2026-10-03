@@ -7,7 +7,8 @@ export type PuzzleRef =
   | { readonly kind: 'daily'; readonly dateKey: string }
   | { readonly kind: 'drawing'; readonly drawingId: string; readonly tier: Tier };
 
-export const FIRST_LEVEL: PuzzleRef = { kind: 'level', level: 1 };
+/** The home screen: the page with no puzzle in its address. */
+export const HOME_HREF = './';
 
 function isTier(value: string | null): value is Tier {
   return value !== null && (TIER_ORDER as readonly string[]).includes(value);
@@ -23,10 +24,11 @@ function isDateKey(value: string): boolean {
 }
 
 /**
- * Reads `?level=N`, `?daily=YYYY-MM-DD` or `?drawing=id&tier=hard`. Anything
- * missing or invalid opens level 1, so a bad link never shows an error page.
+ * Reads `?level=N`, `?daily=YYYY-MM-DD` or `?drawing=id&tier=hard`. No puzzle,
+ * or an invalid one, is null: the app shows the home screen, so a bad link
+ * never shows an error page.
  */
-export function parseRoute(search: string): PuzzleRef {
+export function parseRoute(search: string): PuzzleRef | null {
   const params = new URLSearchParams(search);
   const daily = params.get('daily');
   if (daily !== null && isDateKey(daily)) return { kind: 'daily', dateKey: daily };
@@ -36,8 +38,15 @@ export function parseRoute(search: string): PuzzleRef {
     return { kind: 'drawing', drawingId: drawing, tier: isTier(tier) ? tier : 'medium' };
   }
   const level = Number(params.get('level'));
-  if (Number.isSafeInteger(level) && level >= 1) return { kind: 'level', level };
-  return FIRST_LEVEL;
+  if (params.has('level') && Number.isSafeInteger(level) && level >= 1) {
+    return { kind: 'level', level };
+  }
+  return null;
+}
+
+/** The address of a puzzle, relative to the app. */
+export function puzzleHref(ref: PuzzleRef): string {
+  return `./${routeSearch(ref)}`;
 }
 
 export function routeSearch(ref: PuzzleRef): string {

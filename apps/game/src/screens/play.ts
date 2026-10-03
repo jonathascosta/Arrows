@@ -25,6 +25,25 @@ import { Hud } from '../ui/hud.ts';
 import { Overlay } from '../ui/overlay.ts';
 import type { OverlayContent } from '../ui/overlay.ts';
 
+/** A board that has just been won or lost. */
+export interface BoardResult {
+  readonly ref: PuzzleRef;
+  readonly outcome: 'won' | 'lost';
+  readonly elapsedMs: number;
+  /** No board was lost on this puzzle before this result. */
+  readonly firstTry: boolean;
+}
+
+/** What the end-of-board sheet can say about a result, when it was recorded. */
+export interface ResultNote {
+  /** The streak after this win; left out when the win does not count (a replay). */
+  readonly streak?: number;
+  /** The best time to show; left out on a first win, where it is this time. */
+  readonly bestMs?: number;
+  /** This time beat an earlier best. */
+  readonly newBest?: boolean;
+}
+
 export interface PlayScreenOptions {
   readonly theme: Theme;
   /** The clock for the timer, in milliseconds. */
@@ -32,7 +51,10 @@ export interface PlayScreenOptions {
   readonly reducedMotion: () => boolean;
   /** Opens another puzzle (the next level). */
   readonly navigate: (ref: PuzzleRef) => void;
-  readonly backHref: string;
+  /** The home screen: the back button and the sheets' Home link. */
+  readonly homeHref: string;
+  /** Records a result the moment the board is won or lost (progress, streak). */
+  readonly record?: (result: BoardResult) => ResultNote | undefined;
 }
 
 /** Marks the moment a board is on screen, for tests and profiling. */
@@ -59,13 +81,16 @@ export class PlayScreen {
   private gridVisible = false;
   /** Whether the previous tap landed on empty space: a double tap resets only if both did. */
   private lastTapEmpty = false;
+  /** Boards lost on this puzzle since it was opened: a win is first-try only at zero. */
+  private losses = 0;
+  private note: ResultNote | undefined;
   private readonly options: PlayScreenOptions;
 
   constructor(root: HTMLElement, options: PlayScreenOptions) {
     this.options = options;
     const doc = root.ownerDocument;
     const { theme } = options;
-    this.hud = new Hud(doc, theme, options.backHref, options.reducedMotion);
+    this.hud = new Hud(doc, theme, options.homeHref, options.reducedMotion);
     // Focusable from script only: focus returns here when an overlay closes.
     this.stage = el(doc, 'main', { class: 'stage', tabindex: '-1' });
     this.renderer = new BoardRenderer(this.stage, theme, options.reducedMotion);
@@ -85,6 +110,8 @@ export class PlayScreen {
 
   /** Shows a puzzle from the start. */
   open(ref: PuzzleRef): void {
+    this.losses = 0;
+    this.note = undefined;
     this.loaded = loadPuzzle(ref);
     this.session = new PlaySession(this.loaded.puzzle);
     this.hud.setTitle(this.loaded.title, tierLabel(this.loaded.tier), this.loaded.tier);
@@ -95,6 +122,9 @@ export class PlayScreen {
 
   destroy(): void {
     for (const dispose of this.disposers.splice(0)) dispose();
+    // A board still finishing sees that it is gone and stops.
+    this.session = null;
+    this.loaded = null;
     this.element.remove();
   }
 
@@ -111,8 +141,23 @@ export class PlayScreen {
   }
 
   private restart(): void {
+    this.note = undefined;
     this.session?.retry();
     this.start();
+  }
+
+  /** Reports the outcome at once, so leaving during the last animation still counts. */
+  private report(outcome: 'won' | 'lost'): void {
+    const session = this.session;
+    const loaded = this.loaded;
+    if (session === null || loaded === null) return;
+    this.note = this.options.record?.({
+      ref: loaded.ref,
+      outcome,
+      elapsedMs: session.elapsedMs(this.options.now()),
+      firstTry: this.losses === 0,
+    });
+    if (outcome === 'lost') this.losses++;
   }
 
   private async finish(outcome: 'won' | 'lost'): Promise<void> {
@@ -139,14 +184,27 @@ export class PlayScreen {
       return;
     }
     const { ref } = loaded;
-    this.showOverlay({
-      kind: 'won',
-      title: t('won.title'),
-      body: t('won.summary', {
+    const lines = [
+      t('won.summary', {
         time: formatDuration(session.elapsedMs(this.options.now())),
         chances: state.lives,
         total: state.livesAtStart,
       }),
+    ];
+    const note = this.note;
+    if (note !== undefined) {
+      if (note.streak !== undefined) {
+        lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
+      }
+      if (note.newBest === true) lines.push(t('won.newBest'));
+      else if (note.bestMs !== undefined) {
+        lines.push(t('won.best', { time: formatDuration(note.bestMs) }));
+      }
+    }
+    this.showOverlay({
+      kind: 'won',
+      title: t('won.title'),
+      body: lines.join(' '),
       action: ref.kind === 'level' ? t('won.next') : t('won.again'),
       onAction: () => {
         if (ref.kind === 'level') this.options.navigate({ kind: 'level', level: ref.level + 1 });
@@ -156,9 +214,8 @@ export class PlayScreen {
     });
   }
 
-  /** Home is the puzzle picker until T3 brings the home screen. */
   private home(): { label: string; href: string } {
-    return { label: t('nav.home'), href: this.options.backHref };
+    return { label: t('nav.home'), href: this.options.homeHref };
   }
 
   /** Shows the end-of-board card and takes everything behind it out of reach. */
@@ -343,7 +400,10 @@ export class PlayScreen {
       case 'removed':
         void this.renderer.remove(result.arrowId, result.rayLength);
         this.refresh();
-        if (session.state.status === 'won') void this.finish('won');
+        if (session.state.status === 'won') {
+          this.report('won');
+          void this.finish('won');
+        }
         return;
       case 'blocked':
         void this.renderer.bump(result.arrowId, result.blockedBy);
@@ -351,7 +411,10 @@ export class PlayScreen {
         if (session.state.status === 'lost') this.renderer.setHint(null);
         this.refresh();
         this.announce(tn('status.blocked', session.state.lives));
-        if (session.state.status === 'lost') void this.finish('lost');
+        if (session.state.status === 'lost') {
+          this.report('lost');
+          void this.finish('lost');
+        }
         return;
     }
   }

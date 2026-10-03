@@ -12,8 +12,8 @@ import { el } from './ui/dom.ts';
 
 /**
  * The puzzle picker for development: open any level, any day's daily or any
- * drawing by its seed, and see what the solver measured. Not linked from the
- * game except by the back button until T3 brings the home screen.
+ * drawing by its seed, and see what the solver measured. The home screen's
+ * menu button leads here.
  */
 applyTheme(DEFAULT_THEME, document.documentElement);
 

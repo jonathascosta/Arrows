@@ -59,6 +59,8 @@ export interface ThemeIcons {
   readonly back: string;
   readonly hint: string;
   readonly grid: string;
+  readonly menu: string;
+  readonly streak: string;
 }
 
 export interface ThemeMotion {

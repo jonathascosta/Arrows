@@ -119,20 +119,25 @@ body {
   text-transform: uppercase;
 }
 
-.tier[data-tier='easy'] {
-  color: var(--tier-easy);
+/* Anything tagged with a tier gets its colour as --tier. */
+[data-tier='easy'] {
+  --tier: var(--tier-easy);
 }
 
-.tier[data-tier='medium'] {
-  color: var(--tier-medium);
+[data-tier='medium'] {
+  --tier: var(--tier-medium);
 }
 
-.tier[data-tier='hard'] {
-  color: var(--tier-hard);
+[data-tier='hard'] {
+  --tier: var(--tier-hard);
 }
 
-.tier[data-tier='superHard'] {
-  color: var(--tier-super-hard);
+[data-tier='superHard'] {
+  --tier: var(--tier-super-hard);
+}
+
+.tier {
+  color: var(--tier);
 }
 
 .status {
@@ -434,6 +439,201 @@ body {
   .sheet {
     animation: none;
   }
+}
+
+/* Home */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 4px;
+}
+
+.wordmark {
+  margin: 0;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.7rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.chip .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.card {
+  display: block;
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* A card that opens nothing yet: an outline on the page, not a raised card. */
+.card[data-soon] {
+  /* The border takes its width out of the padding, so the text lines up with the raised cards. */
+  padding: 16.5px;
+  border: 1.5px solid var(--color-divider);
+  background: none;
+  box-shadow: none;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-label {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.tier-badge {
+  padding: 4px 9px;
+  border: 1.5px solid var(--tier);
+  border-radius: 8px;
+  color: var(--tier);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-title {
+  display: block;
+  margin: 6px 0 16px;
+  color: var(--color-title);
+  font-family: var(--font-title);
+  font-size: 2.3rem;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.card-title.small {
+  margin: 8px 0 12px;
+  font-size: 1.65rem;
+}
+
+.card-note {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* The level strip: finished levels filled, the current one ringed, the rest pale. */
+.level-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.level-strip::before {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  left: 18px;
+  height: 2px;
+  background: var(--color-divider);
+  content: '';
+}
+
+.strip-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--color-divider);
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.strip-item[data-state='done'] {
+  border-color: var(--tier);
+  background: var(--tier);
+  color: var(--color-on-primary);
+}
+
+.strip-item[data-state='current'] {
+  width: 44px;
+  height: 44px;
+  border: 2.5px solid var(--tier);
+  color: var(--color-title);
+  font-size: 0.95rem;
+}
+
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.event-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.event-thumb {
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 104px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-background);
+}
+
+.event-text .card-title.small {
+  margin: 6px 0 8px;
 }
 
 /* Dev page */

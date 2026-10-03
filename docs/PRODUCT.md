@@ -100,7 +100,21 @@ plateau around level 300. The level path is infinite.
 ### Levels
 
 An infinite path of numbered levels with the tier shown by colour. Progress and best times are
-stored locally. A win streak badge counts consecutive first-try wins (no board lost in between).
+stored locally, on the device.
+
+- The current level is the next one to play: one past the highest level won. Replaying an earlier
+  level never moves it back.
+- The best time of each level is kept.
+- The win streak counts consecutive first-try wins on new levels. A level won for the first time,
+  without losing a board on it first, adds one. A lost board sets the streak to zero, and winning
+  that level later leaves it at zero, whether after a retry or after leaving and coming back.
+  Leaving a board unfinished does not count either way.
+- A replay (a level already won) only keeps its best time: winning or losing it leaves the
+  streak alone, like daily and event boards.
+
+The home screen (see [DESIGN.md](DESIGN.md), Home) opens the game: the Levels card with the
+current level, its tier, a strip of the levels around it and Play; the streak; and a card for
+each other mode.
 
 ### Daily challenge
 
@@ -179,7 +193,11 @@ localization beyond English (strings are externalized from day one so Portuguese
 - Ray rule on drawings is `bounds` (2026-10-02).
 - Lives are chances, drawn as arrowheads, not drops; the visual direction is the one in
   [DESIGN.md](DESIGN.md) (2026-10-03).
+- Replays of a level already won do not touch the win streak; only new levels count (session
+  decision in T3, open to the owner) (2026-10-03).
 
 ## Open questions
 
-None at the moment.
+- Should replays of a level already won count towards the win streak? The session decided no in
+  T3, so the streak cannot be pumped by replaying an easy level (see Levels and the decisions
+  log); the owner may reverse it.

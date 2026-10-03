@@ -26,8 +26,9 @@ test('the dev page opens any level, day or drawing by its seed', async ({ page, 
   await expect(page.locator('.dev-preview .ascii')).not.toBeEmpty();
 });
 
-test('the back button leads to the puzzle picker', async ({ page, touch }) => {
-  await page.goto('./?level=5');
-  await press(page.getByRole('link', { name: 'Back to puzzles' }), touch);
+test('the home menu opens the puzzle picker', async ({ page, touch }) => {
+  await page.goto('./');
+  await press(page.getByRole('link', { name: 'Puzzle picker' }), touch);
   await expect(page).toHaveURL(/dev\.html$/);
+  await expect(page.locator('h1')).toHaveText('Arrows · puzzles');
 });

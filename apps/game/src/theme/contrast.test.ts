@@ -44,6 +44,12 @@ const PAIRS: [string, string, string, number][] = [
   ['hint icon when shown', colors.hint, colors.surfaceRaised, 3],
   ['focus ring on background', colors.focus, colors.background, 3],
   ['focus ring on raised surface', colors.focus, colors.surfaceRaised, 3],
+  // Home: the streak chip, the tier badge and the level strip.
+  ['chip text on surface', colors.text, colors.surface, 4.5],
+  ...Object.entries(tiers).flatMap(([tier, color]): [string, string, string, number][] => [
+    [`${tier} tier badge on a card`, color, colors.surfaceRaised, 4.5],
+    [`finished ${tier} level number`, colors.onPrimary, color, 4.5],
+  ]),
 ];
 
 /**

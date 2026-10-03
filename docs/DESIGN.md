@@ -131,6 +131,12 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
+Until the later tasks fill them, the cards are placeholders: Daily shows today's date and opens
+today's board (stars and the count come with T4), League shows "Bronze · Opens soon" as an
+outline on the page instead of a raised card and does nothing (T5), and the event card opens the
+butterfly at Hard (T6). The menu button opens the puzzle picker until there is a menu. The level
+strip is not tappable: Play opens the current level.
+
 ### Daily challenge
 
 - Round back button, title "Daily challenge" in serif.
@@ -172,3 +178,6 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
   suggested, so that two intact ones next to a timer do not read as a fast-forward button. It is
   one theme value (`chanceDirection: 'up'`) if the owner prefers it.
 - Character avatars: the design uses initials on colour; illustrated avatars stay for later.
+- Home menu: the design shows a menu button but no menu. Until one is designed it opens the
+  puzzle picker (`dev.html`), also in release builds; hiding it there is one line if the owner
+  prefers.
