@@ -65,9 +65,9 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 
 Everything is generated on the device, deterministically, from a seed:
 
-- Level N: seed `level:N`. Daily: seed `daily:YYYY-MM-DD`. Event board: seed from the event id
-  and the drawing. Same seed, same puzzle, on every phone, forever. Nothing is downloaded or
-  stored.
+- Level N: seed `level:N`. Daily: seed `daily:YYYY-MM-DD`. Event board: seed
+  `board:event:<id>:<n>`, from the event id and the board's number. Same seed, same puzzle, on
+  every phone, forever. Nothing is downloaded or stored.
 - Two phases: **partition** the active cells into paths by seeded random walks (within one
   colour), then **peel**: simulate the solution forward, choosing for each path which end is
   the head so that the ray is free at its turn. Peeling is monotone (removing an arrow only
@@ -170,6 +170,20 @@ Time-limited sets of drawing boards (a butterfly, a surfboard) with their own pr
 reward. A championship is an event with its own league table over the event's duration. v1 ships
 the drawing boards and one event; the championship table reuses the league code.
 
+- An event runs from a first to a last day, in the player's local time, like the daily.
+- Its boards are played in order: the next board opens when the one before is won. Every board
+  has its own seed (`board:event:<id>:<n>`), so everyone plays the same boards.
+- Progress is kept per board. Winning every board earns the event's badge.
+- Boards count only while the event runs. Before it starts and after its last day the boards
+  cannot be opened; the home screen shows how far the player got and the badge, if earned. A
+  board opened on the last day and won after midnight counts for neither the event nor the
+  event bonus: the league scores it like any other board.
+- Event boards earn league points with the event bonus.
+- The first event is the Autumn event (1 October to 30 November 2026): a maple leaf and an acorn,
+  each at Medium, Hard and Super Hard, six boards in all.
+- Drawings are pixel art, one pixel per cell, drawn in the drawing palette (DESIGN.md) and
+  converted to boards by a tool; the art lives in the repository as PNG.
+
 ## Monetization
 
 - Interstitial ad between finishing a board and the score screen. Nowhere else.
@@ -224,6 +238,12 @@ localization beyond English (strings are externalized from day one so Portuguese
 - Daily league (session decisions in T5, open to the owner) (2026-10-03): each board earns points
   once a day, so replaying one board cannot win a league; a day without a board won does not
   relegate, so time away costs nothing; several missed days settle only the last day played.
+- Events (session decisions in T6, open to the owner) (2026-10-03): the Autumn event runs from 1
+  October to 30 November 2026; after its last day its boards close, so a player who did not
+  finish cannot finish later; a finished event's home card opens nothing; the maple leaf and the
+  acorn are placeholder art drawn in the session (17 and 14 pixels wide, narrower than the
+  drawings described in Boards), to be replaced by Claude Design's before players see them
+  (replacing a drawing changes its boards).
 
 ## Open questions
 

@@ -84,6 +84,8 @@ test('the home cards open the calendar, the league and the event board', async (
   page,
   touch,
 }) => {
+  // The event card depends on the day: pin it inside the Autumn event.
+  await page.clock.setFixedTime(new Date('2026-10-14T12:00:00Z'));
   await page.goto('./');
   await press(page.locator('a.daily'), touch);
   await expect(page).toHaveURL(/\?calendar$/);
@@ -96,8 +98,8 @@ test('the home cards open the calendar, the league and the event board', async (
 
   await page.goto('./');
   await press(page.locator('a.event-card'), touch);
-  await expect(page).toHaveURL(/\?drawing=butterfly&tier=hard$/);
-  await expect(page.locator('h1')).toHaveText('Butterfly');
+  await expect(page).toHaveURL(/\?event=autumn-2026&board=1$/);
+  await expect(page.locator('h1')).toHaveText('Maple leaf');
 });
 
 test('a lost daily leaves the streak alone', async ({ page, touch }) => {

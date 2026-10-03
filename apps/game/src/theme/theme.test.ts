@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { DRAWINGS } from '@arrows/engine';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_THEME } from './default.ts';
@@ -57,6 +59,20 @@ describe('theme', () => {
         expect(DEFAULT_THEME.drawingPalette[name], `${drawing.id}: ${name}`).toBeDefined();
       }
     }
+  });
+
+  it('draws the art in its own colours: the PNG palette is the theme palette', () => {
+    // A theme change to the drawing palette must come with the art redrawn (pnpm drawings).
+    const manifest = JSON.parse(
+      readFileSync(join(import.meta.dirname, '../../../../art/drawings/drawings.json'), 'utf8'),
+    ) as { palette: Record<string, string> };
+    const art = Object.fromEntries(
+      Object.entries(manifest.palette).map(([hex, name]) => [name, hex.toLowerCase()]),
+    );
+    const theme = Object.fromEntries(
+      Object.entries(DEFAULT_THEME.drawingPalette).map(([name, hex]) => [name, hex.toLowerCase()]),
+    );
+    expect(art).toEqual(theme);
   });
 
   it('uses the arrowhead of docs/DESIGN.md', () => {

@@ -7,6 +7,8 @@ import { createViewport, transformOf } from '../board/viewport.ts';
 import { levelStrip } from '../levelStrip.ts';
 import type { Progress } from '../persistence/progress.ts';
 import { loadPuzzle, tierLabel } from '../puzzles.ts';
+import type { EventState, GameEvent } from '../events/catalog.ts';
+import type { EventProgress } from '../persistence/events.ts';
 import type { PuzzleRef } from '../route.ts';
 import type { LeagueView } from '../league/provider.ts';
 import { calendarHref, LEAGUE_HREF, puzzleHref } from '../route.ts';
@@ -21,6 +23,8 @@ export interface HomeScreenOptions {
   readonly progress: Progress;
   /** The league now, for the League card. */
   readonly league: LeagueView;
+  /** The event the home screen shows, with the player's progress; null before the first. */
+  readonly event: HomeEvent | null;
   /** The daily challenge days won, for the Daily card's stars. */
   readonly finishedDays: ReadonlySet<DateKey>;
   /** Today's date key in local time, for the Daily card. */
@@ -29,15 +33,19 @@ export interface HomeScreenOptions {
   readonly reducedMotion: () => boolean;
 }
 
-/** The event board on the home screen until T6 brings events. */
-export const EVENT_REF: PuzzleRef = { kind: 'drawing', drawingId: 'butterfly', tier: 'hard' };
+/** The event on the home screen and how far the player got in it. */
+export interface HomeEvent {
+  readonly event: GameEvent;
+  readonly state: EventState;
+  readonly progress: EventProgress;
+  readonly daysLeft: number;
+}
 
 const THUMB_SIZE = 104;
 
 /**
  * The home screen (docs/DESIGN.md, Home): the wordmark, the streak, the Levels
- * card with the level strip and Play, and a card per other mode. Daily and the
- * event open their boards; the league card waits for T5.
+ * card with the level strip and Play, and a card per other mode.
  */
 export class HomeScreen {
   readonly element: HTMLElement;
@@ -143,31 +151,12 @@ export class HomeScreen {
       ]),
     ]);
 
-    const event = loadPuzzle(EVENT_REF);
-    const thumb = el(doc, 'div', { class: 'event-thumb', 'aria-hidden': 'true' });
-    const renderer = new BoardRenderer(thumb, theme, options.reducedMotion);
-    renderer.render(event.puzzle);
-    const view = createViewport(
-      THUMB_SIZE,
-      THUMB_SIZE,
-      boardBounds(event.puzzle.width, event.puzzle.height, theme.board.margin),
-    );
-    renderer.setStageSize(THUMB_SIZE, THUMB_SIZE);
-    renderer.setTransform(transformOf(view));
-    const eventCard = el(doc, 'a', { class: 'card event-card', href: puzzleHref(EVENT_REF) }, [
-      thumb,
-      el(doc, 'span', { class: 'event-text' }, [
-        el(doc, 'span', { class: 'card-label' }, [t('home.event')]),
-        el(doc, 'span', { class: 'card-title small' }, [event.title]),
-        el(doc, 'span', { class: 'card-note' }, [t('home.eventNote')]),
-      ]),
-    ]);
-
+    const eventCard = options.event === null ? null : this.eventCard(doc, theme, options);
     this.element = el(doc, 'main', { class: 'home' }, [
       top,
       levels,
       el(doc, 'div', { class: 'card-row' }, [daily, leagueCard]),
-      eventCard,
+      ...(eventCard === null ? [] : [eventCard]),
     ]);
     root.replaceChildren(this.element);
     doc.title = t('app.name');
@@ -175,6 +164,61 @@ export class HomeScreen {
 
   destroy(): void {
     this.element.remove();
+  }
+
+  /**
+   * The event card (docs/DESIGN.md, Home): a thumbnail of the next board, the
+   * event's name, the drawing, a bar with a segment per board, and the boards
+   * won with the days left. It opens the next board while the event runs.
+   */
+  private eventCard(doc: Document, theme: Theme, options: HomeScreenOptions): HTMLElement {
+    const { event, state, progress, daysLeft } = options.event!;
+    const board = progress.next ?? progress.total;
+    const ref: PuzzleRef = { kind: 'event', eventId: event.id, board };
+    const loaded = loadPuzzle(ref);
+    const thumb = el(doc, 'div', { class: 'event-thumb', 'aria-hidden': 'true' });
+    const renderer = new BoardRenderer(thumb, theme, options.reducedMotion);
+    renderer.render(loaded.puzzle);
+    const view = createViewport(
+      THUMB_SIZE,
+      THUMB_SIZE,
+      boardBounds(loaded.puzzle.width, loaded.puzzle.height, theme.board.margin),
+    );
+    renderer.setStageSize(THUMB_SIZE, THUMB_SIZE);
+    renderer.setTransform(transformOf(view));
+
+    const boards = t('home.eventBoards', { n: progress.won.length, total: progress.total });
+    const when =
+      state === 'ended'
+        ? t('home.eventEnded', { date: formatDayShort(event.end) })
+        : daysLeft === 1
+          ? t('home.eventLastDay')
+          : t('home.eventDaysLeft', { n: daysLeft });
+    const bar = el(
+      doc,
+      'span',
+      { class: 'event-progress', 'aria-hidden': 'true' },
+      Array.from({ length: progress.total }, (_, i) =>
+        el(doc, 'span', progress.won.includes(i + 1) ? { 'data-done': 'true' } : {}),
+      ),
+    );
+    const title = progress.complete
+      ? el(doc, 'span', { class: 'card-title small badge-earned' }, [
+          iconSpan(doc, theme.icons.badge, 'icon'),
+          t('home.eventBadge'),
+        ])
+      : el(doc, 'span', { class: 'card-title small' }, [loaded.title]);
+    const text = el(doc, 'span', { class: 'event-text' }, [
+      el(doc, 'span', { class: 'card-label' }, [t(event.name)]),
+      title,
+      bar,
+      el(doc, 'span', { class: 'card-note' }, [`${boards} · ${when}`]),
+    ]);
+    // A link only while there is a board to play.
+    const open = state === 'running' && progress.next !== null;
+    return open
+      ? el(doc, 'a', { class: 'card event-card', href: puzzleHref(ref) }, [thumb, text])
+      : el(doc, 'div', { class: 'card event-card', 'data-state': state }, [thumb, text]);
   }
 
   /** A sheet over the home screen, such as the league's summary of the last day played. */

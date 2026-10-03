@@ -20,6 +20,8 @@ is next, and what done means) before changing anything.
   generator, the tiers, the solver or the league.
 - `pnpm lint`, `pnpm format:check`, `pnpm typecheck` — the same gates as CI and the pre-commit hook.
 - `pnpm dev` — the app at http://localhost:5173 (`/dev.html` opens any puzzle by seed).
+- `pnpm drawings` — converts the PNG art in `art/drawings/` to `packages/engine/src/drawings/art.ts`;
+  never edit that file by hand. `pnpm drawings:check` (CI) fails when the two differ.
 - `pnpm test:e2e` — Playwright on the production build, phone and desktop profiles. In cloud
   sessions it uses the Chromium at `/opt/pw-browsers/chromium`; never run `playwright install`.
 
@@ -33,6 +35,7 @@ is next, and what done means) before changing anything.
   purpose and say so in the commit message.
 - Keep the product document current: when behaviour changes, change `docs/PRODUCT.md` first.
 - In code and CSS, colours live in `apps/game/src/theme/` only; lint and a CSS test reject them
-  elsewhere. Static files in `apps/game/public/` (the favicon) are exempt and keep the theme's
-  colours by hand.
+  elsewhere. Static files in `apps/game/public/` (the favicon) and the drawing art in `art/` are
+  exempt and keep the theme's colours by hand; a test fails when the art's palette and the
+  theme's drawing palette differ.
 - Code, comments and documents are in English; player-facing text goes through `strings.ts`.

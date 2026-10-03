@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRng, cyrb53 } from '../rng/rng.ts';
-import { BUTTERFLY, drawingMask } from '../drawings/drawings.ts';
+import { BUTTERFLY } from '../drawings/art.ts';
+import { drawingMask } from '../drawings/drawings.ts';
 import { renderAscii } from '../debug/ascii.ts';
 import { dailySpec, generateBoard, generateDaily, generateLevel, weekdayOf } from './levels.ts';
 import { PLATEAU_LEVEL, TIERS, boardSizeForLevel, tierForLevel } from './tiers.ts';

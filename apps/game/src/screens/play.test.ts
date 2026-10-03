@@ -331,6 +331,43 @@ describe('PlayScreen', () => {
     expect(body()).toBe('00:00 · 3 of 3 chances left.');
   });
 
+  it('says where an event board stands, and opens what `next` names', async () => {
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    const navigations: PuzzleRef[] = [];
+    const notes: ResultNote[] = [
+      { event: { board: 2, total: 6 } },
+      { event: { board: 6, total: 6, badge: 'Autumn 2026 badge' } },
+    ];
+    const screen = new PlayScreen(root, {
+      theme: DEFAULT_THEME,
+      now: () => 0,
+      reducedMotion: () => true,
+      navigate: (next) => navigations.push(next),
+      homeHref: './',
+      record: () => notes.shift(),
+      next: () => ({ ref: { kind: 'level', level: 9 }, label: 'Next board' }),
+    });
+    screen.open({ kind: 'level', level: 1 });
+    const arrows = generateLevel(1).puzzle.arrows.length;
+    const body = (): string | null | undefined =>
+      root.querySelector('.overlay[data-overlay="won"] p')?.textContent;
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe('00:00 · 3 of 3 chances left. Board 2 of 6 done.');
+    const button = root.querySelector<HTMLButtonElement>('.overlay button')!;
+    expect(button.textContent).toBe('Next board');
+    button.click();
+    expect(navigations).toEqual([{ kind: 'level', level: 9 }]);
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe(
+      '00:00 · 3 of 3 chances left. Board 6 of 6 done. Every board won: the Autumn 2026 badge is yours!',
+    );
+    screen.destroy();
+  });
+
   it('offers play again, not next level, on a daily', async () => {
     const ref: PuzzleRef = { kind: 'daily', dateKey: '2026-10-03' };
     const { root, navigations } = mount(ref);

@@ -1,0 +1,146 @@
+import type { Drawing } from '@arrows/engine';
+import { PNG } from 'pngjs';
+import { format, resolveConfig } from 'prettier';
+
+/** One drawing of `art/drawings/drawings.json`: its PNG and which character stands for which colour. */
+export interface ManifestDrawing {
+  readonly id: string;
+  readonly name: string;
+  readonly file: string;
+  /** Character to colour name, in palette order: the order the engine numbers the colours in. */
+  readonly legend: Readonly<Record<string, string>>;
+}
+
+export interface Manifest {
+  /** The drawing palette as `#rrggbb` (lower case) to colour name, as the theme names them. */
+  readonly palette: Readonly<Record<string, string>>;
+  readonly drawings: readonly ManifestDrawing[];
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  isRecord(value) && Object.values(value).every((entry) => typeof entry === 'string');
+
+/** Reads the manifest, failing on anything it does not expect. */
+export function parseManifest(json: string): Manifest {
+  const data: unknown = JSON.parse(json);
+  if (!isRecord(data) || !isStringRecord(data.palette) || !Array.isArray(data.drawings)) {
+    throw new Error('drawings.json: expected { palette, drawings }');
+  }
+  for (const hex of Object.keys(data.palette)) {
+    if (!/^#[0-9a-f]{6}$/.test(hex)) throw new Error(`drawings.json: bad colour "${hex}"`);
+  }
+  const drawings = data.drawings.map((entry: unknown, i): ManifestDrawing => {
+    if (
+      !isRecord(entry) ||
+      typeof entry.id !== 'string' ||
+      !/^[a-z][a-z0-9-]*$/.test(entry.id) ||
+      typeof entry.name !== 'string' ||
+      typeof entry.file !== 'string' ||
+      !isStringRecord(entry.legend)
+    ) {
+      throw new Error(`drawings.json: drawing ${i} needs an id, a name, a file and a legend`);
+    }
+    for (const char of Object.keys(entry.legend)) {
+      if (char.length !== 1 || char === '.') {
+        throw new Error(
+          `drawings.json: ${entry.id}: legend key "${char}" must be one character, not "."`,
+        );
+      }
+    }
+    return { id: entry.id, name: entry.name, file: entry.file, legend: entry.legend };
+  });
+  // Each drawing becomes a constant of the engine module, next to `ART`.
+  const constants = new Set(['ART']);
+  for (const drawing of drawings) {
+    const constant = constantName(drawing.id);
+    if (constants.has(constant)) {
+      throw new Error(`drawings.json: the id "${drawing.id}" is taken (it would be ${constant})`);
+    }
+    constants.add(constant);
+  }
+  return { palette: data.palette, drawings };
+}
+
+const hex2 = (n: number): string => n.toString(16).padStart(2, '0');
+
+/**
+ * A drawing from its PNG, one pixel per cell: a transparent pixel is no cell,
+ * an opaque one a cell of the palette colour it matches exactly. Anything else
+ * (a colour off the palette, half transparency, a colour the legend does not
+ * name, a legend colour the art does not use) is an error naming the pixel.
+ */
+export function drawingFromPng(
+  png: Buffer,
+  entry: ManifestDrawing,
+  palette: Readonly<Record<string, string>>,
+): Drawing {
+  const image = PNG.sync.read(png);
+  const charOf = new Map(Object.entries(entry.legend).map(([char, name]) => [name, char]));
+  const used = new Set<string>();
+  const rows: string[] = [];
+  for (let y = 0; y < image.height; y++) {
+    let row = '';
+    for (let x = 0; x < image.width; x++) {
+      const i = (y * image.width + x) * 4;
+      const alpha = image.data[i + 3]!;
+      if (alpha === 0) {
+        row += '.';
+        continue;
+      }
+      const where = `${entry.file} (${x}, ${y})`;
+      if (alpha !== 255) throw new Error(`${where}: half transparent (alpha ${alpha})`);
+      const hex = `#${hex2(image.data[i]!)}${hex2(image.data[i + 1]!)}${hex2(image.data[i + 2]!)}`;
+      const name = palette[hex];
+      if (name === undefined) throw new Error(`${where}: ${hex} is not in the drawing palette`);
+      const char = charOf.get(name);
+      if (char === undefined) throw new Error(`${where}: ${name} is not in the legend`);
+      used.add(char);
+      row += char;
+    }
+    rows.push(row);
+  }
+  for (const char of Object.keys(entry.legend)) {
+    if (!used.has(char)) throw new Error(`${entry.file}: legend "${char}" is never drawn`);
+  }
+  return { id: entry.id, name: entry.name, legend: { ...entry.legend }, rows };
+}
+
+/** `maple-leaf` becomes `MAPLE_LEAF`. */
+export function constantName(id: string): string {
+  return id.toUpperCase().replace(/-/g, '_');
+}
+
+/**
+ * The engine module holding every drawing, formatted as the repository formats
+ * TypeScript, so that `--check` can compare it with the file byte for byte.
+ */
+export async function drawingsModule(
+  drawings: readonly Drawing[],
+  filepath: string,
+): Promise<string> {
+  const constants = drawings.map(
+    (drawing) =>
+      `export const ${constantName(drawing.id)}: Drawing = ${JSON.stringify({
+        id: drawing.id,
+        name: drawing.name,
+        legend: drawing.legend,
+        rows: drawing.rows,
+      })};`,
+  );
+  const source = [
+    [
+      '// Generated by tools/png-to-drawing.ts from art/drawings: do not edit.',
+      '// Change the PNG or art/drawings/drawings.json, then run `pnpm drawings`.',
+    ].join('\n'),
+    "import type { Drawing } from './drawings.ts';",
+    ...constants,
+    `/** Every drawing, in the order of art/drawings/drawings.json. */\nexport const ART: readonly Drawing[] = [${drawings
+      .map((drawing) => constantName(drawing.id))
+      .join(', ')}];`,
+  ].join('\n\n');
+  const options = (await resolveConfig(filepath)) ?? {};
+  return format(source, { ...options, filepath });
+}

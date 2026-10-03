@@ -3,6 +3,7 @@ import '@fontsource-variable/geist/wght.css';
 import './styles.css';
 import { App } from './app.ts';
 import { DAILY_KEY } from './persistence/daily.ts';
+import { EVENTS_KEY } from './persistence/events.ts';
 import { LEAGUE_KEY } from './persistence/league.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
 import { browserStore } from './persistence/store.ts';
@@ -36,6 +37,6 @@ window.addEventListener('pageshow', (event) => {
   if (event.persisted) app.refresh();
 });
 window.addEventListener('storage', (event) => {
-  const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY];
+  const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY, EVENTS_KEY];
   if (event.key === null || keys.includes(event.key)) app.refresh();
 });

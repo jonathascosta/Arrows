@@ -2,12 +2,15 @@ import { findDrawing, TIER_ORDER } from '@arrows/engine';
 import type { Tier } from '@arrows/engine';
 import type { MonthKey } from './daily/days.ts';
 import { isDateKey, isMonthKey } from './daily/days.ts';
+import { findEvent } from './events/catalog.ts';
 
 /** Which puzzle a page shows. Every one of them is a seed: the URL is the puzzle. */
 export type PuzzleRef =
   | { readonly kind: 'level'; readonly level: number }
   | { readonly kind: 'daily'; readonly dateKey: string }
-  | { readonly kind: 'drawing'; readonly drawingId: string; readonly tier: Tier };
+  | { readonly kind: 'drawing'; readonly drawingId: string; readonly tier: Tier }
+  /** A board of an event, numbered from 1. */
+  | { readonly kind: 'event'; readonly eventId: string; readonly board: number };
 
 /** What an address shows: the home screen, the daily calendar, or a puzzle. */
 export type Route =
@@ -24,8 +27,8 @@ function isTier(value: string | null): value is Tier {
 }
 
 /**
- * Reads `?level=N`, `?daily=YYYY-MM-DD`, `?drawing=id&tier=hard`,
- * `?calendar[=YYYY-MM]` or `?league`. Nothing, or anything invalid, is the home screen, so
+ * Reads `?level=N`, `?daily=YYYY-MM-DD`, `?event=id&board=N`,
+ * `?drawing=id&tier=hard`, `?calendar[=YYYY-MM]` or `?league`. Nothing, or anything invalid, is the home screen, so
  * a bad link never shows an error page. Whether a day can be opened yet is
  * the app's to decide.
  */
@@ -34,6 +37,17 @@ export function parseRoute(search: string): Route {
   const daily = params.get('daily');
   if (daily !== null && isDateKey(daily)) {
     return { screen: 'play', ref: { kind: 'daily', dateKey: daily } };
+  }
+  const eventId = params.get('event');
+  const event = eventId === null ? undefined : findEvent(eventId);
+  const board = Number(params.get('board') ?? '1');
+  if (
+    event !== undefined &&
+    Number.isSafeInteger(board) &&
+    board >= 1 &&
+    board <= event.boards.length
+  ) {
+    return { screen: 'play', ref: { kind: 'event', eventId: event.id, board } };
   }
   const drawing = params.get('drawing');
   if (drawing !== null && findDrawing(drawing) !== undefined) {
@@ -77,6 +91,8 @@ export function puzzleSearch(ref: PuzzleRef): string {
       return `?daily=${ref.dateKey}`;
     case 'drawing':
       return `?drawing=${encodeURIComponent(ref.drawingId)}&tier=${ref.tier}`;
+    case 'event':
+      return `?event=${encodeURIComponent(ref.eventId)}&board=${ref.board}`;
   }
 }
 
@@ -95,7 +111,10 @@ export function calendarHref(month: MonthKey | null = null): string {
 
 export const LEAGUE_HREF = './?league';
 
-/** The same board, the same key: `level:12`, `daily:2026-10-03`, `drawing:butterfly:hard`. */
+/**
+ * The same board, the same key: `level:12`, `daily:2026-10-03`,
+ * `event:autumn-2026:2`, `drawing:butterfly:hard`.
+ */
 export function puzzleKey(ref: PuzzleRef): string {
   switch (ref.kind) {
     case 'level':
@@ -104,5 +123,7 @@ export function puzzleKey(ref: PuzzleRef): string {
       return `daily:${ref.dateKey}`;
     case 'drawing':
       return `drawing:${ref.drawingId}:${ref.tier}`;
+    case 'event':
+      return `event:${ref.eventId}:${ref.board}`;
   }
 }

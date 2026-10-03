@@ -66,6 +66,8 @@ export interface ThemeIcons {
   /** A day won: filled, in the star colour. */
   readonly star: string;
   readonly trophy: string;
+  /** An event's reward. */
+  readonly badge: string;
   readonly previous: string;
   readonly next: string;
 }

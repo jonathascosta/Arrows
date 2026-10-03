@@ -15,11 +15,14 @@ import {
 } from './route.ts';
 import { CalendarScreen } from './screens/calendar.ts';
 import { HomeScreen } from './screens/home.ts';
+import type { HomeEvent } from './screens/home.ts';
+import { daysLeft, eventOn, eventState, findEvent } from './events/catalog.ts';
+import { EventStore } from './persistence/events.ts';
 import { LeagueScreen, summaryText } from './screens/league.ts';
 import type { LeagueProvider } from './league/provider.ts';
 import { SimulatedLeagueProvider } from './league/simulated.ts';
 import { PlayScreen } from './screens/play.ts';
-import type { BoardResult, Exit, ResultNote } from './screens/play.ts';
+import type { BoardResult, Exit, NextBoard, ResultNote } from './screens/play.ts';
 import { t } from './strings.ts';
 import type { Theme } from './theme/theme.ts';
 
@@ -62,6 +65,7 @@ export class App {
   private readonly progress: ProgressStore;
   private readonly daily: DailyStore;
   private readonly league: LeagueProvider;
+  private readonly events: EventStore;
   private screen: Screen | null = null;
   private play: PlayScreen | null = null;
   /** What is showing, for `refresh`. */
@@ -73,6 +77,7 @@ export class App {
     this.progress = new ProgressStore(options.store);
     this.daily = new DailyStore(options.store);
     this.league = new SimulatedLeagueProvider(options.store, t('league.you'));
+    this.events = new EventStore(options.store);
   }
 
   /** Today's date key on the device's clock. */
@@ -132,6 +137,7 @@ export class App {
           theme: this.options.theme,
           progress: this.progress.progress,
           league: this.league.view(now),
+          event: this.homeEvent(),
           finishedDays: this.daily.finished(),
           today: this.today(),
           pickerHref: this.options.pickerHref,
@@ -192,7 +198,45 @@ export class App {
     );
   }
 
+  /** The event the home screen shows, with the player's progress in it. */
+  private homeEvent(): HomeEvent | null {
+    const today = this.today();
+    const event = eventOn(today);
+    if (event === null) return null;
+    return {
+      event,
+      state: eventState(event, today),
+      progress: this.events.progress(event),
+      daysLeft: daysLeft(event, today),
+    };
+  }
+
+  /**
+   * Where an event board's address leads: the board itself while the event runs
+   * and the board is open (won before, or the next one), the next board when it
+   * names one further on, or nothing (the home screen) when the event is not running.
+   */
+  private openEventBoard(ref: Extract<PuzzleRef, { kind: 'event' }>): PuzzleRef | null {
+    const event = findEvent(ref.eventId)!;
+    if (!this.eventRuns(event.id)) return null;
+    const { next } = this.events.progress(event);
+    if (next === null || ref.board <= next) return ref;
+    return { kind: 'event', eventId: event.id, board: next };
+  }
+
   private showPuzzle(ref: PuzzleRef): void {
+    if (ref.kind === 'event') {
+      const open = this.openEventBoard(ref);
+      if (open === null) {
+        this.options.replaceUrl(routeSearch({ screen: 'home' }));
+        this.showHome();
+        return;
+      }
+      if (open !== ref) {
+        this.options.replaceUrl(routeSearch({ screen: 'play', ref: open }));
+        ref = open;
+      }
+    }
     // Future days, and days before the first daily, cannot be opened (docs/PRODUCT.md).
     if (ref.kind === 'daily' && !isPlayableDay(ref.dateKey, this.today())) {
       const month = clampMonth(monthOf(ref.dateKey), this.today());
@@ -215,11 +259,28 @@ export class App {
             },
             record: (result) => this.record(result),
             exitFor: (puzzle) => this.exitFor(puzzle),
+            next: (puzzle) => this.nextFor(puzzle),
           }),
       );
       this.play = play;
     }
     this.play.open(ref);
+  }
+
+  /** After a win: the next level, or an event's next board while the event runs. */
+  private nextFor(ref: PuzzleRef): NextBoard | null {
+    if (ref.kind === 'level') {
+      return { ref: { kind: 'level', level: ref.level + 1 }, label: t('won.next') };
+    }
+    if (ref.kind !== 'event') return null;
+    const event = findEvent(ref.eventId)!;
+    if (ref.board >= event.boards.length || !this.eventRuns(event.id)) {
+      return null;
+    }
+    return {
+      ref: { kind: 'event', eventId: event.id, board: ref.board + 1 },
+      label: t('won.nextBoard'),
+    };
   }
 
   /** A daily leads back to its month in the calendar; anything else to the home screen. */
@@ -237,21 +298,23 @@ export class App {
   /**
    * Levels move the path and the streak; a replay of a level already won only
    * keeps its best time. A won daily earns its star; a lost one is not stored.
-   * Event boards are not stored yet (docs/PRODUCT.md). Every board won also
-   * earns league points.
+   * An event board won while the event runs counts for the event, and the last
+   * one earns its badge. Every board won also earns league points, event boards
+   * with the bonus while the event runs.
    */
   private record(result: BoardResult): ResultNote | undefined {
     const note = this.recordPuzzle(result);
     if (result.outcome !== 'won') return note;
+    const { ref } = result;
     // Every board won counts for the league, once a day (docs/PRODUCT.md, Daily league).
     const award = this.league.record(
       {
-        key: puzzleKey(result.ref),
+        key: puzzleKey(ref),
         tier: result.tier,
         cellCount: result.cellCount,
         timeSeconds: result.elapsedMs / 1000,
         chancesLost: result.chancesLost,
-        event: result.ref.kind === 'drawing',
+        event: ref.kind === 'event' && this.eventRuns(ref.eventId),
       },
       this.options.clock(),
     );
@@ -259,8 +322,26 @@ export class App {
     return { ...note, league: award };
   }
 
+  private eventRuns(eventId: string): boolean {
+    return eventState(findEvent(eventId)!, this.today()) === 'running';
+  }
+
   private recordPuzzle(result: BoardResult): ResultNote | undefined {
     const { ref } = result;
+    if (ref.kind === 'event') {
+      // A board opened on the last day and won after midnight no longer counts (docs/PRODUCT.md).
+      if (result.outcome === 'lost' || !this.eventRuns(ref.eventId)) return undefined;
+      const event = findEvent(ref.eventId)!;
+      const win = this.events.recordWin(event, ref.board);
+      if (!win.first) return undefined;
+      return {
+        event: {
+          board: ref.board,
+          total: event.boards.length,
+          ...(win.badge ? { badge: t(event.badge) } : {}),
+        },
+      };
+    }
     if (ref.kind === 'daily') {
       if (result.outcome === 'lost') return undefined;
       const win = this.daily.recordWin(ref.dateKey, result.elapsedMs, this.today());

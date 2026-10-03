@@ -68,7 +68,8 @@ export type {
   LevelPuzzle,
 } from './levels/levels.ts';
 
-export { BUTTERFLY, DRAWINGS, HEART, drawingMask, findDrawing } from './drawings/drawings.ts';
+export { DRAWINGS, drawingMask, findDrawing } from './drawings/drawings.ts';
+export { ACORN, BUTTERFLY, HEART, MAPLE_LEAF } from './drawings/art.ts';
 export type { Drawing } from './drawings/drawings.ts';
 
 export { ADJECTIVES, NOUNS, characterNames } from './league/names.ts';

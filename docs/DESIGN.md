@@ -97,7 +97,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
 
 - Top: a round back button on `surface`; the title left-aligned in Instrument Serif ("Level
   42", or the drawing's name); the tier under it in small caps in the tier colour (for events:
-  "SPRING EVENT · 5 OF 12").
+  "SPRING EVENT · 5 OF 12"). As built in T6 an event board's line uses the event's short name
+  ("AUTUMN · 3 OF 6") and stays on one line; below 375 px the chances and the timer move to a
+  row of their own so the title and its line keep the width.
 - Top right: the three chances, a hairline divider, the timer (`01:12`) in Geist, tabular
   figures, no pill.
 - The board fills the middle.
@@ -113,6 +115,9 @@ time. A lost chance differs from an intact one by shape as well as colour.
   and the time on the right), Chances lost ("1 of 3"), Score (large serif figure).
 - One line with an orange dot: "+38 points in Gold league · now 8th".
 - Primary button "Next level" (or "Play again" off the level path), text button "Home".
+- As built in T6 (still the T2 sheet until T7 builds this screen): an event board's first win
+  adds "Board 3 of 6 done." and, on the last board, "Every board won: the Autumn 2026 badge is
+  yours!"; the primary button reads "Next board" while the event runs and boards are left.
 
 ### Lose
 
@@ -132,9 +137,13 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
-Until T6 fills it, the event card is a placeholder: it opens the butterfly at Hard. The menu
-button opens the puzzle picker until there is a menu. The level strip is not tappable: Play
-opens the current level.
+As built in T6, the event card shows the running event, or the one that ended last: the label
+is the event's name ("Autumn event"), the title the next board's drawing, the progress bar a
+segment per board (won ones in `hint`), and the note "2 of 6 boards · 48 days left" ("Last day",
+or "Ended Mon 30 Nov" after it). It opens the next board while the event runs; once every board
+is won the title is the badge ("Badge earned", the badge icon in `hint`), and the card opens
+nothing. The menu button opens the puzzle picker until there is a menu. The level strip is not
+tappable: Play opens the current level.
 
 ### Daily challenge
 
@@ -191,6 +200,13 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
 - Hint on drawings: the hint colour against the orange of the drawings is 1.20:1, so with reduced
   motion (no pulse) a hinted orange arrow barely stands out on the butterfly. A hint treatment that
   does not rely on colour alone (a halo, a thicker stroke) is worth designing.
+- Blocked tap on red drawings: `blocked` against the drawing red is 1.11:1, so on the maple leaf
+  (three of the six Autumn boards) a blocked arrow's flash barely shows; with reduced motion
+  there is no bump either, and only the chance lost in the header tells. Like the hint, it needs
+  a treatment that does not rely on colour alone, or another red for the leaf.
+- Drawing art: drawings are PNGs in `art/drawings/`, one pixel per cell, in the exact palette
+  colours (`art/drawings/drawings.json`); `pnpm drawings` converts them. The maple leaf and the
+  acorn of the Autumn event are session art to replace with designed ones.
 - Drawing palette: four colours are defined. Drawings that need more (the heart needs red) take
   `drawing5` onwards, still to be designed; until then red maps to `tierSuperHard`.
 - Chance direction: the chances point right, like the board's heads. Pointing them up was

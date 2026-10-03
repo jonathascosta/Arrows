@@ -28,6 +28,8 @@ jobs:
       # Same gates as the pre-commit hook.
       - run: pnpm lint
       - run: pnpm format:check
+      # The engine's drawings are what the PNG art makes (tools/png-to-drawing.ts).
+      - run: pnpm drawings:check
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build

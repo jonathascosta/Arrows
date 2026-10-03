@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { activeCount, cellIndex, colorAt, maskFromAscii, rectangleMask } from '../board/mask.ts';
 import type { Mask, Path } from '../board/types.ts';
-import { drawingMask, BUTTERFLY } from '../drawings/drawings.ts';
+import { BUTTERFLY } from '../drawings/art.ts';
+import { drawingMask } from '../drawings/drawings.ts';
 import { createRng } from '../rng/rng.ts';
 import { partition } from './partition.ts';
 
