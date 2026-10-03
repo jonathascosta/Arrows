@@ -36,9 +36,15 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @arrows/game build
+      # The app's build, without the puzzle picker (a tool for testing on the web only).
+      - run: pnpm --filter @arrows/game build:ios
       # Copies the web build into the Xcode project and writes its Swift package list.
       - run: pnpm --filter @arrows/game exec cap sync ios
+      # What goes into the bundle carries no puzzle picker (a tool for testing on the web only).
+      - name: The app ships no puzzle picker
+        run: |
+          test ! -e apps/game/ios/App/App/public/dev.html
+          if compgen -G 'apps/game/ios/App/App/public/assets/dev-*.js'; then exit 1; fi
       - run: xcodebuild -version
       - name: Build the app
         working-directory: apps/game/ios/App

@@ -35,8 +35,9 @@ if (root === null) throw new Error('index.html has no #app element');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // The iOS app keeps records in Preferences and shows AdMob ads; its module loads only there.
-const platform = Capacitor.isNativePlatform()
-  ? await (await import('./platform/native.ts')).nativePlatform(document)
+const native = Capacitor.isNativePlatform();
+const platform = native
+  ? await (await import('./platform/native.ts')).nativePlatform()
   : webPlatform(document);
 
 const app = new App(root, {
@@ -48,8 +49,10 @@ const app = new App(root, {
   pushUrl: (url) => history.pushState(null, '', url),
   // An empty search would keep the current one: the home screen is './'.
   replaceUrl: (url) => history.replaceState(null, '', url === '' ? './' : url),
-  pickerHref: 'dev.html',
-  // No ads on the web; the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
+  // A tool for testing, in the web build only (docs/PRODUCT.md, Settings): the iOS
+  // build leaves the page out, and the app shows no link to it either way.
+  pickerHref: native ? null : 'dev.html',
+  // No ads on the web; there the puzzle picker can turn on test ads (docs/PRODUCT.md, Monetization).
   ads: platform.ads,
   haptics: platform.haptics,
   privacy: platform.privacy,

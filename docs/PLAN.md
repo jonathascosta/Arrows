@@ -278,7 +278,7 @@ API within the budget in the product document, Android, iPad.
 | T9   | owner | [#10](https://github.com/jonathascosta/Arrows/pull/10) |
 | T10  | owner | [#11](https://github.com/jonathascosta/Arrows/pull/11) |
 | T11  | done  | [#16](https://github.com/jonathascosta/Arrows/pull/16) |
-| T12  | open  |                                                        |
+| T12  | done  | [#17](https://github.com/jonathascosta/Arrows/pull/17) |
 | T13  | done  | [#18](https://github.com/jonathascosta/Arrows/pull/18) |
 | T14  | open  |                                                        |
 | T15  | open  |                                                        |

@@ -242,14 +242,14 @@ ended last: a thumbnail of the next board, a segment per board, and the days lef
 
 ### Ads and the score screen
 
-Ads sit behind `AdProvider` (`ads/ads.ts`): `showInterstitial()` resolves when the ad has
-closed, `showRewarded()` with whether the reward was earned. `App` takes one and hands it to the
-play screen; the platform chooses it (`platform/`, see iOS). The web gets `NO_ADS`, which
-resolves at once and grants every reward, so nothing changes for a web player; the iOS app gets
-`AdMobAds`. On both, the `arrows.ads` setting, which the puzzle picker keeps in the web view's
-storage, swaps in `DebugAds` (`adsFor`): a full-screen card appended to the body, with the rest
-of the page `inert` until it closes, counting what it showed in `data-interstitials` and
-`data-rewarded` for the end-to-end tests.
+Ads sit behind `AdProvider` (`ads/ads.ts`): `showInterstitial()` resolves when the ad has closed,
+`showRewarded()` with whether the reward was earned. `App` takes one and hands it to the play
+screen; the platform chooses it (`platform/`, see iOS). The web gets `NO_ADS`, which resolves at
+once and grants every reward, so nothing changes for a web player; the iOS app gets `AdMobAds`,
+always: the app has no puzzle picker. On the web, the `arrows.ads` setting, which the picker keeps
+in the browser's storage, swaps in `DebugAds` (`adsFor`): a full-screen card appended to the body,
+with the rest of the page `inert` until it closes, counting what it showed in `data-interstitials`
+and `data-rewarded` for the end-to-end tests.
 
 The play screen calls the provider in two places only. A hint asks for the rewarded ad first,
 unless a hinted arrow is still on the board, which is brought into view again for free; no
@@ -311,8 +311,9 @@ play screen plays the board's cues, and `App` the promotion, when the league's s
 promoted day shows (on the home screen or the league screen). The Settings sheet
 (`ui/settings.ts`) opens from the home screen's menu button: a switch per setting (haptics only
 in the app), Done, and links to the privacy choices (in the app, where `Platform.privacy` says
-the law asks for them, read as the sheet opens), the privacy policy, the credits and the puzzle
-picker. Escape closes it from anywhere while it is open.
+the law asks for them, read as the sheet opens), the privacy policy, the credits and, when
+`App` gets a `pickerHref` (the web build; `main.ts` passes null in the app), the puzzle picker.
+Escape closes it from anywhere while it is open.
 
 The Credits screen (`?credits`, `screens/credits.ts`) shows each bundled font and library with
 its licence in full, behind a disclosure. `credits/licences.ts` imports the licence files from
@@ -354,18 +355,19 @@ as by colour.
 
 ### iOS
 
-The iOS app is the web build in Capacitor 8 (`apps/game/capacitor.config.ts`,
-`apps/game/ios/`). The Xcode project uses Swift Package Manager, so there is no CocoaPods:
-`cap sync ios` copies `dist/` into `ios/App/App/public` and writes
-`ios/App/CapApp-SPM/Package.swift` from the plugins installed (both are Capacitor's to write;
-the copied web build and `capacitor.config.json` are not committed). The project is iPhone
-only and portrait; Info.plist names AdMob's app id through the `ADMOB_APP_ID` build setting
-(Google's test app unless the build passes another), declares no encryption beyond the
-system's, and gives Apple's tracking prompt its text (`NSUserTrackingUsageDescription`, in
-`en.lproj` and `pt.lproj/InfoPlist.strings` too). `PrivacyInfo.xcprivacy` is the app's privacy
-manifest: no tracking and no data collected by the game's own code, and the one required-reason
-API it uses, UserDefaults (Capacitor's Preferences), for the app's own data (`CA92.1`). Both are
-in the Xcode project's resources.
+The iOS app is the web build in Capacitor 8 (`apps/game/capacitor.config.ts`, `apps/game/ios/`),
+made with `pnpm build:ios` (Vite's `ios` mode, so it reads `.env.ios` files), which leaves out the
+puzzle picker's `dev.html`; both iOS workflows check that the copied bundle has no picker. The
+Xcode project uses Swift Package Manager, so there is no CocoaPods: `cap sync ios` copies `dist/`
+into `ios/App/App/public` and writes `ios/App/CapApp-SPM/Package.swift` from the plugins installed
+(both are Capacitor's to write; the copied web build and `capacitor.config.json` are not
+committed). The project is iPhone only and portrait; Info.plist names AdMob's app id through the
+`ADMOB_APP_ID` build setting (Google's test app unless the build passes another), declares no
+encryption beyond the system's, and gives Apple's tracking prompt its text
+(`NSUserTrackingUsageDescription`, in `en.lproj` and `pt.lproj/InfoPlist.strings` too).
+`PrivacyInfo.xcprivacy` is the app's privacy manifest: no tracking and no data collected by the
+game's own code, and the one required-reason API it uses, UserDefaults (Capacitor's Preferences),
+for the app's own data (`CA92.1`). Both are in the Xcode project's resources.
 
 `main.ts` asks Capacitor whether it runs in the app. In a browser it uses `webPlatform`; in the
 app it imports `platform/native.ts`, a chunk of its own, so the web never loads the plugins.

@@ -6,7 +6,8 @@ export interface SettingsSheetOptions {
   readonly settings: CueSettings;
   /** Only the iOS app has haptics: the web shows no switch for them. */
   readonly hapticsAvailable: boolean;
-  readonly pickerHref: string;
+  /** The puzzle picker, a tool for testing: the web build only, null in the app. */
+  readonly pickerHref: string | null;
   readonly creditsHref: string;
   readonly privacyHref: string;
   /** Opens the choices about ads, where the law asks for a way back to them; else null. */
@@ -18,8 +19,8 @@ export interface SettingsSheetOptions {
 /**
  * The home menu's Settings (docs/PRODUCT.md, Sound, haptics and settings): a
  * sheet like the others, with a switch per setting, Done, and links to the
- * privacy choices (where required), the privacy policy, the credits and the
- * puzzle picker. Escape closes it too.
+ * privacy choices (where required), the privacy policy, the credits and, on the
+ * web only, the puzzle picker. Escape closes it too.
  */
 export class SettingsSheet {
   readonly element: HTMLDivElement;
@@ -83,9 +84,13 @@ export class SettingsSheet {
             el(doc, 'a', { class: 'text-button', href: options.creditsHref }, [
               t('settings.credits'),
             ]),
-            el(doc, 'a', { class: 'text-button', href: options.pickerHref }, [
-              t('settings.picker'),
-            ]),
+            ...(options.pickerHref === null
+              ? []
+              : [
+                  el(doc, 'a', { class: 'text-button', href: options.pickerHref }, [
+                    t('settings.picker'),
+                  ]),
+                ]),
           ]),
         ]),
       ],

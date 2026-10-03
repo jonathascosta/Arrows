@@ -24,7 +24,7 @@
     "test:a11y": "pnpm --filter @arrows/game test:a11y",
     "drawings": "pnpm --filter @arrows/tools drawings",
     "drawings:check": "pnpm --filter @arrows/tools drawings:check",
-    "ios:sync": "pnpm --filter @arrows/game build && pnpm --filter @arrows/game exec cap sync ios",
+    "ios:sync": "pnpm --filter @arrows/game build:ios && pnpm --filter @arrows/game exec cap sync ios",
     "prepare": "husky",
     "store:screenshots": "pnpm --filter @arrows/game store:screenshots"
   },
