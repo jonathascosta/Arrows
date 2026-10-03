@@ -14,9 +14,9 @@ together is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). What comes next, ta
 | Area                                              | State                                                                                                                                                                                 |
 | :------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`packages/engine`](packages/engine/src/index.ts) | Done for v1: seeded RNG, boards and drawings, generator (partition and peel), solver and difficulty metrics, tiers, level and daily seeds, game state, daily league simulation, tests |
-| `apps/game`                                       | Next: the playable web app (board rendering, zoom and pan, lives, timer), then levels, daily, league, events                                                                          |
-| iOS                                               | Later: Capacitor project, macOS build in CI, TestFlight                                                                                                                               |
-| CI                                                | Lint, format, typecheck, unit tests, build on every push; calibration suites in their own job                                                                                         |
+| [`apps/game`](apps/game/src/main.ts)              | Playable board in the browser (T2): SVG board, tap by cell, pinch and wheel zoom, drops, timer, hint, grid, win and lose, exit animation, a dev page to open any puzzle by seed       |
+| Next                                              | Persistence and the level path (T3), then daily, league, events, ads, iOS: see [docs/PLAN.md](docs/PLAN.md)                                                                           |
+| CI                                                | Lint, format, typecheck, unit tests, build with a size budget; Playwright end to end; calibration suites                                                                              |
 
 ## Quick start
 
@@ -26,15 +26,17 @@ pnpm, which Corepack provides at the version pinned in `package.json`.
 ```sh
 corepack enable
 pnpm install
-pnpm test
+pnpm dev   # the game at http://localhost:5173, any puzzle at http://localhost:5173/dev.html
 ```
 
-| Command                                        | What it does                                                                                      |
-| :--------------------------------------------- | :------------------------------------------------------------------------------------------------ |
-| `pnpm test`                                    | Unit and property tests for every package (a few seconds)                                         |
-| `pnpm test:calibration`                        | The long suites: difficulty bands over 400 levels, league promotion rates over 120 simulated days |
-| `pnpm lint` · `pnpm format` · `pnpm typecheck` | Type-aware ESLint, Prettier, and `tsc` for every project                                          |
-| `pnpm build`                                   | Builds the engine into `packages/engine/dist`                                                     |
+| Command                                        | What it does                                                                                               |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| `pnpm dev` · `pnpm preview`                    | Runs the app with Vite (the puzzle picker is at `/dev.html`); serves the production build                  |
+| `pnpm build`                                   | Builds the engine into `packages/engine/dist` and the app into `apps/game/dist`; fails over 300 kB gzipped |
+| `pnpm test:e2e`                                | Playwright against a fresh production build, as a touch phone and on a desktop                             |
+| `pnpm test`                                    | Unit and property tests for every package (a few seconds)                                                  |
+| `pnpm test:calibration`                        | The long suites: difficulty bands over 400 levels, league promotion rates over 120 simulated days          |
+| `pnpm lint` · `pnpm format` · `pnpm typecheck` | Type-aware ESLint, Prettier, and `tsc` for every project                                                   |
 
 A Husky pre-commit hook runs `lint`, `format:check`, `typecheck` and `test`.
 

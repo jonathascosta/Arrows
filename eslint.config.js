@@ -14,7 +14,16 @@ import tseslint from 'typescript-eslint';
 const BROWSER_GLOBALS = ['window', 'document', 'navigator', 'localStorage', 'sessionStorage'];
 
 export default defineConfig([
-  globalIgnores(['**/dist/', '**/coverage/', '**/node_modules/', '**/ios/', '**/android/']),
+  globalIgnores([
+    '**/dist/',
+    '**/coverage/',
+    '**/node_modules/',
+    '**/ios/',
+    '**/android/',
+    '**/test-results/',
+    '**/playwright-report/',
+    '.claude/worktrees/',
+  ]),
 
   js.configs.recommended,
 
@@ -75,7 +84,7 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: ['@arrows/app', '@arrows/ui'],
+              group: ['@arrows/game', '@arrows/game/*'],
               message: 'The engine must not depend on UI or rendering code.',
             },
           ],
@@ -88,6 +97,27 @@ export default defineConfig([
     name: 'repo/browser',
     files: ['apps/**/*.ts'],
     languageOptions: { globals: globals.browser },
+  },
+
+  {
+    // Colours come from the theme object, so a theme is data (docs/PLAN.md).
+    // styles.css is held to the same rule by src/styles.test.ts.
+    name: 'repo/theme-colours',
+    files: ['apps/game/src/**/*.ts'],
+    ignores: ['apps/game/src/theme/**', 'apps/game/src/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/]',
+          message: 'Colour literal outside the theme: add it to src/theme and read it from there.',
+        },
+        {
+          selector: 'Literal[value=/^(?:rgb|hsl|oklch|oklab)a?\\(/]',
+          message: 'Colour literal outside the theme: add it to src/theme and read it from there.',
+        },
+      ],
+    },
   },
 
   {

@@ -12,12 +12,22 @@ how the code is organised. This file says in which order and what "done" means.
    touching code, then works on a branch named `claude/<task-id>-<short-name>`.
 3. Done means: every acceptance criterion below is met, `pnpm lint`, `pnpm format:check`,
    `pnpm typecheck` and `pnpm test` pass locally, the pull request is open against `main`, CI is
-   green, and the pull request description lists the criteria with how each was verified. The
-   session updates `docs/ARCHITECTURE.md` when the structure changes and `docs/PRODUCT.md` when
-   behaviour changes, and marks the task done in this file.
-4. One task per session. If a task turns out to need something from a later task, the session
-   says so in the pull request and stops at a clean boundary instead of widening the scope.
-5. Design decisions that this plan and the product document do not cover go to the owner as a
+   green, the pull request description lists the criteria with how each was verified, and the
+   isolated reviewer (step 4) has approved it. The session updates `docs/ARCHITECTURE.md` when
+   the structure changes and `docs/PRODUCT.md` when behaviour changes, and marks the task done in
+   this file.
+4. Review loop, on every pull request: once the pull request is open, the session starts a
+   separate review agent in its own worktree, with no context from the session beyond the
+   pull request and the repository documents. The reviewer checks the diff against the task's
+   acceptance criteria and the documents, runs the gates, and answers with a verdict (approved,
+   or changes requested with findings). The session fixes every blocking finding, pushes, and
+   asks the same reviewer to review again, until it approves. The session then posts one comment
+   on the pull request recording the rounds and the approval. Only the owner merges.
+5. When the owner merges the pull request, the session moves on to the next open task in this
+   file on its own, from the updated `main`, and repeats the cycle. If a task turns out to need
+   something from a later task, the session says so in the pull request and stops at a clean
+   boundary instead of widening the scope.
+6. Design decisions that this plan and the product document do not cover go to the owner as a
    question in the pull request, with a recommendation. Everything else the session decides.
 
 ## Conventions the tasks share
@@ -56,7 +66,7 @@ The first thing anyone can play.
   Pinch zoom and two-finger pan on touch, wheel zoom and drag on desktop, board clamped to the
   viewport, double tap resets.
 - HUD: drops (three, lost on a blocked tap), timer that starts on the first tap, hint button
-  (calls `hint` directly for now; the ad gate comes in T8), grid toggle.
+  (calls `hint` directly for now; the ad gate comes in T7), grid toggle.
 - Flow: win and lose overlays; lose offers retry of the same puzzle; win offers next level.
 - Exit animation: the arrow slides along its own body and then the ray, 250 to 400 ms; a
   blocked arrow shakes. Reduced-motion preference respected.
@@ -168,15 +178,15 @@ API within the budget in the product document, Android, iPad.
 
 ## Status
 
-| Task | State | Pull request |
-| :--- | :---- | :----------- |
-| T1   | open  |              |
-| T2   | open  |              |
-| T3   | open  |              |
-| T4   | open  |              |
-| T5   | open  |              |
-| T6   | open  |              |
-| T7   | open  |              |
-| T8   | open  |              |
-| T9   | open  |              |
-| T10  | open  |              |
+| Task | State | Pull request                                         |
+| :--- | :---- | :--------------------------------------------------- |
+| T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1) |
+| T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2) |
+| T3   | open  |                                                      |
+| T4   | open  |                                                      |
+| T5   | open  |                                                      |
+| T6   | open  |                                                      |
+| T7   | open  |                                                      |
+| T8   | open  |                                                      |
+| T9   | open  |                                                      |
+| T10  | open  |                                                      |
