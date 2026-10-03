@@ -18,16 +18,18 @@ Monetization, the decisions log); how the app is built and uploaded is in
 | Upload of the listing      | The `App Store listing` workflow (`fastlane listing`), by hand                                                                                         |
 | Upload of a build          | The `TestFlight` workflow (`fastlane beta`), by hand                                                                                                   |
 
-The listing's name is **Arrows**, subtitle "Clear the board of arrows" ("Limpe o tabuleiro de
-flechas"), under Games, Puzzle and Board. Support goes to the repository's issues; the privacy
-policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once published.
+The listing's name is **Arrows: Tap Puzzle** (Arrows was taken), subtitle "Clear the board of
+arrows" ("Limpe o tabuleiro de flechas"), under Games, Puzzle and Board; on the home screen the
+app is still Arrows (`CFBundleDisplayName` in `Info.plist`). The English keywords leave out the
+name's words, which the App Store already searches. Support goes to the repository's issues;
+the privacy policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once published.
 
 ## The owner's steps
 
-1. **App Store Connect: create the app.** My Apps, New App: iOS, name Arrows, primary language
-   English (U.S.), bundle id `net.jonathas.arrows`, any SKU. If the name is taken, pick
-   another (for example "Arrows: Clear the Board") and put it in both `name.txt` files. Then add
-   the Portuguese (Brazil) localisation.
+1. **App Store Connect: create the app.** Done (3 October 2026): iOS, named Arrows: Tap Puzzle,
+   primary language English (U.S.), bundle id `net.jonathas.arrows`, SKU `net.jonathas.arrows`,
+   full user access. Still to do: add the Portuguese (Brazil) localisation. A renamed listing
+   goes in both `name.txt` files, at most 30 characters, and must be free on the App Store.
 2. **GitHub Pages: publish the privacy policy.** In the repository's Settings, Pages, set the
    source to GitHub Actions, then run the `Privacy policy` workflow from the Actions tab. Check
    that the address above opens the policy. Run it again whenever `privacy.html` changes.
