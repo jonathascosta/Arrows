@@ -76,6 +76,8 @@ export const DEFAULT_THEME: Theme = {
     grid: icon(
       '<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/>',
     ),
+    menu: icon('<path d="M4 7h16M4 12h16M4 17h16"/>'),
+    streak: icon('<path d="M4 18L10 12l3.5 3.5L20 9"/><path d="M14.5 9H20v5.5"/>'),
   },
   motion: {
     exitMinMs: 250,

@@ -131,6 +131,11 @@ time. A lost chance differs from an intact one by shape as well as colour.
 - **Event card**: a thumbnail of the drawing board, "Spring event", the drawing's name in serif, a
   progress bar, "4 of 12 boards · 3 days left".
 
+Until the later tasks fill them, the cards are placeholders: Daily shows today's date and opens
+today's board (stars and the count come with T4), League shows "Bronze · Opens soon" and does
+nothing (T5), and the event card opens the butterfly at Hard (T6). The level strip is not
+tappable: Play opens the current level.
+
 ### Daily challenge
 
 - Round back button, title "Daily challenge" in serif.

@@ -10,8 +10,24 @@ const en = {
   'tier.medium': 'Medium',
   'tier.hard': 'Hard',
   'tier.superHard': 'Super Hard',
-  'nav.back': 'Back to puzzles',
+  'nav.back': 'Back to home',
   'nav.home': 'Home',
+  'home.levels': 'Levels',
+  'home.play': 'Play',
+  'home.streak': 'Streak {n}',
+  'home.streakLabel': 'Win streak: {n}',
+  'home.menu': 'Puzzle picker',
+  'home.path': 'Level path',
+  'home.done': 'Level {n}, done',
+  'home.current': 'Level {n}, next to play',
+  'home.ahead': 'Level {n}, ahead',
+  'home.daily': 'Daily',
+  'home.dailyNote': 'Today’s board',
+  'home.league': 'League',
+  'home.leagueTitle': 'Bronze',
+  'home.leagueNote': 'Opens soon',
+  'home.event': 'Event',
+  'home.eventNote': 'A drawing board',
   'hud.chances': '{n} of {total} chances left',
   'hud.timer': 'Time {time}',
   'tools.grid': 'Grid',
@@ -26,7 +42,11 @@ const en = {
   'status.hint': 'Try the highlighted arrow.',
   'status.noHint': 'No free arrow right now.',
   'won.title': 'Solved',
-  'won.summary': '{time} · {chances} of {total} chances left',
+  'won.summary': '{time} · {chances} of {total} chances left.',
+  'won.firstTry': 'First try. Win streak is now {n}.',
+  'won.streakOver': 'Not on the first try, so the streak starts again.',
+  'won.newBest': 'New best time!',
+  'won.best': 'Best {time}.',
   'won.next': 'Next level',
   'won.again': 'Play again',
   'lost.title': 'Out of chances',
@@ -75,6 +95,22 @@ const SMALL_NUMBERS = [
 /** Small counts in words, as running text prefers ("three fresh chances"); digits from 11. */
 export function spellOut(n: number): string {
   return SMALL_NUMBERS[n] ?? String(n);
+}
+
+/** `2026-10-03` as `Sat 3 Oct`, the way the home screen names a day. */
+export function formatDayShort(dateKey: string): string {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
+  // Parts, not format(): engines disagree on the comma after the weekday.
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('weekday')} ${part('day')} ${part('month')}`;
 }
 
 /** `2026-10-02` as `Oct 2, 2026`. */

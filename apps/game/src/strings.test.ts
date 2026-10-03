@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateKey, formatDuration, spellOut, t, tn } from './strings.ts';
+import { formatDateKey, formatDayShort, formatDuration, spellOut, t, tn } from './strings.ts';
 
 describe('t', () => {
   it('fills placeholders and leaves unknown ones visible', () => {
@@ -43,5 +43,12 @@ describe('formatDuration', () => {
 describe('formatDateKey', () => {
   it('formats a day key like the reference game', () => {
     expect(formatDateKey('2026-10-02')).toBe('Oct 2, 2026');
+  });
+});
+
+describe('formatDayShort', () => {
+  it('names a day the way the home screen shows it, in any time zone', () => {
+    expect(formatDayShort('2026-10-03')).toBe('Sat 3 Oct');
+    expect(formatDayShort('2027-01-01')).toBe('Fri 1 Jan');
   });
 });

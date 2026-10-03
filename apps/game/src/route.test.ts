@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIRST_LEVEL, localDateKey, parseRoute, routeSearch } from './route.ts';
+import { localDateKey, parseRoute, puzzleHref, routeSearch } from './route.ts';
 import type { PuzzleRef } from './route.ts';
 
 describe('parseRoute', () => {
@@ -13,7 +13,7 @@ describe('parseRoute', () => {
     });
   });
 
-  it('falls back to level 1 or a medium tier on anything invalid', () => {
+  it('reads no puzzle, or an invalid one, as the home screen; a bad tier as medium', () => {
     for (const search of [
       '',
       '?level=0',
@@ -23,7 +23,7 @@ describe('parseRoute', () => {
       '?daily=2026-02-30',
       '?drawing=nope',
     ]) {
-      expect(parseRoute(search)).toEqual(FIRST_LEVEL);
+      expect(parseRoute(search)).toBeNull();
     }
     expect(parseRoute('?drawing=heart&tier=impossible')).toEqual({
       kind: 'drawing',
@@ -39,6 +39,7 @@ describe('parseRoute', () => {
       { kind: 'drawing', drawingId: 'heart', tier: 'superHard' },
     ];
     for (const ref of refs) expect(parseRoute(routeSearch(ref))).toEqual(ref);
+    expect(puzzleHref({ kind: 'level', level: 7 })).toBe('./?level=7');
   });
 });
 

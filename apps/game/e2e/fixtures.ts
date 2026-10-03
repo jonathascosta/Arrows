@@ -1,3 +1,4 @@
+import type { Puzzle } from '@arrows/engine';
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
@@ -46,4 +47,19 @@ export async function bodies(page: Page): Promise<(string | null)[]> {
   return page
     .locator('[data-arrow] .body')
     .evaluateAll((paths) => paths.map((p) => p.getAttribute('d')));
+}
+
+/** Wins the open board by asking for a hint and tapping the hinted arrow, arrow after arrow. */
+export async function solveWithHints(page: Page, touch: boolean, puzzle: Puzzle): Promise<void> {
+  for (let move = 0; move < puzzle.arrows.length; move++) {
+    await press(page.locator('.toolbar .hint'), touch);
+    const hinted = page.locator('.arrow.hinted');
+    await expect(hinted).toHaveCount(1);
+    const id = Number(await hinted.getAttribute('data-arrow'));
+    await tapArrow(page, touch, id);
+    await expect(play(page)).toHaveAttribute(
+      'data-arrows-left',
+      String(puzzle.arrows.length - move - 1),
+    );
+  }
 }

@@ -4,6 +4,7 @@ import { cellCenter } from '../board/geometry.ts';
 import type { PuzzleRef } from '../route.ts';
 import { DEFAULT_THEME } from '../theme/default.ts';
 import { BOARD_READY_MARK, PlayScreen } from './play.ts';
+import type { BoardResult, ResultNote } from './play.ts';
 
 const STAGE = { width: 390, height: 600 };
 
@@ -33,23 +34,53 @@ interface Harness {
   screen: PlayScreen;
   root: HTMLElement;
   navigations: PuzzleRef[];
+  results: BoardResult[];
   clock: { now: number };
 }
 
-function mount(ref: PuzzleRef = { kind: 'level', level: 1 }): Harness {
+function mount(
+  ref: PuzzleRef = { kind: 'level', level: 1 },
+  note?: (result: BoardResult) => ResultNote | undefined,
+): Harness {
   const root = document.createElement('div');
   document.body.replaceChildren(root);
   const navigations: PuzzleRef[] = [];
+  const results: BoardResult[] = [];
   const clock = { now: 0 };
   const screen = new PlayScreen(root, {
     theme: DEFAULT_THEME,
     now: () => clock.now,
     reducedMotion: () => true,
     navigate: (next) => navigations.push(next),
-    backHref: 'dev.html',
+    homeHref: './',
+    record: (result) => {
+      results.push(result);
+      return note?.(result);
+    },
   });
   screen.open(ref);
-  return { screen, root, navigations, clock };
+  return { screen, root, navigations, results, clock };
+}
+
+/** Removes every arrow by following the hints, the way a stuck player could. */
+function solveWithHints(root: HTMLElement, arrows: number): void {
+  const { puzzle } = generateLevel(1);
+  for (let i = 0; i < arrows; i++) {
+    root.querySelector<HTMLButtonElement>('.hint')!.click();
+    const id = Number(root.querySelector('.hinted')!.getAttribute('data-arrow'));
+    const { x, y } = head(puzzle.arrows[id]!);
+    tapCell(root, x, y);
+  }
+}
+
+/** Taps a blocked arrow of level 1 until the board is lost. */
+function loseLevelOne(root: HTMLElement): void {
+  const { puzzle } = generateLevel(1);
+  const game = createGame(puzzle);
+  const free = new Set(freeArrows(game));
+  const stuck = [...game.remaining].find((id) => !free.has(id))!;
+  const { x, y } = puzzle.arrows[stuck]!.cells[0]!;
+  for (let i = 0; i < game.livesAtStart; i++) tapCell(root, x, y);
 }
 
 /** Taps the centre of a cell through real pointer events on the stage. */
@@ -162,7 +193,7 @@ describe('PlayScreen', () => {
     expect(overlay.querySelector('p')?.textContent).toBe(
       'Retry plays the same puzzle again, with three fresh chances and the timer reset.',
     );
-    expect(overlay.querySelector('a')?.getAttribute('href')).toBe('dev.html');
+    expect(overlay.querySelector('a')?.getAttribute('href')).toBe('./');
     expect(overlay.querySelector('a')?.textContent).toBe('Home');
     // Everything behind the sheet is out of reach while it shows.
     for (const selector of ['.topbar', '.stage', '.toolbar']) {
@@ -222,6 +253,59 @@ describe('PlayScreen', () => {
     expect(overlay.textContent).toContain('3 of 3 chances left');
     overlay.querySelector('button')!.click();
     expect(navigations).toEqual([{ kind: 'level', level: 2 }]);
+  });
+
+  it('records each result once, with first try false after a lost board', async () => {
+    const { root, results, clock } = mount();
+    const { puzzle } = generateLevel(1);
+    loseLevelOne(root);
+    expect(results).toEqual([
+      { ref: { kind: 'level', level: 1 }, outcome: 'lost', elapsedMs: 0, firstTry: true },
+    ]);
+    await vi.advanceTimersByTimeAsync(1000);
+    root.querySelector<HTMLElement>('.overlay button')!.click();
+    clock.now = 5000;
+    solveWithHints(root, puzzle.arrows.length);
+    // Recorded at the winning tap, before the last arrow has left.
+    expect(results).toHaveLength(2);
+    expect(results[1]).toMatchObject({ outcome: 'won', firstTry: false });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(results).toHaveLength(2);
+  });
+
+  it('counts a first try again when another puzzle opens', async () => {
+    const { screen, root, results } = mount();
+    loseLevelOne(root);
+    await vi.advanceTimersByTimeAsync(1000);
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, generateLevel(1).puzzle.arrows.length);
+    expect(results.at(-1)).toMatchObject({ outcome: 'won', firstTry: true });
+  });
+
+  it('tells the streak and the best time on the win sheet', async () => {
+    const notes: ResultNote[] = [
+      { streak: 4, bestMs: 61_000, newBest: false },
+      { streak: 0, bestMs: 2000, newBest: true },
+    ];
+    const { screen, root } = mount({ kind: 'level', level: 1 }, () => notes.shift());
+    const arrows = generateLevel(1).puzzle.arrows.length;
+    const body = (): string | null | undefined =>
+      root.querySelector('.overlay[data-overlay="won"] p')?.textContent;
+
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe('00:00 · 3 of 3 chances left. First try. Win streak is now 4. Best 01:01.');
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe(
+      '00:00 · 3 of 3 chances left. Not on the first try, so the streak starts again. New best time!',
+    );
+    // Nothing recorded (a daily or an event): only the time and the chances.
+    screen.open({ kind: 'level', level: 1 });
+    solveWithHints(root, arrows);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(body()).toBe('00:00 · 3 of 3 chances left.');
   });
 
   it('offers play again, not next level, on a daily', async () => {

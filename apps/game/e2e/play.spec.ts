@@ -1,5 +1,5 @@
 import { createGame, freeArrows, generateLevel, tap } from '@arrows/engine';
-import { bodies, expect, play, press, tapArrow, test } from './fixtures.ts';
+import { bodies, expect, play, press, solveWithHints, tapArrow, test } from './fixtures.ts';
 
 // The engine is the oracle: the page generates the same puzzle from the same seed.
 
@@ -9,17 +9,7 @@ test('level 1 is won by following the hints, then opens level 2', async ({ page,
   await expect(page.locator('[data-arrow]')).toHaveCount(puzzle.arrows.length);
   await expect(page.locator('.time')).toHaveText('00:00');
 
-  for (let move = 0; move < puzzle.arrows.length; move++) {
-    await press(page.locator('.toolbar .hint'), touch);
-    const hinted = page.locator('.arrow.hinted');
-    await expect(hinted).toHaveCount(1);
-    const id = Number(await hinted.getAttribute('data-arrow'));
-    await tapArrow(page, touch, id);
-    await expect(play(page)).toHaveAttribute(
-      'data-arrows-left',
-      String(puzzle.arrows.length - move - 1),
-    );
-  }
+  await solveWithHints(page, touch, puzzle);
 
   const overlay = page.locator('.overlay[data-overlay="won"]');
   await expect(overlay).toBeVisible();
@@ -68,7 +58,7 @@ test('a blocked tap costs a chance; three lose; retry brings back the whole boar
   await expect(overlay.getByRole('heading')).toHaveText('Out of chances');
   await expect(play(page)).toHaveAttribute('data-status', 'lost');
   await expect(page.locator('.chance.lost')).toHaveCount(3);
-  await expect(overlay.getByRole('link', { name: 'Home' })).toHaveAttribute('href', 'dev.html');
+  await expect(overlay.getByRole('link', { name: 'Home' })).toHaveAttribute('href', './');
 
   await press(overlay.getByRole('button', { name: 'Retry' }), touch);
   await expect(overlay).toBeHidden();
