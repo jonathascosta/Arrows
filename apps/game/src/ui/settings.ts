@@ -19,6 +19,7 @@ export interface SettingsSheetOptions {
 export class SettingsSheet {
   readonly element: HTMLDivElement;
   private readonly first: HTMLButtonElement;
+  private readonly onKey: (event: KeyboardEvent) => void;
 
   constructor(doc: Document, options: SettingsSheetOptions) {
     const values = { ...options.settings };
@@ -73,9 +74,17 @@ export class SettingsSheet {
         ]),
       ],
     );
-    this.element.addEventListener('keydown', (event) => {
+    // Wherever focus is while the sheet is open, as with a tap above it.
+    this.onKey = (event) => {
       if (event.key === 'Escape') options.onClose();
-    });
+    };
+    doc.addEventListener('keydown', this.onKey);
+  }
+
+  /** Takes the sheet away and stops listening for Escape. */
+  remove(): void {
+    this.element.ownerDocument.removeEventListener('keydown', this.onKey);
+    this.element.remove();
   }
 
   /** Moves focus into the sheet, onto its first switch. */

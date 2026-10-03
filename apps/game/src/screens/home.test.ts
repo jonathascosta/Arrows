@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SimulatedLeagueProvider } from '../league/simulated.ts';
 import { INITIAL_PROGRESS } from '../persistence/progress.ts';
 import { MemoryStore } from '../persistence/store.ts';
@@ -107,14 +107,25 @@ describe('HomeScreen', () => {
     expect(root.querySelector('[data-overlay="settings"]')).toBeNull();
     expect(root.querySelector('.home-top')?.hasAttribute('inert')).toBe(false);
     expect(document.activeElement).toBe(menu);
-    // Opened again, it shows what was saved; Escape closes it.
+    // Opened again, it shows what was saved; Escape closes it, wherever focus is.
     menu.click();
     const again = root.querySelector<HTMLElement>('[data-overlay="settings"]')!;
     expect(
       [...again.querySelectorAll('[role="switch"]')].map((b) => b.getAttribute('aria-checked')),
     ).toEqual(['false', 'false']);
-    again.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    (document.activeElement as HTMLElement).blur();
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(root.querySelector('[data-overlay="settings"]')).toBeNull();
+    expect(document.activeElement).toBe(menu);
+  });
+
+  it('stops listening for Escape when the screen goes with Settings open', () => {
+    const { root, screen } = mount();
+    root.querySelector<HTMLButtonElement>('button.menu')!.click();
+    const remove = vi.spyOn(document, 'removeEventListener');
+    screen.destroy();
+    expect(remove).toHaveBeenCalledWith('keydown', expect.any(Function));
+    remove.mockRestore();
   });
 
   it('shows no haptics switch where there are no haptics (the web)', () => {

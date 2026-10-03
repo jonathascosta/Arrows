@@ -12,7 +12,9 @@ export const TEXT_SCALE_RANGE = { min: 0.85, max: 1.5 } as const;
 /** How much larger than the default the player wants text, within `TEXT_SCALE_RANGE`. */
 export function preferredTextScale(doc: Document): number {
   const view = doc.defaultView;
-  if (view?.CSS.supports('font', '-apple-system-body') !== true) return 1;
+  // Some engines have no CSS object at all.
+  const css = view?.CSS;
+  if (view === null || css?.supports('font', '-apple-system-body') !== true) return 1;
   const probe = doc.createElement('span');
   probe.style.font = '-apple-system-body';
   probe.style.position = 'absolute';

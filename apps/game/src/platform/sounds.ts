@@ -51,26 +51,54 @@ const CUES: Readonly<Record<Cue, readonly Tone[]>> = {
 /** How loud the game is at most: quiet, next to the phone's own sounds. */
 const MASTER = 0.18;
 
+/**
+ * How late a cue may still sound while the audio starts. A browser starts audio
+ * only after a tap: a cue before any tap waits, and must not sound with a later one.
+ */
+const LATE_MS = 250;
+
 type AudioContextClass = new () => AudioContext;
 
 /**
  * The cues through Web Audio, in the browser and in the iOS app's web view
  * (where the silent switch mutes them). The audio context starts on the first
- * cue, which comes from a tap; where Web Audio is missing, or the browser does
- * not let it start, the cue is silent.
+ * cue. A browser lets it start only after a tap, so a cue before any tap (a
+ * promotion as the page opens) is silent there; the app's web view plays it.
+ * Where Web Audio is missing or fails, the cue is silent.
  */
 export class WebAudioSounds implements CuePlayer {
   private readonly create: AudioContextClass | undefined;
+  private readonly now: () => number;
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
 
-  constructor(create: AudioContextClass | undefined = globalThis.AudioContext) {
+  constructor(
+    create: AudioContextClass | undefined = globalThis.AudioContext,
+    now: () => number = () => Date.now(),
+  ) {
     this.create = create;
+    this.now = now;
   }
 
   play(cue: Cue): void {
     const context = this.ready();
-    if (context === null || this.master === null) return;
+    if (context === null) return;
+    if (context.state === 'running') {
+      this.schedule(context, cue);
+      return;
+    }
+    // Starting: the cue sounds once the audio runs, unless that is too late.
+    const asked = this.now();
+    context.resume().then(
+      () => {
+        if (this.now() - asked <= LATE_MS) this.schedule(context, cue);
+      },
+      () => undefined,
+    );
+  }
+
+  private schedule(context: AudioContext, cue: Cue): void {
+    if (this.master === null) return;
     try {
       const start = context.currentTime + 0.01;
       for (const tone of CUES[cue]) this.tone(context, this.master, start, tone);
@@ -88,7 +116,6 @@ export class WebAudioSounds implements CuePlayer {
         this.master.gain.value = MASTER;
         this.master.connect(this.context.destination);
       }
-      if (this.context.state === 'suspended') void this.context.resume().catch(() => undefined);
       return this.context;
     } catch {
       return null;
@@ -108,6 +135,10 @@ export class WebAudioSounds implements CuePlayer {
     gain.gain.linearRampToValueAtTime(tone.level, at + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, end);
     oscillator.connect(gain).connect(out);
+    oscillator.addEventListener('ended', () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    });
     oscillator.start(at);
     oscillator.stop(end + 0.02);
   }

@@ -3,6 +3,7 @@ import {
   capitalize,
   drawingTitle,
   formatDateKey,
+  formatDayInText,
   formatDayLong,
   formatDayShort,
   formatCountdown,
@@ -10,6 +11,7 @@ import {
   formatMonth,
   formatMonthShort,
   formatMonthTitle,
+  formatNumber,
   getLocale,
   leagueLabel,
   localeFor,
@@ -34,7 +36,10 @@ describe('tn', () => {
   it('picks the singular for one and the plural otherwise', () => {
     expect(tn('status.blocked', 1)).toBe('Blocked. 1 chance left.');
     expect(tn('status.blocked', 2)).toBe('Blocked. 2 chances left.');
-    expect(tn('status.blocked', 0)).toBe('Blocked. 0 chances left.');
+    expect(tn('status.blocked', 0)).toBe('Blocked. No chances left.');
+    // Keys without a zero form take the plural.
+    expect(tn('league.points', 0)).toBe('0 points');
+    expect(tn('league.points', 12_345)).toBe('12,345 points');
     expect(tn('board.label', 1)).toMatch(/^Board, 1 arrow left\./);
     expect(tn('board.label', 142)).toMatch(/^Board, 142 arrows left\./);
   });
@@ -140,8 +145,9 @@ describe('Portuguese', () => {
   });
 
   it('has every string, with the English placeholders and nothing left in English', () => {
+    // Which placeholders, not how often: a translation may name the league once.
     const placeholders = (text: string): string[] =>
-      [...text.matchAll(/\{\w+\}/g)].map(String).sort();
+      [...new Set([...text.matchAll(/\{\w+\}/g)].map(String))].sort();
     const english: Record<string, string> = {};
     const portuguese: Record<string, string> = {};
     for (const key of STRING_KEYS) {
@@ -169,6 +175,10 @@ describe('Portuguese', () => {
     expect(tn('league.points', 1)).toBe('1 ponto');
     expect(tn('league.points', 38)).toBe('38 pontos');
     expect(tn('status.blocked', 1)).toBe('Bloqueada. Resta 1 chance.');
+    expect(tn('status.blocked', 0)).toBe('Bloqueada. Nenhuma chance restante.');
+    expect(tn('league.points', 50_000)).toBe('50.000 pontos');
+    expect(formatNumber(-1234567)).toBe('-1.234.567');
+    expect(formatDayInText('2026-10-02')).toBe('2 de outubro');
     expect(t('lost.body', { total: spellOut(3) })).toBe(
       'Tentar de novo recomeça o mesmo quebra-cabeça, com três chances novas e o tempo zerado.',
     );
@@ -192,6 +202,9 @@ describe('Portuguese', () => {
     expect(
       t('won.league', { points: tn('league.points', 38), league: 'Ouro', rank: ordinal(8) }),
     ).toBe('+38 pontos na liga Ouro · agora em 8º.');
+    expect(t('won.star', { day: formatDayInText('2026-10-03') })).toBe(
+      'Uma estrela para o dia 3 de outubro.',
+    );
   });
 
   it('keeps English the same as before', () => {
@@ -200,5 +213,8 @@ describe('Portuguese', () => {
     expect(drawingTitle('maple-leaf', 'Maple leaf')).toBe('Maple leaf');
     expect(formatMonthTitle('2026-10')).toBe('October 2026');
     expect(capitalize(formatDayShort('2026-10-03'))).toBe('Sat 3 Oct');
+    expect(formatDayInText('2026-10-03')).toBe('Sat 3 Oct');
+    expect(formatNumber(1234567)).toBe('1,234,567');
+    expect(formatNumber(999)).toBe('999');
   });
 });

@@ -162,8 +162,9 @@ nothing. The level strip is not tappable: Play opens the current level.
 
 As built in T9, the menu button opens **Settings**, a bottom sheet like the others: "Settings"
 in serif, a list on `background` with a row per switch (Sound; Haptics in the iOS app only),
-each a label and a pill switch (`chanceLost` off, `primary` on, a `surfaceRaised` knob), then
-"Done" as the primary button and "Puzzle picker" as the text button.
+each a label and a pill switch (off: outlined in `textMuted` with a `textMuted` knob; on:
+`primary` with a `surfaceRaised` knob, every part at 3:1 against the list), then "Done" as the
+primary button and "Puzzle picker" as the text button.
 
 ### Daily challenge
 
@@ -234,5 +235,8 @@ What the build looks like at 390 by 844, task by task, in [screenshots/](screens
   event art and the app icon are T9's assets still to come from Claude Design.
 - Settings: designed in the session from the sheet's parts (T9); the puzzle picker stays in it,
   also in release builds, and hiding it there is one line if the owner prefers.
-- Portuguese: the layouts hold the Portuguese strings, which run up to a third longer (checked
-  at 320 px); the tier badge "Muito difícil" is the longest.
+- Portuguese and large text: the layouts hold the Portuguese strings, which run up to a third
+  longer, and the phone's text size up to 1.5 times, down to 320 px (`e2e/fit.spec.ts`). Where
+  a line does not fit, it wraps: the streak and the menu go under the wordmark, the league's
+  countdown under its name, a text screen's title over two lines. The level strip's numbers and
+  the league's tags keep their default size.

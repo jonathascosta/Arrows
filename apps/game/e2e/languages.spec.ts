@@ -25,7 +25,7 @@ test.describe('on a phone in Portuguese', () => {
       'De primeira. Sequência de vitórias: 1.',
     );
     await expect(score.locator('.score-league')).toHaveText(
-      /^\+\d+ pontos na liga Bronze · agora em \d+º\.$/,
+      /^\+[\d.]+ pontos na liga Bronze · agora em \d+º\.$/,
     );
     await expect(score.getByRole('button', { name: 'Próximo nível' })).toBeVisible();
 

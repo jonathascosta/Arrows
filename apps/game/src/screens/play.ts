@@ -24,7 +24,7 @@ import type { LoadedPuzzle } from '../puzzles.ts';
 import type { PuzzleRef } from '../route.ts';
 import { monthOf } from '../daily/days.ts';
 import {
-  formatDayShort,
+  formatDayInText,
   formatDuration,
   formatMonth,
   leagueLabel,
@@ -201,7 +201,6 @@ export class PlayScreen {
     // A board still finishing sees that it is gone and stops.
     this.session = null;
     this.loaded = null;
-    this.markCovered(false);
     this.element.remove();
   }
 
@@ -280,7 +279,7 @@ export class PlayScreen {
       lines.push(note.streak > 0 ? t('won.firstTry', { n: note.streak }) : t('won.streakOver'));
     }
     if (note.star !== undefined && ref.kind === 'daily') {
-      lines.push(t('won.star', { day: formatDayShort(ref.dateKey) }));
+      lines.push(t('won.star', { day: formatDayInText(ref.dateKey) }));
       if (note.star === 'month') {
         lines.push(t('won.trophy', { month: formatMonth(monthOf(ref.dateKey)) }));
       }
@@ -314,7 +313,6 @@ export class PlayScreen {
           ? { ref: { kind: 'level', level: ref.level + 1 } as const, label: t('won.next') }
           : null;
     this.coverBoard();
-    this.markCovered(true);
     this.score.show({
       heading: t('won.heading', { title: loaded.title, subtitle: loaded.subtitle }),
       tier: loaded.tier,
@@ -390,7 +388,6 @@ export class PlayScreen {
   /** Shows the lost sheet and takes everything behind it out of reach. */
   private showOverlay(content: OverlayContent): void {
     this.coverBoard();
-    this.markCovered(true);
     // A lost board fades only now, under the sheet: until then the losing tap
     // flashes like any other blocked tap.
     if (content.kind === 'lost') this.element.dataset.faded = 'true';
@@ -402,20 +399,11 @@ export class PlayScreen {
     for (const element of this.background()) element.toggleAttribute('inert', true);
   }
 
-  /**
-   * Under a sheet or the score, text follows the phone's text size like any
-   * text screen; the board itself does not (styles.css, Dynamic Type).
-   */
-  private markCovered(covered: boolean): void {
-    this.element.ownerDocument.documentElement.toggleAttribute('data-covered', covered);
-  }
-
   /** Hides the lost sheet or the score screen, and gives the board back. */
   private hideOverlay(): void {
     if (!this.overlay.visible && !this.score.visible) return;
     this.overlay.hide();
     this.score.hide();
-    this.markCovered(false);
     delete this.element.dataset.faded;
     for (const element of this.background()) element.toggleAttribute('inert', false);
     this.stage.focus();

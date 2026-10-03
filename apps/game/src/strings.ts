@@ -112,6 +112,7 @@ const en = {
   'tools.adNote': '(plays an ad)',
   'board.label.one': 'Board, 1 arrow left. Pinch or scroll to zoom, drag to move.',
   'board.label.other': 'Board, {n} arrows left. Pinch or scroll to zoom, drag to move.',
+  'status.blocked.zero': 'Blocked. No chances left.',
   'status.blocked.one': 'Blocked. 1 chance left.',
   'status.blocked.other': 'Blocked. {n} chances left.',
   'status.hint': 'Try the highlighted arrow.',
@@ -162,7 +163,7 @@ export const STRING_KEYS = Object.keys(en) as StringKey[];
 const pt: Readonly<Record<StringKey, string>> = {
   'app.name': 'Arrows',
   'title.level': 'Nível {n}',
-  'title.daily': 'Diário · {date}',
+  'title.daily': 'Desafio · {date}',
   'tier.easy': 'Fácil',
   'tier.medium': 'Médio',
   'tier.hard': 'Difícil',
@@ -180,7 +181,7 @@ const pt: Readonly<Record<StringKey, string>> = {
   'home.done': 'Nível {n}, concluído',
   'home.current': 'Nível {n}, o próximo a jogar',
   'home.ahead': 'Nível {n}, mais adiante',
-  'home.daily': 'Diário',
+  'home.daily': 'Desafio diário',
   'home.dailyStars': '{n} de {total}',
   'home.dailyStarsLabel': '{n} de {total} estrelas neste mês',
   'home.league': 'Liga',
@@ -189,7 +190,7 @@ const pt: Readonly<Record<StringKey, string>> = {
   'home.eventBoards': '{n} de {total} tabuleiros',
   'home.eventDaysLeft': 'faltam {n} dias',
   'home.eventLastDay': 'Último dia',
-  'home.eventEnded': 'Terminou {date}',
+  'home.eventEnded': 'Terminou em {date}',
   'home.eventBadge': 'Medalha conquistada',
   'event.autumn2026': 'Evento de outono',
   'event.autumn2026.short': 'Outono',
@@ -213,7 +214,7 @@ const pt: Readonly<Record<StringKey, string>> = {
   'calendar.trophy': '{month}: troféu, todos os dias vencidos',
   'calendar.missed': '{n} de {total}',
   'calendar.missedLabel': '{month}: {n} de {total} dias vencidos',
-  'calendar.play': 'Jogar o de hoje',
+  'calendar.play': 'Jogar o desafio de hoje',
   'calendar.board': 'Tabuleiro {kind} · {tier} · {width} × {height}',
   'calendar.weekday': 'de dia útil',
   'calendar.weekend': 'de fim de semana',
@@ -240,33 +241,34 @@ const pt: Readonly<Record<StringKey, string>> = {
   'league.points.other': '{n} pontos',
   'league.movesUp': 'sobe',
   'league.movesDown': 'desce',
-  'league.aboveUp': 'Daqui para cima sobe',
-  'league.belowDown': 'Daqui para baixo desce',
+  'league.aboveUp': 'Os de cima sobem',
+  'league.belowDown': 'Os de baixo descem',
   'league.howTitle': 'Como a liga funciona',
   'league.howBody':
-    'Cada tabuleiro que você vence hoje dá pontos: mais para tabuleiros mais difíceis e maiores, para um tempo rápido e nenhuma chance perdida, e um bônus nos tabuleiros de evento. Cada tabuleiro conta uma vez por dia. À meia-noite os 10 primeiros sobem de liga e os 10 últimos descem; um dia sem vitória deixa você na mesma liga. Até a liga ter jogadores, os outros 29 são personagens do jogo, simulados no seu telefone e marcados como “personagem”.',
+    'Cada tabuleiro que você vencer hoje dá pontos: mais para tabuleiros mais difíceis e maiores, para um tempo rápido e nenhuma chance perdida, e um bônus nos tabuleiros de evento. Cada tabuleiro conta uma vez por dia. À meia-noite os 10 primeiros sobem de liga e os 10 últimos descem; um dia sem vitória deixa você na mesma liga. Até a liga ter jogadores, os outros 29 são personagens do jogo, simulados no seu telefone e marcados como “personagem”.',
   'league.gotIt': 'Entendi',
   'league.summaryTitle': 'Enquanto você esteve fora',
   'league.summary.promoted':
-    'Você terminou em {rank} na liga {league} em {day}, com {points}, e subiu para {next}.',
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e subiu para {next}.',
   'league.summary.stayed':
-    'Você terminou em {rank} na liga {league} em {day}, com {points}, e continua na liga {league}.',
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e continua nela.',
   'league.summary.relegated':
-    'Você terminou em {rank} na liga {league} em {day}, com {points}, e desceu para {next}.',
+    'Em {day}, você terminou em {rank} na liga {league}, com {points}, e desceu para {next}.',
   'league.continue': 'Continuar',
   'league.see': 'Ver a liga',
   'hud.chances': '{n} de {total} chances restantes',
   'hud.timer': 'Tempo {time}',
   'tools.grid': 'Grade',
   'tools.hint': 'Dica',
-  'tools.hintShown': 'Dica à vista',
+  'tools.hintShown': 'Dica ativa',
   'tools.hintLoading': 'Carregando anúncio…',
   'tools.ad': 'AD',
   'tools.adNote': '(mostra um anúncio)',
   'board.label.one':
-    'Tabuleiro, 1 flecha restante. Pince ou role para dar zoom, arraste para mover.',
+    'Tabuleiro, 1 flecha restante. Use dois dedos ou a roda do mouse para dar zoom; arraste para mover.',
   'board.label.other':
-    'Tabuleiro, {n} flechas restantes. Pince ou role para dar zoom, arraste para mover.',
+    'Tabuleiro, {n} flechas restantes. Use dois dedos ou a roda do mouse para dar zoom; arraste para mover.',
+  'status.blocked.zero': 'Bloqueada. Nenhuma chance restante.',
   'status.blocked.one': 'Bloqueada. Resta 1 chance.',
   'status.blocked.other': 'Bloqueada. Restam {n} chances.',
   'status.hint': 'Tente a flecha destacada.',
@@ -283,10 +285,10 @@ const pt: Readonly<Record<StringKey, string>> = {
   'won.streakOver': 'Não foi de primeira, então a sequência recomeça.',
   'won.newBest': 'novo recorde',
   'won.best': 'recorde {time}',
-  'won.star': 'Uma estrela para {day}.',
+  'won.star': 'Uma estrela para o dia {day}.',
   'won.trophy': 'Todos os dias de {month} vencidos: um troféu!',
   'won.league': '+{points} na liga {league} · agora em {rank}.',
-  'won.leagueCounted': 'Já contou na liga de hoje.',
+  'won.leagueCounted': 'Já contou para a liga de hoje.',
   'won.next': 'Próximo nível',
   'won.nextBoard': 'Próximo tabuleiro',
   'won.eventBoard': 'Tabuleiro {n} de {total} concluído.',
@@ -350,15 +352,28 @@ export function t(key: StringKey, params: Readonly<Record<string, string | numbe
 }
 
 /**
- * A string that depends on a count: `{n}` is the count. One takes the `.one`
- * form, any other count `.other`, as both languages do for whole numbers.
+ * A string that depends on a count: `{n}` is the count, with its thousands
+ * marked. One takes the `.one` form, any other count `.other`, as both
+ * languages do for whole numbers; zero takes `.zero` where a key has one.
  */
 export function tn(
   key: PluralKey,
   n: number,
   params: Readonly<Record<string, string | number>> = {},
 ): string {
-  return t(`${key}.${Math.abs(n) === 1 ? 'one' : 'other'}`, { ...params, n });
+  const zero = `${key}.zero`;
+  const form =
+    n === 0 && hasString(zero) ? zero : (`${key}.${Math.abs(n) === 1 ? 'one' : 'other'}` as const);
+  return t(form, { ...params, n: formatNumber(n) });
+}
+
+/** A whole number with its thousands marked: `12,345`, or `12.345` in Portuguese. */
+export function formatNumber(n: number): string {
+  const digits = String(Math.abs(Math.trunc(n))).replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    current === 'pt' ? '.' : ',',
+  );
+  return n < 0 ? `-${digits}` : digits;
 }
 
 /** Keys that come in `.one` and `.other` forms, chosen by count. */
@@ -499,11 +514,21 @@ function dayParts(dateKey: string): DayParts {
   };
 }
 
-/** `2026-10-03` as `Sat 3 Oct` or `sáb 3 out`: a day in running text, and on the home card. */
+/** `2026-10-03` as `Sat 3 Oct` or `sáb 3 out`, on the home card. */
 export function formatDayShort(dateKey: string): string {
   const { weekday, day, month } = dayParts(dateKey);
   const names = NAMES[current];
   return `${names.shortWeekdays[weekday]!} ${day} ${names.shortMonths[month]!}`;
+}
+
+/**
+ * `2026-10-03` inside a sentence: `Sat 3 Oct`, or `3 de outubro` in Portuguese,
+ * which does not abbreviate a date in running text.
+ */
+export function formatDayInText(dateKey: string): string {
+  if (current !== 'pt') return formatDayShort(dateKey);
+  const { day, month } = dayParts(dateKey);
+  return `${day} de ${NAMES.pt.months[month]!}`;
 }
 
 /** `2026-10-03` as `Saturday 3 October` or `sábado, 3 de outubro`, for screen readers. */

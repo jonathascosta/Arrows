@@ -217,9 +217,11 @@ the drawing boards and one event; the championship table reuses the league code.
 
 - English and Portuguese (Brazilian Portuguese). The game speaks the device's language when it is
   one of the two, English otherwise; there is no setting.
-- Everything the player reads is translated, dates, ordinals ("8º") and the chances in words
-  included, except the brand (Arrows) and the characters' names in the league, which are names
-  ("Wonderful Butterfly").
+- Everything the player reads is translated, dates, ordinals ("8º"), numbers ("12.345") and the
+  chances in words included, except the brand (Arrows), the characters' names in the league,
+  which are names ("Wonderful Butterfly"), the "AD" mark on the Hint button, which the word
+  "Anúncio" would not fit (VoiceOver says "mostra um anúncio"), and the puzzle picker, a tool for
+  testing that Settings links to.
 
 ## Sound, haptics and settings
 
@@ -235,7 +237,9 @@ the drawing boards and one event; the championship table reuses the league code.
   tap, a hint, the arrows left).
 - Reduced motion turns the animations off: arrows leave at once, no pulse, no slide-in.
 - The text screens (home, calendar, league, the sheets, the score) follow the phone's text size,
-  up to one and a half times; the board's screen keeps its size, so the board keeps its room.
+  up to one and a half times, and still fit a 320-pixel-wide phone in both languages; the
+  board's screen keeps its size, so the board keeps its room, while its sheets and the score
+  follow the text size like the other screens.
 - Lighthouse's accessibility score is above 90 on every screen of the web build.
 
 ## Monetization
@@ -314,7 +318,6 @@ beyond English and Portuguese.
   the id); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
   skipped, so the board never waits more than four seconds on the network; with the real network, no ad still means no
   hint, as T7 decided; a placeholder icon.
-
 - Languages, sound and settings (session decisions in T9, open to the owner) (2026-10-03):
   Portuguese is Brazil's (the bigger market), from the device's language with no setting; the
   characters' names stay in English, since they are names; sounds are synthesised by the game

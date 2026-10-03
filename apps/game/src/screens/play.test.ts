@@ -237,8 +237,6 @@ describe('PlayScreen', () => {
     expect(root.querySelector('.hint .tool-label')?.textContent).toBe('Hint');
     await vi.advanceTimersByTimeAsync(1000);
     expect(play.dataset.faded).toBe('true');
-    // Under the sheet the page's type follows the phone's text size again.
-    expect(document.documentElement.hasAttribute('data-covered')).toBe(true);
 
     const overlay = root.querySelector<HTMLElement>('.overlay')!;
     expect(overlay.hidden).toBe(false);
@@ -270,7 +268,6 @@ describe('PlayScreen', () => {
       expect(root.querySelector(selector)?.hasAttribute('inert'), selector).toBe(false);
     }
     expect(document.activeElement).toBe(root.querySelector('.stage'));
-    expect(document.documentElement.hasAttribute('data-covered')).toBe(false);
   });
 
   it('plays a quick double tap on an arrow without resetting the zoom', async () => {
@@ -309,7 +306,6 @@ describe('PlayScreen', () => {
     const score = root.querySelector<HTMLElement>('.score-screen')!;
     expect(score.hidden).toBe(false);
     expect(score.getAttribute('role')).toBe('dialog');
-    expect(document.documentElement.hasAttribute('data-covered')).toBe(true);
     expect(score.querySelector('.score-heading')?.textContent).toBe('Level 1 · Easy');
     expect(score.querySelector('.score-heading')?.getAttribute('data-tier')).toBe('easy');
     expect(score.querySelector('h2')?.textContent).toBe('Solved');

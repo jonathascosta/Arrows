@@ -83,7 +83,7 @@ function scorePart(root: HTMLElement, part: string): string | null {
   return element.textContent;
 }
 
-const LEAGUE_LINE = /^\+\d+ points in Bronze league · now \d+(st|nd|rd|th)\.$/;
+const LEAGUE_LINE = /^\+[\d,]+ points in Bronze league · now \d+(st|nd|rd|th)\.$/;
 
 /** Taps an arrow that is blocked at the start until the board is lost. */
 async function loseBoard(root: HTMLElement, ref: PuzzleRef): Promise<void> {
@@ -156,19 +156,6 @@ describe('App', () => {
       expect(root.querySelector('.home'), search).not.toBeNull();
       expect(root.querySelector('.play'), search).toBeNull();
     }
-  });
-
-  it('marks which screen shows, for the type size (styles.css)', () => {
-    const { app } = mount();
-    const screen = (): string | undefined => document.documentElement.dataset.screen;
-    app.show('');
-    expect(screen()).toBe('home');
-    app.show('?calendar');
-    expect(screen()).toBe('calendar');
-    app.show('?league');
-    expect(screen()).toBe('league');
-    app.show('?level=1');
-    expect(screen()).toBe('play');
   });
 
   it('shows a puzzle, and one screen at a time', () => {
@@ -504,7 +491,7 @@ describe('App', () => {
     const sheet = root.querySelector<HTMLElement>('.overlay[data-overlay="summary"]')!;
     expect(sheet.querySelector('h2')?.textContent).toBe('While you were away');
     expect(sheet.querySelector('p')?.textContent).toMatch(
-      /^You finished 1st in Bronze on Fri 2 Oct, with \d+ points, and moved up to Silver\.$/,
+      /^You finished 1st in Bronze on Fri 2 Oct, with [\d,]+ points, and moved up to Silver\.$/,
     );
     expect(sheet.querySelector('a')?.getAttribute('href')).toBe('./?league');
     expect(root.querySelector('a.league .card-title')?.textContent).toBe('Silver');

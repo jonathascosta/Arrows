@@ -65,7 +65,7 @@ test('a won board earns points and a place in the table', async ({ page, touch }
   await page.goto('./?level=1');
   await solveWithHints(page, touch, generateLevel(1).puzzle);
   await expect(page.locator('.score-screen')).toContainText(
-    /\+\d+ points in Bronze league · now \d+(st|nd|rd|th)\./,
+    /\+[\d,]+ points in Bronze league · now \d+(st|nd|rd|th)\./,
   );
   await page.goto('./?league');
   await expect(page.locator('.league-join')).toBeHidden();
@@ -85,7 +85,7 @@ test('a winning day moves the player up, and the summary says so once', async ({
   await expect(sheet).toBeVisible();
   await expect(sheet.getByRole('heading')).toHaveText('While you were away');
   await expect(sheet).toContainText(
-    'You finished 1st in Bronze on Tue 13 Oct, with 99999 points, and moved up to Silver.',
+    'You finished 1st in Bronze on Tue 13 Oct, with 99,999 points, and moved up to Silver.',
   );
   await expect(page.locator('a.league .card-title')).toHaveText('Silver');
   await press(sheet.getByRole('button', { name: 'Continue' }), touch);

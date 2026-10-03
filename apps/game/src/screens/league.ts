@@ -1,6 +1,6 @@
 import { LEAGUES } from '@arrows/engine';
 import type { DaySummary, LeagueProvider, LeagueRow, LeagueView } from '../league/provider.ts';
-import { formatCountdown, formatDayShort, leagueLabel, ordinal, t, tn } from '../strings.ts';
+import { formatCountdown, formatDayInText, leagueLabel, ordinal, t, tn } from '../strings.ts';
 import type { Theme } from '../theme/theme.ts';
 import { el, iconSpan } from '../ui/dom.ts';
 import { Overlay } from '../ui/overlay.ts';
@@ -24,7 +24,7 @@ export function summaryText(summary: DaySummary): string {
   const params = {
     rank: ordinal(summary.rank),
     league,
-    day: formatDayShort(summary.day),
+    day: formatDayInText(summary.day),
     points: tn('league.points', summary.points),
   };
   switch (summary.outcome) {
@@ -249,7 +249,10 @@ export class LeagueScreen {
         avatar,
         // The name with its tag under it: the name keeps the width on a small phone.
         el(doc, 'span', { class: 'row-who', 'aria-hidden': 'true' }, [
-          el(doc, 'span', { class: 'row-name' }, [player ? t('league.you') : row.name]),
+          // A character's name is English in every language: said and hyphenated as English.
+          player
+            ? el(doc, 'span', { class: 'row-name' }, [t('league.you')])
+            : el(doc, 'span', { class: 'row-name', lang: 'en' }, [row.name]),
           ...(player ? [] : [el(doc, 'span', { class: 'tag' }, [t('league.character')])]),
         ]),
         el(doc, 'span', { class: 'score', 'aria-hidden': 'true' }, [String(row.score)]),

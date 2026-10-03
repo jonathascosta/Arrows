@@ -225,7 +225,8 @@ iPhone and the ads in it, wait on the owner's Apple Developer and AdMob accounts
 and steps are in [ARCHITECTURE.md](ARCHITECTURE.md), iOS).
 
 T9 is built: Portuguese, the sounds and the promotion cue, Settings, the text size, the emphasis
-strokes, and Lighthouse accessibility of 93 or more on every screen (`pnpm test:a11y`). The
+strokes, text screens that fit a 320 px phone at every text size, and Lighthouse
+accessibility of 93 or more on every screen in both languages (`pnpm test:a11y`). The
 assets still to come from Claude Design (character avatars, league badges, event art, the app
 icon) wait on the owner; the screens keep the initials, plain badges and the board thumbnail
 until then.

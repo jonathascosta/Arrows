@@ -7,7 +7,6 @@ import { DAILY_KEY } from './persistence/daily.ts';
 import { EVENTS_KEY } from './persistence/events.ts';
 import { LEAGUE_KEY } from './persistence/league.ts';
 import { PROGRESS_KEY } from './persistence/progress.ts';
-import { SETTINGS_KEY } from './persistence/settings.ts';
 import { webPlatform } from './platform/platform.ts';
 import { WebAudioSounds } from './platform/sounds.ts';
 import { applyTextScale, preferredTextScale } from './platform/textSize.ts';
@@ -16,8 +15,9 @@ import { DEFAULT_THEME } from './theme/default.ts';
 import { applyTheme } from './theme/theme.ts';
 
 // The device's language, when the game speaks it (docs/PRODUCT.md, Languages);
-// before anything is drawn or named.
-const locale = localeFor(navigator.languages);
+// before anything is drawn or named. Old web views have only `language`.
+const languages = (navigator.languages as readonly string[] | undefined) ?? [navigator.language];
+const locale = localeFor(languages);
 setLocale(locale);
 document.documentElement.lang = LOCALE_TAGS[locale];
 
@@ -62,7 +62,8 @@ window.addEventListener('popstate', () => app.show(location.search));
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) app.refresh();
 });
+// Settings need no refresh: the cues read them each time they play.
 window.addEventListener('storage', (event) => {
-  const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY, EVENTS_KEY, SETTINGS_KEY];
+  const keys = [PROGRESS_KEY, DAILY_KEY, LEAGUE_KEY, EVENTS_KEY];
   if (event.key === null || keys.includes(event.key)) app.refresh();
 });

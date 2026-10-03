@@ -5,7 +5,7 @@ import { startFlow } from 'lighthouse';
 import puppeteer from 'puppeteer-core';
 import { DEBUG_PORT } from '../playwright.a11y.config.ts';
 
-/** Lighthouse's accessibility score each screen must reach (docs/PRODUCT.md, Accessibility). */
+/** Lighthouse's accessibility score each screen must be above (docs/PRODUCT.md, Accessibility). */
 const MINIMUM = 0.9;
 
 const LEAGUE_KEY = 'arrows.league';
@@ -88,29 +88,38 @@ async function audit(page: Page, name: string): Promise<number> {
     const failing = category.auditRefs
       .filter((ref) => ref.weight > 0 && lhr.audits[ref.id]?.score !== 1)
       .map((ref) => `${ref.id}: ${lhr.audits[ref.id]?.title ?? ''}`);
-    test.info().annotations.push({
-      type: 'lighthouse',
-      description: `${name}: ${Math.round((category.score ?? 0) * 100)}${failing.length > 0 ? ` (${failing.join('; ')})` : ''}`,
-    });
+    // In the test's output, which CI's list reporter prints, and in the HTML report.
+    const line = `${name}: ${Math.round((category.score ?? 0) * 100)}${failing.length > 0 ? ` (${failing.join('; ')})` : ''}`;
+    process.stdout.write(`Lighthouse accessibility, ${line}\n`);
+    test.info().annotations.push({ type: 'lighthouse', description: line });
     return category.score ?? 0;
   } finally {
     await browser.disconnect();
   }
 }
 
+/** The names a test looks controls up by, in the page's language. */
+interface Words {
+  readonly settings: string;
+  readonly leagueInfo: string;
+  readonly hint: string;
+}
+
 interface Screen {
   readonly name: string;
-  readonly open: (page: Page) => Promise<void>;
+  readonly open: (page: Page, words: Words) => Promise<void>;
+  /** Only in English: the puzzle picker is a testing tool, not translated. */
+  readonly englishOnly?: boolean;
 }
 
 const SCREENS: readonly Screen[] = [
   { name: 'home', open: (page) => page.goto('./').then(() => undefined) },
   {
     name: 'home, settings',
-    open: async (page) => {
+    open: async (page, words) => {
       await page.goto('./');
-      await page.getByRole('button', { name: 'Settings' }).tap();
-      await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+      await page.getByRole('button', { name: words.settings }).tap();
+      await expect(page.getByRole('dialog', { name: words.settings })).toBeVisible();
     },
   },
   {
@@ -138,9 +147,9 @@ const SCREENS: readonly Screen[] = [
   },
   {
     name: 'league, the rules',
-    open: async (page) => {
+    open: async (page, words) => {
       await page.goto('./?league');
-      await page.getByRole('button', { name: 'How the league works' }).tap();
+      await page.getByRole('button', { name: words.leagueInfo }).tap();
       await expect(page.locator('.overlay[data-overlay="rules"]')).toBeVisible();
     },
   },
@@ -149,6 +158,16 @@ const SCREENS: readonly Screen[] = [
     open: async (page) => {
       await page.goto('./?level=1');
       await expect(page.locator('[data-arrow]').first()).toBeVisible();
+    },
+  },
+  {
+    name: 'board, the test ad',
+    open: async (page, words) => {
+      await page.goto('./');
+      await page.evaluate(() => localStorage.setItem('arrows.ads', 'test'));
+      await page.goto('./?level=1');
+      await page.getByRole('button', { name: new RegExp(`^${words.hint}`) }).tap();
+      await expect(page.locator('.test-ad')).toBeVisible();
     },
   },
   {
@@ -169,6 +188,7 @@ const SCREENS: readonly Screen[] = [
   },
   {
     name: 'puzzle picker',
+    englishOnly: true,
     open: async (page) => {
       await page.goto('./dev.html');
       await expect(page.locator('h1')).toBeVisible();
@@ -176,20 +196,29 @@ const SCREENS: readonly Screen[] = [
   },
 ];
 
-for (const screen of SCREENS) {
-  test(`${screen.name} reaches ${MINIMUM * 100} in Lighthouse accessibility`, async ({ page }) => {
-    await screen.open(page);
-    expect(await audit(page, screen.name)).toBeGreaterThanOrEqual(MINIMUM);
+const LANGUAGES: readonly { locale: string; words: Words }[] = [
+  {
+    locale: 'en-US',
+    words: { settings: 'Settings', leagueInfo: 'How the league works', hint: 'Hint' },
+  },
+  {
+    locale: 'pt-BR',
+    words: { settings: 'Ajustes', leagueInfo: 'Como a liga funciona', hint: 'Dica' },
+  },
+];
+
+for (const { locale, words } of LANGUAGES) {
+  test.describe(`in ${locale}`, () => {
+    test.use({ locale });
+
+    for (const screen of SCREENS) {
+      if (screen.englishOnly === true && locale !== 'en-US') continue;
+      test(`${screen.name} is above ${MINIMUM * 100} in Lighthouse accessibility`, async ({
+        page,
+      }) => {
+        await screen.open(page, words);
+        expect(await audit(page, `${screen.name} (${locale})`)).toBeGreaterThan(MINIMUM);
+      });
+    }
   });
 }
-
-test.describe('in Portuguese', () => {
-  test.use({ locale: 'pt-BR' });
-
-  test('home reaches the same score, and says its language', async ({ page }) => {
-    await page.goto('./');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
-    await expect(page.locator('.levels-card h2')).toHaveText('Nível 1');
-    expect(await audit(page, 'home, pt')).toBeGreaterThanOrEqual(MINIMUM);
-  });
-});

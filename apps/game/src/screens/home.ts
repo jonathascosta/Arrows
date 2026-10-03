@@ -16,6 +16,7 @@ import { calendarHref, LEAGUE_HREF, puzzleHref } from '../route.ts';
 import {
   capitalize,
   formatCountdown,
+  formatDayInText,
   formatDayShort,
   leagueLabel,
   ordinal,
@@ -64,6 +65,7 @@ const THUMB_SIZE = 104;
  */
 export class HomeScreen {
   readonly element: HTMLElement;
+  private settings: SettingsSheet | null = null;
 
   constructor(root: HTMLElement, options: HomeScreenOptions) {
     const doc = root.ownerDocument;
@@ -176,6 +178,7 @@ export class HomeScreen {
   }
 
   destroy(): void {
+    this.settings?.remove();
     this.element.remove();
   }
 
@@ -203,7 +206,7 @@ export class HomeScreen {
     const boards = t('home.eventBoards', { n: progress.won.length, total: progress.total });
     const when =
       state === 'ended'
-        ? t('home.eventEnded', { date: formatDayShort(event.end) })
+        ? t('home.eventEnded', { date: formatDayInText(event.end) })
         : daysLeft === 1
           ? t('home.eventLastDay')
           : t('home.eventDaysLeft', { n: daysLeft });
@@ -255,11 +258,13 @@ export class HomeScreen {
         pickerHref: options.pickerHref,
         onChange: options.settings.change,
         onClose: () => {
-          sheet.element.remove();
+          sheet.remove();
+          this.settings = null;
           for (const part of page) part.toggleAttribute('inert', false);
           button.focus();
         },
       });
+      this.settings = sheet;
       for (const part of page) part.toggleAttribute('inert', true);
       this.element.append(sheet.element);
       sheet.focus();

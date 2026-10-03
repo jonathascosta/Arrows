@@ -23,7 +23,8 @@ describe('preferredTextScale', () => {
     } as CSSStyleDeclaration);
   }
 
-  it('is 1 where the system font is unknown', () => {
+  it('is 1 where the system font is unknown, or there is no CSS object', () => {
+    expect(preferredTextScale(document)).toBe(1);
     css(false);
     expect(preferredTextScale(document)).toBe(1);
   });

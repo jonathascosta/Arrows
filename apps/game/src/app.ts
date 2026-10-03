@@ -140,11 +140,9 @@ export class App {
   }
 
   /** Tears down the screen showing and puts the one `make` builds in its place. */
-  private swap<S extends Screen>(make: () => S, name: Route['screen']): S {
+  private swap<S extends Screen>(make: () => S): S {
     this.screen?.destroy();
     this.play = null;
-    // Which screen shows: the board's keeps its type size (styles.css, Dynamic Type).
-    this.root.ownerDocument.documentElement.dataset.screen = name;
     const screen = make();
     this.screen = screen;
     return screen;
@@ -170,7 +168,6 @@ export class App {
           },
           reducedMotion: this.options.reducedMotion,
         }),
-      'home',
     );
     // The first screen of a new day says how the last day played ended. Shown is
     // seen, here as in the league: it never shows twice.
@@ -200,7 +197,6 @@ export class App {
           clock: this.options.clock,
           homeHref: HOME_HREF,
         }),
-      'league',
     );
   }
 
@@ -226,7 +222,6 @@ export class App {
             this.options.replaceUrl(routeSearch(this.route));
           },
         }),
-      'calendar',
     );
   }
 
@@ -300,7 +295,6 @@ export class App {
             ...(this.options.ads !== undefined ? { ads: this.options.ads } : {}),
             cues: this.cues,
           }),
-        'play',
       );
       this.play = play;
     }

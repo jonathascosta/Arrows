@@ -153,7 +153,7 @@ daily, opens the calendar.
 | `levelStrip.ts`          | Pure: the seven levels around the current one, with their tiers and states                                                                                                                                                                                                                                                                                         |
 | `ui/`                    | HUD (top bar and tool bar, stacked when a title does not fit), `Chances` (the arrowhead lives and their breaking animation), the sheet (lost board, league), `ScoreScreen` (a won board), `SettingsSheet`, DOM helpers                                                                                                                                             |
 | `route.ts`, `puzzles.ts` | URL to route (home, calendar, league, puzzle: level, daily, event board, drawing), `puzzleKey` (one key per board, for the league's once a day); reference to generated puzzle, with its title and the line under it                                                                                                                                               |
-| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`, in English and Brazilian Portuguese; the locale (`localeFor`, `setLocale`), plurals (`tn`), league and drawing names, number words, ordinals and dates in the player's language                                                                                                                          |
+| `strings.ts`             | Every player-facing string, keyed, with `{placeholders}`, in English and Brazilian Portuguese; the locale (`localeFor`, `setLocale`), plurals (`tn`), league and drawing names, numbers, number words, ordinals and dates in the player's language                                                                                                                 |
 
 ### Progress and navigation
 
@@ -289,17 +289,22 @@ board away from the fingers.
 `main.ts` picks the language before anything draws: `localeFor(navigator.languages)` takes the
 first preferred language whose base is Portuguese or English, else English, and sets it in
 `strings.ts` and on `<html lang>`. Both tables have the same keys, with the same
-placeholders, and a unit test holds them to it. Everything that shows a name, a number in words,
-an ordinal or a date goes through `strings.ts`, so the screens never format text themselves.
+placeholders, and a unit test holds them to it. Everything that shows a name, a count, a number
+in words, an ordinal or a date goes through `strings.ts`, so the screens never format text
+themselves; Portuguese writes a date in full inside a sentence (`formatDayInText`: "2 de
+outubro") and has a form for none ("Nenhuma chance restante"). The "AD" mark and the puzzle
+picker stay in English (docs/PRODUCT.md, Languages).
 League names and drawing names have their own keys; the characters' names stay as they are.
 `Info.plist` lists both languages, so iOS shows the app in Portuguese where the phone is.
 
 The five cues (`platform/cues.ts`: an arrow leaving, a blocked tap, a win, a loss, a promotion)
 go through one `CuePlayer` that `App` builds from the sounds, the platform's haptics (none on the
 web) and `SettingsStore`, read at each cue so a switch takes effect at once. `WebAudioSounds`
-synthesises each cue from a few oscillator tones; it opens its `AudioContext` on the first cue
-and resumes it at each one (a browser lets it start only after a tap), and stays silent if Web
-Audio is missing or fails. The play screen
+synthesises each cue from a few oscillator tones and lets go of their nodes when they end. It
+opens its `AudioContext` on the first cue. A browser lets the audio start only after a tap, so
+a cue that waits for it more than 250 ms is dropped: a promotion as the page opens is silent in
+a browser rather than sounding with the next tap, and plays in the app, whose web view needs no
+tap. Where Web Audio is missing or fails, cues are silent. The play screen
 plays the board's cues, and `App` the promotion, when the league's summary of a promoted day
 shows (on the home screen or the league screen). The Settings sheet (`ui/settings.ts`) opens
 from the home screen's menu button: a switch per setting (haptics only in the app), Done and the
@@ -310,20 +315,27 @@ puzzle picker.
 Every control has a name in the player's language, and the screens are tested with Lighthouse
 (`pnpm test:a11y`, `apps/game/a11y/`): Playwright starts the production build in Chromium with
 a debugging port, and Lighthouse, connected to it through `puppeteer-core`, takes an
-accessibility snapshot of each screen and its sheets in turn (home, Settings, the day's summary,
-the calendar, the league and its rules, a board, the lost sheet, the score screen, the puzzle
-picker, and the home screen in Portuguese). Each must score 90 or more; the one audit they all fail is
-`user-scalable=no` in the viewport, kept because the board has its own pinch zoom, which the
-page's zoom would fight, and the text screens follow the phone's text size instead.
+accessibility snapshot of each screen and its sheets in turn, in English and in Portuguese
+(home, Settings, the day's summary, the calendar, the league and its rules, a board, the test
+ad, the lost sheet, the score screen, and the puzzle picker in English). Each must score above
+90, and the scores are printed with the audits that fell short. The one that does on every
+screen but the picker is `user-scalable=no` in the viewport. It is kept for the app: its web
+view honours it (Safari ignores it), so the page never zooms like a web page around the board,
+whose own pinch zoom moves only the board, and the text screens follow the phone's text size
+instead.
 
 The text size follows Dynamic Type: `platform/textSize.ts` measures WebKit's
 `-apple-system-body` font (17 px at the default size), and `main.ts` sets the ratio, from 0.85
 to 1.5, as `--text-scale` at start and whenever the app comes back to the front. The root font
-size is scaled by it, and the screens are sized in `rem`, except the play screen, which keeps
-100 % while no sheet covers it (`html[data-screen='play']:not([data-covered])`): its bars must
-leave the board its room. The HUD stacks its title above the tier when either is cut. Reduced
-motion skips the board's animations, as before; the hinted arrow and blocked taps are marked by
-a wider stroke as well as by colour.
+size is scaled by it, and the screens are sized in `rem`, except the play screen's bars, whose
+type is in pixels (the `.play` rules in `styles.css`), so the board keeps its room; its sheets
+and the score are in `rem` like everything else. A few graphic parts keep their size too: the
+level strip's numbers and the league's tags, whose meaning the screen reader text carries.
+`e2e/fit.spec.ts` holds every text screen to the width of a 320, 375 and 390 px phone at 1,
+1.25 and 1.5 times, in both languages: no sideways scroll, and no text spilling out of its
+box. When the board's title or its line would be cut, the HUD moves the chances and the timer
+to a row of their own (`Hud.fitTitle`). Reduced motion skips the board's animations, as before;
+the hinted arrow and blocked taps are marked by a wider stroke as well as by colour.
 
 ### iOS
 
@@ -401,7 +413,8 @@ creates the App Store provisioning profile itself.
 | Web never loads the native plugins   | ESLint `no-restricted-imports` (`repo/native-plugins`): only `platform/native.ts`  |
 | Web build under 300 kB gzipped       | The `arrows:size-budget` plugin in `apps/game/vite.config.ts` fails the build      |
 | Both languages have every string     | `strings.test.ts`: the same keys and placeholders, no English words left in pt     |
-| Lighthouse accessibility 90 or more  | `pnpm test:a11y` (`apps/game/a11y/lighthouse.spec.ts`) in the e2e CI job           |
+| Lighthouse accessibility above 90    | `pnpm test:a11y` (`apps/game/a11y/lighthouse.spec.ts`) in the e2e CI job           |
+| Text screens fit at every text size  | `e2e/fit.spec.ts`: 320 to 390 px wide, 1 to 1.5 times, English and Portuguese      |
 
 ## Testing
 
