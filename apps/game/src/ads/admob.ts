@@ -44,8 +44,12 @@ export const TEST_AD_UNITS: AdUnits = {
 
 export interface AdMobOptions {
   readonly units: AdUnits;
-  /** Resolves when the SDK has started (`AdMob.initialize`): no ad loads before. */
-  readonly started?: Promise<unknown>;
+  /**
+   * Resolves when ads may load: the player's choices asked for and the SDK
+   * started (`AdConsent.ready`). Called before every load, so a load after a
+   * failed one asks again; no ad loads before it resolves.
+   */
+  readonly ready?: () => Promise<unknown>;
   /** How long a hint or a score waits for an ad still loading before going without. */
   readonly waitMs?: number;
   readonly onError?: (error: unknown) => void;
@@ -74,7 +78,7 @@ export class AdMobAds implements AdProvider {
   private readonly units: AdUnits;
   private readonly waitMs: number;
   private readonly onError: (error: unknown) => void;
-  private readonly started: Promise<unknown>;
+  private readonly started: () => Promise<unknown>;
   private readonly now: () => number;
   private readonly loads: Record<Kind, Promise<boolean> | null> = {
     interstitial: null,
@@ -91,7 +95,7 @@ export class AdMobAds implements AdProvider {
     this.units = options.units;
     this.waitMs = options.waitMs ?? WAIT_MS;
     this.onError = options.onError ?? (() => undefined);
-    this.started = options.started ?? Promise.resolve();
+    this.started = options.ready ?? (() => Promise.resolve());
     this.now = options.now ?? (() => Date.now());
   }
 
@@ -115,8 +119,8 @@ export class AdMobAds implements AdProvider {
   private load(kind: Kind): void {
     const options = { adId: this.units[kind] };
     this.loadedAt[kind] = null;
-    // The SDK must have started first: before, the plugin's show calls would never answer.
-    const attempt = this.started
+    // Consent first, and the SDK started: before, the plugin's show calls would never answer.
+    const attempt = this.started()
       .then(() =>
         kind === 'interstitial'
           ? this.api.prepareInterstitial(options)

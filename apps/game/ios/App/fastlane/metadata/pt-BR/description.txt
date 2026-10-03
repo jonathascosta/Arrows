@@ -1,6 +1,6 @@
 Arrows é um quebra-cabeça calmo e inteligente. O tabuleiro está cheio de caminhos em forma de flecha. Toque numa flecha com a saída livre e ela desliza para fora do tabuleiro. Toque numa que está bloqueada e você perde uma chance. Limpe o tabuleiro para vencer.
 
-• Níveis sem fim, do fácil ao muito difícil, cada um um pouco maior que o anterior
+• Níveis sem fim, do fácil ao muito difícil, com tabuleiros maiores à medida que você avança
 • Um desafio diário novo todo dia, igual para todos: uma estrela por dia vencido, um troféu por mês completo
 • Uma liga diária contra os personagens do jogo: termine entre os dez primeiros para subir, do Bronze à Lenda
 • Eventos sazonais com tabuleiros desenhados como figuras, e uma medalha para quem termina

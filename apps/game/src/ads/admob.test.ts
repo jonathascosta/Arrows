@@ -103,7 +103,7 @@ describe('AdMobAds', () => {
   it('loads both ads ahead with the units it is given, once the SDK has started', async () => {
     const api = new FakeAdMob();
     const started = deferred<undefined>();
-    new AdMobAds(api, { units: TEST_AD_UNITS, started: started.promise }).preload();
+    new AdMobAds(api, { units: TEST_AD_UNITS, ready: () => started.promise }).preload();
     await settle();
     expect(api.prepared).toEqual([]);
     started.resolve(undefined);
@@ -124,7 +124,7 @@ describe('AdMobAds', () => {
     const api = new FakeAdMob();
     const ads = new AdMobAds(api, {
       units: TEST_AD_UNITS,
-      started: Promise.reject(new Error('no SDK')),
+      ready: () => Promise.reject(new Error('no SDK')),
       onError: (error) => errors.push(error),
     });
     await expect(ads.showRewarded()).rejects.toThrow('No rewarded ad loaded');
@@ -132,6 +132,29 @@ describe('AdMobAds', () => {
     expect(api.prepared).toEqual([]);
     expect(api.shows).toEqual([]);
     expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('asks again whether ads may load when they could not before', async () => {
+    const api = new FakeAdMob();
+    let allowed = false;
+    const ads = new AdMobAds(api, {
+      units: TEST_AD_UNITS,
+      ready: () => (allowed ? Promise.resolve() : Promise.reject(new Error('no consent yet'))),
+      onError: () => undefined,
+    });
+    ads.preload();
+    await settle();
+    expect(api.prepared).toEqual([]);
+    // The consent check succeeds by the time the first board is won.
+    allowed = true;
+    const shown = ads.showInterstitial();
+    await settle();
+    expect(api.prepared.map((load) => load.kind)).toEqual(['interstitial']);
+    api.loadAll();
+    await settle();
+    api.emit(ADMOB_EVENTS.interstitialDismissed);
+    await shown;
+    expect(api.shows).toEqual(['interstitial']);
   });
 
   it('shows the interstitial and resolves only when it is dismissed, then loads the next', async () => {

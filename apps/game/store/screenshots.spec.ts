@@ -124,9 +124,9 @@ for (const { locale, folder } of LANGUAGES) {
       await expect(page.locator('[data-arrow]').first()).toBeVisible();
       await shoot(page, folder, '5-event');
 
-      // 6. The score of a board won.
-      await page.goto('./?level=8');
-      await clear(page, generateLevel(8).puzzle, '01:26');
+      // 6. The score of the board from the first screen, won: a new level, so the streak grows.
+      await page.goto('./?level=37');
+      await clear(page, generateLevel(37).puzzle, '02:41');
       await expect(page.locator('.score-screen')).toBeVisible();
       await shoot(page, folder, '6-score');
     });

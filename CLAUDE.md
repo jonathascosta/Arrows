@@ -46,3 +46,5 @@ is next, and what done means) before changing anything.
   exempt and keep the theme's colours by hand; a test fails when the art's palette and the
   theme's drawing palette differ.
 - Code, comments and documents are in English; player-facing text goes through `strings.ts`.
+- The AdMob plugin carries a patch (`patches/`, see `docs/ARCHITECTURE.md`, iOS): an upgrade of
+  `@capacitor-community/admob` must carry it over, and a unit test fails without it.

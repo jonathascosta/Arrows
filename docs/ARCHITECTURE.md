@@ -378,15 +378,19 @@ SDK to have started), and maps the haptic cues to the Taptic Engine
 promotion). The page runs under the status bar and the home indicator (`contentInset: 'never'`,
 `viewport-fit=cover`) and keeps clear of them with the CSS safe-area insets.
 
-`AdConsent` (`ads/consent.ts`) runs once at start, while the game is already playable:
-Google's User Messaging Platform first (`requestConsentInfo`, then `showConsentForm` when a
-consent message is required and available), Apple's tracking prompt next if it has not been
-answered (the consent message's IDFA explainer may already have shown it), and `initialize`
-last. It rejects, so no ad loads, when the player's choices allow none (`canRequestAds` false).
-A consent check that fails (no network) does not stop the ads: the SDK goes by the choices it
-kept. Where the message says the player needs a way back to the choices
+`AdConsent` (`ads/consent.ts`) asks for the player's choices while the game is already
+playable: Google's User Messaging Platform first (`requestConsentInfo`, then `showConsentForm`
+when a consent message is required and available), Apple's tracking prompt next if it has not
+been answered (the consent message's IDFA explainer may already have shown it), and
+`initialize` last. `AdMobAds` calls its `ready()` before every load, so no ad is requested
+before it resolves. It rejects when the player's choices allow none (`canRequestAds` false) or
+when the consent check fails (no network); the next load, when an ad is next needed, runs the
+flow again. Where the message says the player needs a way back to the choices
 (`privacyOptionsRequirementStatus`), Settings shows Privacy choices, which opens Google's
-privacy options form.
+privacy options form. The plugin as published wires its consent forms only in `initialize`,
+which Google's order puts last: `patches/@capacitor-community__admob@8.1.0.patch` (pnpm's
+`patchedDependencies`) wires them when the plugin loads, and a unit test reads the installed
+source to check the patch is there.
 
 `AdMobAds` loads each kind of ad ahead and shows it when its moment comes. The plugin's show
 calls do not say when an ad has gone, so it waits for the `Dismissed` or `FailedToShow` event,
@@ -442,8 +446,9 @@ Two more workflows run by hand:
 - `app-store-listing.yml` uploads the text and the screenshots with fastlane (`deliver`, lane
   `listing`), with the App Store Connect API key of the TestFlight workflow. It uploads no build
   and submits nothing.
-- `pages.yml` builds the web app for GitHub Pages and publishes only the privacy policy (the
-  page, its assets and the icon), at the address the listing gives.
+- `pages.yml` builds the web app for GitHub Pages and publishes the privacy policy page, the
+  icon and the build's `assets` folder, at the address the listing gives. The folder holds the
+  game's scripts too, but none of the game's pages is published.
 
 ## Enforced rules
 

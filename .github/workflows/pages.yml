@@ -2,9 +2,10 @@ name: Privacy policy
 
 # Publishes the privacy policy (apps/game/privacy.html, built with the game's theme)
 # to GitHub Pages, at https://jonathascosta.github.io/Arrows/privacy.html, the address
-# the App Store listing gives (docs/STORE.md). Only the policy is published, not the
-# game. Run by hand from the Actions tab once the owner has set Settings > Pages >
-# Source to "GitHub Actions", and again whenever the policy changes.
+# the App Store listing gives (docs/STORE.md). Only the policy's page is published, with
+# the build's assets folder (the game's scripts are in it too, but none of its pages).
+# Run by hand from the Actions tab once the owner has set Settings > Pages > Source to
+# "GitHub Actions", and again whenever the policy changes.
 on:
   workflow_dispatch:
 
@@ -34,7 +35,7 @@ jobs:
       - run: pnpm --filter @arrows/game build
         env:
           BASE_PATH: /Arrows/
-      # The page, the files it loads and the icon; not the game's own pages.
+      # The page, the assets folder it loads from and the icon; not the game's own pages.
       - name: Keep only the policy
         run: |
           mkdir site

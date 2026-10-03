@@ -55,11 +55,14 @@ export async function nativePlatform(doc: Document): Promise<Platform> {
   // Dark text on the paper colour; the page itself keeps clear of the bar (safe-area insets).
   StatusBar.setStyle({ style: Style.Light }).catch(report);
   // The player's choices about ads first, then the SDK; the ads load once it has
-  // started, and the game does not wait for any of it.
+  // started (asking again when an ad is needed, if that failed), and the game does
+  // not wait for any of it.
   const consent = new AdConsent(AdMob, report);
-  const started = consent.start();
-  started.catch(report);
-  const admob = new AdMobAds(AdMob, { units: UNITS, started, onError: report });
+  const admob = new AdMobAds(AdMob, {
+    units: UNITS,
+    ready: () => consent.ready(),
+    onError: report,
+  });
   admob.preload();
   const privacy = {
     required: () => consent.privacyOptionsRequired,

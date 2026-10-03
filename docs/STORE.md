@@ -61,18 +61,25 @@ policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once publishe
    prevention. The answers must agree with the privacy policy.
 
 8. **Age rating.** No objectionable content of any kind, no user-generated content, no chat, no
-   gambling, no web browsing: every answer is None or No, which gives 4+. The ads are Google's,
-   filtered to the app's rating in the AdMob console (Blocking controls, maximum ad content
-   rating).
+   gambling, no web browsing: those answers are None or No. Advertising is Yes, since the app
+   shows ads. Check the rating App Store Connect gives (4+ is expected), and filter the ads to it
+   in the AdMob console (Blocking controls, maximum ad content rating).
 9. **Review and release.** Price free, the countries to sell in, the review contact, and a note
    for the reviewer: no account; the consent message shows only in the EEA, the UK and
-   Switzerland; hints show a rewarded ad. Pick the TestFlight build for the version and submit
-   it for review.
+   Switzerland; hints show a rewarded ad. To sell in the European Union, declare the trader
+   status the Digital Services Act asks for (App Store Connect, Business); without it the app is
+   not offered in the EU storefronts. Pick the TestFlight build for the version and submit it for
+   review.
 
 ## Before each release
 
+- Create the new version in App Store Connect first: the listing workflow writes to the version
+  being prepared.
 - Update `release_notes.txt` in both languages.
 - If a screen changed, run `pnpm store:screenshots` and commit the screenshots.
+- If no event runs when the version comes out (the Autumn event ends on 30 November 2026), drop
+  the seasonal events line from the descriptions, and the event board from the screenshots
+  (`apps/game/store/screenshots.spec.ts`), until the next event.
 - If what the app does with data changed, update `privacy.html` (its date too), the privacy
   manifest and the App Privacy answers, and run the `Privacy policy` workflow.
 - Run the `App Store listing` workflow, then the `TestFlight` one, then submit.

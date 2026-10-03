@@ -1293,8 +1293,6 @@ button.text-button {
   text-align: center;
 }
 
-/* Daily league */
-
 /* Documents: the privacy policy (privacy.html), in both languages, one after the other. */
 .doc {
   max-width: 640px;
@@ -1414,6 +1412,8 @@ button.text-button {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Daily league */
 
 .league-screen {
   display: flex;

@@ -44,7 +44,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
   message where the law requires one (the EEA, the UK, Switzerland, some US states), then
   Apple's tracking prompt ("Your data will be used to show you ads that suit you better. The
   game is the same either way."). The game does not wait for either; ads load once they are
-  answered, and none load if the choices allow none. An ad loaded more than 55 minutes earlier
+  answered, and none load if the choices allow none. If the check cannot be made (no network),
+  no ad is requested: it is made again the next time an ad is needed. An ad loaded more than 55 minutes earlier
   is loaded again before it shows, since ads expire after an hour.
 - The privacy policy is in the app (Settings) and at the address the store listing gives; the
   app's privacy manifest declares what the app itself does (nothing is collected or tracked by
