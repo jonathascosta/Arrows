@@ -325,6 +325,19 @@ body {
   letter-spacing: 0.06em;
 }
 
+/*
+ * On wide screens the chrome keeps the width of a phone column, centred, so
+ * the tool bar does not become a 1,000-pixel button; the board keeps the full
+ * stage.
+ */
+.topbar,
+.toolbar,
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
 /* End-of-board sheet */
 
 .overlay {
@@ -332,6 +345,7 @@ body {
   inset: 0;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
 }
 
 .overlay[hidden] {
