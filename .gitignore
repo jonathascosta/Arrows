@@ -18,3 +18,6 @@ Thumbs.db
 .env*.local
 test-results/
 playwright-report/
+
+# Worktrees of review agents and other Claude Code sessions
+.claude/worktrees/

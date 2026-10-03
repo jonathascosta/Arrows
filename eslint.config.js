@@ -22,6 +22,7 @@ export default defineConfig([
     '**/android/',
     '**/test-results/',
     '**/playwright-report/',
+    '.claude/worktrees/',
   ]),
 
   js.configs.recommended,
