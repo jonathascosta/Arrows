@@ -26,8 +26,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 
 ### The iOS app
 
-- Named Arrows, with the app id `com.jonathascosta.arrows`; the id is fixed for good with the
-  first upload to App Store Connect.
+- Named Arrows, with the app id `net.jonathas.arrows` (the owner's domain, reversed); the id is
+  fixed for good with the first upload to App Store Connect.
 - iPhone only, in portrait. The page runs edge to edge on the paper colour and keeps its
   controls clear of the notch and the home indicator; the status bar shows dark text.
 - Haptics on every tap that does something: a light tick when an arrow leaves, a warning when a
@@ -332,8 +332,8 @@ beyond English and Portuguese.
   with the real network); a board won again the same day shows its score with "Already counted in
   today's league." instead of points.
 - The iOS app (session decisions in T8, open to the owner) (2026-10-03): the name Arrows and the
-  app id `com.jonathascosta.arrows` (confirm before the first TestFlight upload, which fixes
-  the id); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
+  app id `com.jonathascosta.arrows`, which the owner changed to `net.jonathas.arrows` before
+  the first upload (below); iPhone only, portrait; the haptic cues above; an ad not loaded within four seconds is
   skipped, so the board never waits more than four seconds on the network; with the real network, no ad still means no
   hint, as T7 decided; a placeholder icon.
 - Languages, sound and settings (session decisions in T9, open to the owner) (2026-10-03):
@@ -349,6 +349,9 @@ beyond English and Portuguese.
   consent order is Google's message, then Apple's prompt; the screenshots are the web build's
   screens without captions; Google's list of SKAdNetwork ids for its partners is the owner's to
   paste in (it could not be fetched from the session); the copyright holder is Jonathas Costa.
+- App id (owner's decision) (2026-10-03): `net.jonathas.arrows`, from the owner's domain
+  `jonathas.net` in reverse, as bundle ids are written, instead of `com.jonathascosta.arrows`;
+  chosen before anything was uploaded, so nothing else changes.
 
 ## Open questions
 
