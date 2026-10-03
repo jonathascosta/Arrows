@@ -68,10 +68,10 @@ describe('generateLevel', () => {
       13: fingerprint(13),
       300: fingerprint(300),
     }).toEqual({
-      1: '148fcb71-3bbb83d5',
-      11: '4a676320-7dfd51e3',
-      13: 'bf8c75f8-b450abdf',
-      300: '407f1e64-1b5808a1',
+      1: 'a33a3ed9-99c1caef',
+      11: '9c7dd6ef-e819e42d',
+      13: '1be81293-2a1a45c6',
+      300: 'a5c94a1b-9b7d24d2',
     });
   });
 

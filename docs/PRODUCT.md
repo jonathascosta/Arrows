@@ -59,6 +59,9 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 - The board is a grid. Every active cell belongs to exactly one arrow. An arrow is a path of
   one or more adjacent cells; its head is the last cell and points along the last segment (a
   one-cell arrow points wherever the generator decided).
+- An arrow's tip and the end of its tail sit on the edges of its end cells, its corners on cell
+  centres (see the grid, below). No point serves two arrows: an arrow never points straight into
+  the end of another's tail, and two tails never meet back to back.
 - Tapping an arrow is a valid move when the straight ray from its head to the edge of the board
   is empty. The arrow then slides out: the head moves along the ray and the body follows the
   head's track. Its cells become empty.
@@ -111,8 +114,13 @@ Everything is generated on the device, deterministically, from a seed:
 - Two phases: **partition** the active cells into paths by seeded random walks (within one
   colour), then **peel**: simulate the solution forward, choosing for each path which end is
   the head so that the ray is free at its turn. Peeling is monotone (removing an arrow only
-  frees cells), so it never needs backtracking; when nothing can be peeled, one path is split
-  at an extreme cell, which always unblocks it. The peel order is a solution.
+  frees cells), so it never needs backtracking; when nothing can be peeled, a path is split,
+  which always unblocks it. The peel order is a solution. On Hard and Super Hard the peel
+  prefers the end freed most recently, so few arrows are free at once and fewer of them queue
+  behind one another in the same direction.
+- Then the **ends** are separated: an arrow pointing into another's tail is joined in front of
+  it, and of two tails back to back the arrow that leaves later gives its tail run to the other.
+  Both only move cells to an arrow that leaves earlier, so the puzzle stays solvable.
 - Every generated puzzle is verified by the solver before it is used. A property test keeps
   that true for thousands of seeds.
 - Difficulty is measured, not assumed. The solver reports for each puzzle: number of arrows,
@@ -123,12 +131,12 @@ Everything is generated on the device, deterministically, from a seed:
 
 ### Tiers and the level path
 
-| Tier       | Board (start) | Grows to (around level 300) | What makes it harder                    |
-| :--------- | :------------ | :-------------------------- | :-------------------------------------- |
-| Easy       | 6 x 8         | 6 x 8                       | Levels 1 to 10 only                     |
-| Medium     | 9 x 13        | 13 x 19                     | Size                                    |
-| Hard       | 11 x 16       | 16 x 24                     | Fewer free arrows per step, longer rays |
-| Super Hard | 14 x 20       | 20 x 30                     | Both, and long winding paths            |
+| Tier       | Board (start) | Grows to (around level 300) | What makes it harder                                                    |
+| :--------- | :------------ | :-------------------------- | :---------------------------------------------------------------------- |
+| Easy       | 6 x 8         | 6 x 8                       | Levels 1 to 10 only                                                     |
+| Medium     | 9 x 13        | 13 x 19                     | Size                                                                    |
+| Hard       | 11 x 16       | 16 x 24                     | Winding arrows of about 6 cells, about 3 free at a time                 |
+| Super Hard | 14 x 20       | 20 x 30                     | Long winding arrows of about 8 cells, 2 or 3 free at a time, few queues |
 
 Levels 1 to 10 are easy. From 11 on, every block of 10 levels has the pattern
 medium, medium, hard, medium, medium, medium, hard, medium, medium, super hard (so level 300 is
@@ -354,6 +362,13 @@ beyond English and Portuguese.
   consent order is Google's message, then Apple's prompt; the screenshots are the web build's
   screens without captions; Google's list of SKAdNetwork ids for its partners is the owner's to
   paste in (it could not be fetched from the session); the copyright holder is Jonathas Costa.
+- Harder Hard and Super Hard (owner's decision) (2026-10-03): Super Hard felt easy (four to
+  six arrows free at every step, short arrows, queues of arrows in the same direction). Super
+  Hard now has winding arrows of about 8 cells and 2 or 3 free at a time, Hard about 6 cells and
+  3 free; Easy and Medium keep their knobs. With the half-cell grid (T13), the owner also ruled
+  that a grid node serves one end only, so no arrow points straight into a tail and no two tails
+  meet; that changes every level, Easy and Medium included, before any player has them. Super
+  Hard boards have about half as many arrows as before, each harder to find.
 - Puzzle picker (owner's decision) (2026-10-03): a tool for testing, so it leaves the app (the
   iOS build does not ship it, and Settings has no link to it there); the web build keeps it for
   development.

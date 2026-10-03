@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { activeCount, cellIndex, colorAt, maskFromAscii, rectangleMask } from '../board/mask.ts';
-import type { Mask, Path } from '../board/types.ts';
+import type { Cell, Mask, Path } from '../board/types.ts';
 import { BUTTERFLY } from '../drawings/art.ts';
 import { drawingMask } from '../drawings/drawings.ts';
 import { createRng } from '../rng/rng.ts';
@@ -71,5 +71,66 @@ describe('partition', () => {
       total += paths.length;
     }
     expect(singles / total).toBeLessThan(0.2);
+  });
+
+  it('winding walks grown from both ends and joined short paths stay a valid partition', () => {
+    const options = { meanLength: 12, maxLength: 30, turn: 0.5, growBothEnds: true, joinBelow: 4 };
+    let cells = 0;
+    let paths = 0;
+    for (let i = 0; i < 20; i++) {
+      const mask = rectangleMask(14, 21);
+      const result = partition(mask, createRng(`long:${i}`), options);
+      expectValidPartition(mask, result, 30);
+      cells += activeCount(mask);
+      paths += result.length;
+    }
+    expect(cells / paths).toBeGreaterThan(8);
+    const butterfly = drawingMask(BUTTERFLY);
+    expectValidPartition(butterfly, partition(butterfly, createRng('long:b'), options), 30);
+  });
+
+  it('turns more often with `turn`', () => {
+    const turns = (turn: number): number => {
+      let count = 0;
+      for (let i = 0; i < 10; i++) {
+        for (const path of partition(rectangleMask(14, 21), createRng(`turn:${i}`), {
+          meanLength: 10,
+          maxLength: 24,
+          turn,
+        })) {
+          for (let k = 2; k < path.cells.length; k++) {
+            const [a, b, c] = [path.cells[k - 2]!, path.cells[k - 1]!, path.cells[k]!];
+            if (b.x - a.x !== c.x - b.x || b.y - a.y !== c.y - b.y) count++;
+          }
+        }
+      }
+      return count;
+    };
+    expect(turns(0.8)).toBeGreaterThan(turns(0) * 1.2);
+  });
+
+  it('leaves no two path ends of different colours facing each other on a drawing', () => {
+    const mask = drawingMask(BUTTERFLY);
+    for (let i = 0; i < 50; i++) {
+      const paths = partition(mask, createRng(`facing:${i}`), { meanLength: 5, maxLength: 12 });
+      expectValidPartition(mask, paths, 12);
+      const nodes = new Map<string, number>();
+      for (const path of paths) {
+        if (path.cells.length < 2) continue;
+        for (const [end, before] of [
+          [path.cells[0]!, path.cells[1]!],
+          [path.cells[path.cells.length - 1]!, path.cells[path.cells.length - 2]!],
+        ] as [Cell, Cell][]) {
+          const beyond = { x: 2 * end.x - before.x, y: 2 * end.y - before.y };
+          const key = [end, beyond]
+            .map((c) => `${c.x},${c.y}`)
+            .sort()
+            .join('|');
+          const other = nodes.get(key);
+          if (other !== undefined) expect(other).toBe(path.color);
+          nodes.set(key, path.color);
+        }
+      }
+    }
   });
 });

@@ -149,4 +149,107 @@ describe('peel', () => {
     // The repair path runs for real somewhere in this sweep.
     expect(repairs).toBeGreaterThan(0);
   });
+
+  it('property: the scored peel (fresh ends, cuts) always solves, both ray modes', () => {
+    const options = [
+      {
+        bias: 0.85,
+        freshness: 1,
+        commitment: 1000,
+        queuePenalty: 4,
+        staleCut: 0,
+        cutMinPiece: 3,
+        repair: 'cut',
+      },
+      { bias: 0.6, freshness: 1, commitment: 1000, queuePenalty: 4, staleCut: 4, repair: 'cut' },
+      { bias: 0, freshness: 1 },
+    ] as const;
+    const masks: [string, Mask][] = [
+      ['9x13', rectangleMask(9, 13)],
+      ['14x21', rectangleMask(14, 21)],
+      ['1x12', rectangleMask(1, 12)],
+      ['butterfly', drawingMask(BUTTERFLY)],
+      ['ring', maskFromAscii(['AAAAA', 'A...A', 'A...A', 'AAAAA'])],
+    ];
+    let cuts = 0;
+    for (const [name, mask] of masks) {
+      for (const rayMode of ['bounds', 'mask'] as const) {
+        for (let i = 0; i < 30; i++) {
+          const rng = createRng(`scored:${name}:${rayMode}:${i}`);
+          const paths = partition(mask, rng.fork('partition'), {
+            meanLength: 12,
+            maxLength: 30,
+            turn: 0.5,
+            growBothEnds: true,
+            joinBelow: 4,
+          });
+          const result = peel(mask, paths, rng.fork('peel'), options[i % options.length]!, rayMode);
+          const puzzle: Puzzle = {
+            width: mask.width,
+            height: mask.height,
+            mask,
+            arrows: result.arrows,
+            rayMode,
+            seed: 's',
+          };
+          expectSolution(puzzle, result.solution);
+          cuts += result.repairs;
+        }
+      }
+    }
+    expect(cuts).toBeGreaterThan(0);
+  });
+
+  it('peels the end freed most recently: few arrows free at a time along the solution', () => {
+    const mask = rectangleMask(14, 21);
+    const freeAlong = (options: Parameters<typeof peel>[3]): number => {
+      let sum = 0;
+      let steps = 0;
+      for (let i = 0; i < 10; i++) {
+        const rng = createRng(`fresh:${i}`);
+        const paths = partition(mask, rng.fork('partition'), {
+          meanLength: 16,
+          maxLength: 40,
+          turn: 0.5,
+          growBothEnds: true,
+          joinBelow: 4,
+        });
+        const { arrows, solution } = peel(mask, paths, rng.fork('peel'), options, 'bounds');
+        const puzzle: Puzzle = {
+          width: 14,
+          height: 21,
+          mask,
+          arrows,
+          rayMode: 'bounds',
+          seed: 'f',
+        };
+        const occupancy = createOccupancy(puzzle);
+        const left = new Set(arrows.map((arrow) => arrow.id));
+        for (const id of solution) {
+          for (const other of left) {
+            const arrow = arrows[other]!;
+            if (rayStatus(mask, occupancy, head(arrow), arrow.direction, 'bounds').blockers === 0)
+              sum++;
+          }
+          steps++;
+          clearArrow(occupancy, mask, arrows[id]!);
+          left.delete(id);
+        }
+      }
+      return sum / steps;
+    };
+    const random = freeAlong({ bias: 0.85 });
+    const fresh = freeAlong({
+      bias: 0.85,
+      freshness: 1,
+      commitment: 1000,
+      queuePenalty: 4,
+      staleCut: 0,
+      cutMinPiece: 3,
+      repair: 'cut',
+    });
+    // About 2.8 against 3.6 on these seeds.
+    expect(fresh).toBeLessThan(3.2);
+    expect(fresh).toBeLessThan(random * 0.85);
+  });
 });
