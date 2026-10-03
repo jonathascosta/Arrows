@@ -26,13 +26,18 @@ export const PLATEAU_LEVEL = 300;
  * The knobs per tier. The bands are what the calibration suite enforces on the
  * generated puzzles; the other values are how we get there.
  *
- * What the measurements say (see the calibration suite): the number of free
- * arrows at any moment is about 3 to 6 whatever the board, so the share of the
- * board that is playable falls with the number of arrows. Size is the main
- * knob; the peel bias moves heads inward and makes rays longer, and picking
- * the hardest of several candidates trims the easy outliers. The bands overlap
- * on purpose: a medium board at level 300 is about as hard as a hard board at
- * level 11, as in the reference game, where the label is relative to the path.
+ * What the measurements say (see the calibration suite): with a random peel
+ * the number of free arrows at any moment is about 3 to 6 whatever the board,
+ * so easy and medium get harder with size alone; the peel bias moves heads
+ * inward and makes rays longer. Hard and super hard score the peel instead
+ * (`freshness`): each step peels the end freed most recently, so a player sees
+ * about 3 (hard) and 2 (super hard) free arrows at a time, with fewer queues;
+ * their walks are longer and wind, and both cut a path rather than use a
+ * stale end: super hard as soon as the best end is not the freshest
+ * (`staleCut: 0`), hard once it is 4 removals stale. Picking the hardest of
+ * several candidates trims the outliers. The bands overlap on purpose: a
+ * medium board at level 300 is about as hard as a hard board at level 11, as
+ * in the reference game, where the label is relative to the path.
  */
 export const TIERS: Readonly<Record<Tier, TierParams>> = {
   easy: {
@@ -59,20 +64,36 @@ export const TIERS: Readonly<Record<Tier, TierParams>> = {
     label: 'Hard',
     base: [11, 16],
     growth: 0.5,
-    partition: { meanLength: 5, maxLength: 14 },
-    peel: { bias: 0.6 },
+    partition: { meanLength: 7, maxLength: 16, turn: 0.5, growBothEnds: true, joinBelow: 3 },
+    peel: {
+      bias: 0.6,
+      freshness: 1,
+      commitment: 1000,
+      queuePenalty: 4,
+      staleCut: 4,
+      cutMinPiece: 3,
+      repair: 'cut',
+    },
     candidates: 6,
-    target: { avgFreeRatio: [0.07, 0.22] },
+    target: { avgFreeRatio: [0.06, 0.2] },
     prefer: 'hardest',
   },
   superHard: {
     label: 'Super Hard',
     base: [14, 20],
     growth: 0.45,
-    partition: { meanLength: 6, maxLength: 20 },
-    peel: { bias: 0.85 },
-    candidates: 6,
-    target: { avgFreeRatio: [0.04, 0.16] },
+    partition: { meanLength: 16, maxLength: 40, turn: 0.5, growBothEnds: true, joinBelow: 4 },
+    peel: {
+      bias: 0.85,
+      freshness: 1,
+      commitment: 1000,
+      queuePenalty: 4,
+      staleCut: 0,
+      cutMinPiece: 3,
+      repair: 'cut',
+    },
+    candidates: 8,
+    target: { avgFreeRatio: [0.03, 0.14] },
     prefer: 'hardest',
   },
 };

@@ -239,7 +239,9 @@ of that; Easy and Medium stay as they are.
 
 Acceptance: the calibration suite holds Super Hard to arrows of about eight cells and one to
 three free arrows at a time on average, Hard between that and Medium, Easy and Medium unchanged;
-the fingerprint test changes on purpose; PRODUCT.md first.
+the fingerprint test changes on purpose; PRODUCT.md first. (The owner's later rule of one end
+per grid node changes Easy and Medium content too: longer arrows, fewer of them, their knobs
+unchanged.)
 
 ### T15. Events of 300 boards
 
@@ -280,7 +282,7 @@ API within the budget in the product document, Android, iPad.
 | T11  | done  | [#16](https://github.com/jonathascosta/Arrows/pull/16) |
 | T12  | done  | [#17](https://github.com/jonathascosta/Arrows/pull/17) |
 | T13  | done  | [#18](https://github.com/jonathascosta/Arrows/pull/18) |
-| T14  | open  |                                                        |
+| T14  | done  | [#20](https://github.com/jonathascosta/Arrows/pull/20) |
 | T15  | done  | [#19](https://github.com/jonathascosta/Arrows/pull/19) |
 | T16  | open  |                                                        |
 

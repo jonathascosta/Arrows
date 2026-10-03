@@ -46,7 +46,7 @@ gains no dependency: `pngjs` belongs to the tools.
 | :----------- | :--------------------------------------------------------------------------------------------------------------------------- |
 | `rng/`       | `createRng(seed)`: xoshiro128\*\* seeded from a string hash, with `fork(label)` for independent streams                      |
 | `board/`     | `Cell`, `Direction`, `Mask` (active cells and colours), `Path`, `Arrow`, `Puzzle`; mask constructors                         |
-| `generator/` | `partition` (phase one), `peel` (phase two), `generatePuzzle`, `generateInBand`                                              |
+| `generator/` | `partition` (phase one), `peel` (phase two), `separateEnds` (`ends.ts`), `generatePuzzle`, `generateInBand`                  |
 | `solver/`    | `Occupancy` and the allocation-free ray scan; `analyze` (reference solution and metrics)                                     |
 | `game/`      | `GameState`: `createGame`, `tap`, `hint`, `freeArrows`, `arrowAt`. Immutable, UI-agnostic                                    |
 | `levels/`    | Tiers and their knobs, `tierForLevel`, `boardSizeForLevel`, `generateLevel`, `generateDaily`, boards                         |
@@ -71,7 +71,8 @@ flowchart LR
   seed["seed\nlevel:N · daily:date · board:id"] --> rng["Rng\nfork('partition') · fork('peel')"]
   rng --> partition["partition\nrandom walks within a colour"]
   partition --> peel["peel\nforward simulation picks heads"]
-  peel --> analyze["analyze\nreference solution + metrics"]
+  peel --> ends["separateEnds\nno two ends on one node"]
+  ends --> analyze["analyze\nreference solution + metrics"]
   analyze --> band{"in the tier band?"}
   band -- "no, next sub-seed" --> rng
   band -- yes --> puzzle["Puzzle"]
@@ -81,26 +82,49 @@ flowchart LR
    free same-colour neighbours up to a sampled target length (geometric from the mean, capped).
    The walk prefers the neighbour with the fewest free neighbours (Warnsdorff's rule), which
    strands fewer single cells; a final pass attaches remaining singles to an adjacent path end.
-2. **Peel.** The solution is simulated forward on the full board. At each step every path with
-   an end whose ray is free is a candidate; one is chosen (uniformly, or with `bias` towards the
+   Hard and Super Hard turn on more options (all off by default, so Easy and Medium walk as
+   before): `turn` makes walks prefer to turn, so paths wind; `growBothEnds` lets a stuck walk
+   grow from its first cell; `joinBelow` joins short paths end to end. On a drawing,
+   `splitFacingEnds` cuts the end cell off a path whose end faces another colour's end across
+   one edge, since arrows of two colours cannot be joined later.
+2. **Peel.** The solution is simulated forward on the full board. At each step every path with an
+   end whose ray is free is a candidate; one is chosen (uniformly, or with `bias` towards the
    longest ray, which puts heads deeper inside), that end becomes the head, and the path leaves.
-   Removal only frees cells, so the greedy process never backtracks. If no end is free, the
-   topmost occupied cell is cut out of its path as a single cell pointing up, which is free by
-   construction; the count of such repairs is reported. The peel order is a valid solution, and
-   ids are then assigned by head position so the ids do not leak the order.
-3. **Verify and rate.** `analyze` plays the puzzle with a fixed policy (shortest free ray first)
+   Removal only frees cells, so the greedy process never backtracks. Hard and Super Hard score the
+   candidates instead (`freshness`): the end whose ray was cleared most recently wins, since an
+   arrow is free in the finished puzzle from the removal that clears its ray until it leaves;
+   `commitment` sends first the paths that gain nothing by waiting, `queuePenalty` lowers an end
+   cleared by an arrow pointing the same way, and `staleCut` cuts a path to make a fresher end
+   rather than use a stale one. If no end is free, a path is cut (`repair: 'cut'`, into two long
+   pieces) or, by default, the topmost occupied cell is cut out of its path as a single cell
+   pointing up, which is free by construction; the count of repairs is reported. The peel order is
+   a valid solution, and ids are then assigned by head position so the ids do not leak the order.
+3. **Separate the ends** (`separateEnds`, every tier). An arrow's tip and tail end are drawn on
+   the edges of its end cells (docs/DESIGN.md, Board), and no edge may hold two ends. In the
+   peel's order, an arrow pointing into another's tail is joined in front of it and leaves at
+   its turn (it must leave first anyway: its ray holds that tail); of two tails back to back,
+   the arrow that leaves later gives its straight tail run to the other. Cells only move to an
+   arrow that leaves earlier and whose ray never crossed them, so the order still solves; tip to
+   tip cannot happen in a solvable puzzle and throws. Two colours cannot be joined, so on a
+   drawing the partition and the peel avoid such ends and band selection prefers a candidate
+   without one.
+4. **Verify and rate.** `analyze` plays the puzzle with a fixed policy (shortest free ray first)
    and measures: arrows, cells, path lengths, free arrows per step, free over remaining
    (`avgFreeRatio`, the main signal), ray length at removal, near misses, heads on the border.
    A puzzle that does not solve is a bug and throws.
-4. **Band selection.** `generateInBand` tries sub-seeds `seed#0`, `seed#1`, ... and keeps a
+5. **Band selection.** `generateInBand` tries sub-seeds `seed#0`, `seed#1`, ... and keeps a
    candidate inside the tier's band (the easiest, the hardest or the first, per tier), or the
-   nearest. Deterministic: the same seed always picks the same candidate.
+   nearest; a candidate with two ends on one node loses to any without. Deterministic: the same
+   seed always picks the same candidate.
 
-What the measurements say: the number of free arrows at any moment is about 3 to 6 on any
-board, so the playable share of the board falls with the number of arrows. Board size is the
-main difficulty knob; the peel bias lengthens rays; picking the hardest of several candidates
-trims easy outliers. The bands overlap on purpose, as in the reference game, where the label is
-relative to the position on the level path.
+What the measurements say (T14, a player taking any free arrow): Easy and Medium have about 4 free
+arrows at a time on any board, so their playable share falls with size, the main knob there. The
+scored peel brings Hard to about 3 free arrows (arrows of about 6 cells) and Super Hard to about
+2.5 (about 8 cells, 3 or fewer free on four steps in five), with about a third of newly freed
+arrows pointing the way of the one just removed, down from about 43%. Generation stays under about
+70 ms for any board in Node; the calibration suite allows a second. Picking the hardest of several
+candidates trims easy outliers. The bands overlap on purpose, as in the reference game, where the
+label is relative to the position on the level path.
 
 ### Content pins
 
