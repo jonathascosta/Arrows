@@ -51,9 +51,11 @@ published.
    <https://developers.google.com/admob/ios/3p-skadnetworks> into `SKAdNetworkItems` in
    `apps/game/ios/App/App/Info.plist`, keeping Google's own `cstr6suwn9.skadnetwork`. The session
    that prepared the app could not reach that page, and the ids must not be typed from memory.
-5. **Upload a build.** Run the `TestFlight` workflow (secrets in ARCHITECTURE.md, iOS), install it
-   from TestFlight and play it: the consent message (in the EEA), the tracking prompt, the ads,
-   Settings, Credits and the privacy policy.
+5. **Upload a build.** Run the `TestFlight` workflow and install the build from TestFlight. Its
+   secrets are in ARCHITECTURE.md (iOS); the API key and the certificate are the team's, shared
+   with the owner's other apps, so none is made for this app alone. Then play the build: the
+   consent message (in the EEA), the tracking prompt, the ads, Settings, Credits and the privacy
+   policy.
 6. **Upload the listing.** Run the `App Store listing` workflow: it sends the text and the
    screenshots of both languages to the version being prepared, and submits nothing.
 7. **App Privacy.** In App Store Connect, App Privacy, answer for Google's SDKs, which the app

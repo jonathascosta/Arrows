@@ -435,11 +435,19 @@ Certificates, Identifiers & Profiles and creates the app in App Store Connect wi
 creates the App Store provisioning profile itself.
 
 The API key and the distribution certificate belong to the owner's Apple Developer team, not to
-this app: the owner's other apps (Trilha, already on TestFlight, and the games to come) sign and
-upload with the same ones, so neither is revoked or replaced for this app alone, and each game's
-repository holds the same six required secrets (only the AdMob ones differ). The lane neither
-creates nor revokes certificates: it imports the one it is given into a temporary keychain, and
-creates or downloads only this app's profile.
+this app, and the owner has other apps on it: Trilha (already on TestFlight) and the games to
+come. A team key with the App Manager role serves every app, so Trilha's key serves this one
+too. The certificate is an Apple Distribution certificate whose private key the owner keeps (the
+`.p12`), so the games to come can sign with it too; Trilha signs with another one, made through
+the API by its own build tool, which must not be revoked either. Every game repository with
+these workflows holds the same values in the six required secrets; only the three AdMob ones are
+its own. When the certificate expires (after a year), the owner makes a new one and replaces
+`IOS_DISTRIBUTION_CERTIFICATE_P12` and its password in each of those repositories; the `beta`
+lane then makes a new profile by itself.
+
+The `beta` lane neither creates nor revokes certificates: it imports the one it is given into a
+temporary keychain, and creates or downloads only this app's profile. The `listing` lane (Store,
+below) uses the same key and writes only this app's listing (`app_identifier`).
 
 ### Store
 
