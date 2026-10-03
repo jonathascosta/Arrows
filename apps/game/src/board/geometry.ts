@@ -119,19 +119,41 @@ export function exitDuration(travel: number, motion: ThemeMotion): number {
   return Math.min(motion.exitMaxMs, Math.max(motion.exitMinMs, ms));
 }
 
-/** Cell grid lines for the active cells, each edge drawn once. */
+/**
+ * The grid: lines every half cell, through the cells' centres and along their
+ * edges, across each run of active cells. Its nodes are where an arrow's
+ * corners (the centres), the tip of its head and the end of its tail (the
+ * edges) land, and an arrow's ray runs along one of its lines, so a player can
+ * follow it to the first arrow in its way.
+ */
 export function gridData(mask: Mask): string {
   const active = (x: number, y: number): boolean =>
     x >= 0 && y >= 0 && x < mask.width && y < mask.height && mask.active[y * mask.width + x] === 1;
+  // Line k is k half cells from the top (or the left). An odd line runs through
+  // the centres of row (k - 1) / 2; an even one along the edge between rows
+  // k / 2 - 1 and k / 2, so it is drawn where either of them is active.
+  const touching = (k: number): number[] => [Math.floor((k - 1) / 2), Math.floor(k / 2)];
   const parts: string[] = [];
-  for (let y = 0; y < mask.height; y++) {
-    for (let x = 0; x < mask.width; x++) {
-      if (!active(x, y)) continue;
-      parts.push(`M${x} ${y}h1`, `M${x} ${y}v1`);
-      if (!active(x + 1, y)) parts.push(`M${x + 1} ${y}v1`);
-      if (!active(x, y + 1)) parts.push(`M${x} ${y + 1}h1`);
+  const runs = (
+    lines: number,
+    length: number,
+    on: (k: number, i: number) => boolean,
+    draw: (k: number, from: number, to: number) => string,
+  ): void => {
+    for (let k = 0; k <= lines; k++) {
+      for (let i = 0; i < length; i++) {
+        if (!on(k, i) || on(k, i - 1)) continue;
+        let end = i + 1;
+        while (on(k, end)) end++;
+        parts.push(draw(k, i, end));
+      }
     }
-  }
+  };
+  // Horizontal line k runs over column x when an active cell of that column touches it.
+  const rowsOn = (k: number, x: number): boolean => touching(k).some((y) => active(x, y));
+  const columnsOn = (k: number, y: number): boolean => touching(k).some((x) => active(x, y));
+  runs(2 * mask.height, mask.width, rowsOn, (k, from, to) => `M${from} ${k / 2}H${to}`);
+  runs(2 * mask.width, mask.height, columnsOn, (k, from, to) => `M${k / 2} ${from}V${to}`);
   return parts.join('');
 }
 
