@@ -27,8 +27,8 @@ Reference: Amaze GO! (App Store). We match its core loop and improve on honesty 
 ### The iOS app
 
 - Named Arrows on the home screen and Arrows: Tap Puzzle on the App Store (Arrows was taken),
-  with the app id `net.jonathas.arrows` (the owner's domain, reversed); the id is
-  fixed for good with the first upload to App Store Connect.
+  with the app id `net.jonathas.arrows` (the owner's domain, reversed); the id is fixed for good
+  with the first upload to App Store Connect.
 - iPhone only, in portrait. The page runs edge to edge on the paper colour and keeps its
   controls clear of the notch and the home indicator; the status bar shows dark text.
 - Haptics on every tap that does something: a light tick when an arrow leaves, a warning when a
@@ -354,8 +354,9 @@ beyond English and Portuguese.
   `jonathas.net` in reverse, as bundle ids are written, instead of `com.jonathascosta.arrows`;
   chosen before anything was uploaded, so nothing else changes.
 - Store name (owner's decision) (2026-10-03): the App Store listing is named Arrows: Tap Puzzle in
-  both languages, since Arrows was taken; the home screen keeps Arrows, and the English keywords
-  drop "puzzle" and "tap", now in the name, for "strategy" and "focus".
+  both languages, since Arrows was taken; the home screen keeps Arrows; the keywords leave out
+  words the name or the subtitle already carry ("puzzle", "tap" and "board" in English, "flecha"
+  in Portuguese), for "strategy", "focus" and "solve", and "estratégia".
 
 ## Open questions
 

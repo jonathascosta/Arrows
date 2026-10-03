@@ -20,16 +20,19 @@ Monetization, the decisions log); how the app is built and uploaded is in
 
 The listing's name is **Arrows: Tap Puzzle** (Arrows was taken), subtitle "Clear the board of
 arrows" ("Limpe o tabuleiro de flechas"), under Games, Puzzle and Board; on the home screen the
-app is still Arrows (`CFBundleDisplayName` in `Info.plist`). The English keywords leave out the
-name's words, which the App Store already searches. Support goes to the repository's issues;
-the privacy policy is at `https://jonathascosta.github.io/Arrows/privacy.html` once published.
+app is still Arrows (`CFBundleDisplayName` in `Info.plist`). The keywords leave out the words of
+the name and the subtitle, which the App Store already searches. Support goes to the
+repository's issues; the privacy policy is at
+`https://jonathascosta.github.io/Arrows/privacy.html` once published.
 
 ## The owner's steps
 
-1. **App Store Connect: create the app.** Done (3 October 2026): iOS, named Arrows: Tap Puzzle,
-   primary language English (U.S.), bundle id `net.jonathas.arrows`, SKU `net.jonathas.arrows`,
-   full user access. Still to do: add the Portuguese (Brazil) localisation. A renamed listing
-   goes in both `name.txt` files, at most 30 characters, and must be free on the App Store.
+1. **App Store Connect: create the app.** Done (3 October 2026): iOS, named "Arrows: Tap
+   Puzzle", primary language English (U.S.), bundle id `net.jonathas.arrows`, SKU
+   `net.jonathas.arrows`, full user access. The Portuguese (Brazil) localisation can be added by
+   hand or left to the listing workflow (step 6), which creates it. If the listing is renamed
+   again, the new name (at most 30 characters, and free on the App Store) goes in both
+   `name.txt` files, and its words come out of the keywords.
 2. **GitHub Pages: publish the privacy policy.** In the repository's Settings, Pages, set the
    source to GitHub Actions, then run the `Privacy policy` workflow from the Actions tab. Check
    that the address above opens the policy. Run it again whenever `privacy.html` changes.

@@ -1,1 +1,1 @@
-quebra-cabeça,flecha,seta,lógica,raciocínio,desafio,labirinto,offline,liga,mente
+quebra-cabeça,seta,lógica,raciocínio,desafio,labirinto,offline,liga,mente,estratégia
