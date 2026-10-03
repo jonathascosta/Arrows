@@ -171,7 +171,7 @@ API within the budget in the product document, Android, iPad.
 | Task | State | Pull request                                         |
 | :--- | :---- | :--------------------------------------------------- |
 | T1   | done  | [#1](https://github.com/jonathascosta/Arrows/pull/1) |
-| T2   | done  | this branch, `claude/t2-playable-board`              |
+| T2   | done  | [#2](https://github.com/jonathascosta/Arrows/pull/2) |
 | T3   | open  |                                                      |
 | T4   | open  |                                                      |
 | T5   | open  |                                                      |
